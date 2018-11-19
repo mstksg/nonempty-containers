@@ -79,7 +79,13 @@ updateWithKey :: Ord k => (k -> a -> Maybe a) -> k -> NEMap k a -> Map k a
 updateLookupWithKey :: Ord k => (k -> a -> Maybe a) -> k -> NEMap k a -> (Maybe a, Map k a)
 alter :: Ord k => (Maybe a -> Maybe a) -> k -> NEMap k a -> Map k a
 alterF :: (Ord k, Functor f) => (Maybe a -> f (Maybe a)) -> k -> NEMap k a -> f (Map k a)
+
+-- | Variant of <a>alter</a> that disallows deletion. Allows us to
+--   guarantee that the result is also a non-empty Map.
 alter' :: Ord k => (Maybe a -> a) -> k -> NEMap k a -> NEMap k a
+
+-- | Variant of <a>alterF</a> that disallows deletion. Allows us to
+--   guarantee that the result is also a non-empty Map.
 alterF' :: (Ord k, Functor f) => (Maybe a -> f a) -> k -> NEMap k a -> f (NEMap k a)
 lookup :: Ord k => k -> NEMap k a -> Maybe a
 (!?) :: Ord k => NEMap k a -> k -> Maybe a
@@ -102,6 +108,13 @@ unionWith :: Ord k => (a -> a -> a) -> NEMap k a -> NEMap k a -> NEMap k a
 unionWithKey :: Ord k => (k -> a -> a -> a) -> NEMap k a -> NEMap k a -> NEMap k a
 unions :: (Foldable1 f, Ord k) => f (NEMap k a) -> NEMap k a
 unionsWith :: (Foldable1 f, Ord k) => (a -> a -> a) -> f (NEMap k a) -> NEMap k a
+difference :: Ord k => NEMap k a -> NEMap k b -> Map k a
+(\\) :: Ord k => NEMap k a -> NEMap k b -> Map k a
+differenceWith :: Ord k => (a -> b -> Maybe a) -> NEMap k a -> NEMap k b -> Map k a
+differenceWithKey :: Ord k => (k -> a -> b -> Maybe a) -> NEMap k a -> NEMap k b -> Map k a
+intersection :: Ord k => NEMap k a -> NEMap k b -> Map k a
+intersectionWith :: Ord k => (a -> b -> c) -> NEMap k a -> NEMap k b -> Map k c
+intersectionWithKey :: Ord k => (k -> a -> b -> c) -> NEMap k a -> NEMap k b -> Map k c
 map :: (a -> b) -> NEMap k a -> NEMap k b
 mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 traverseWithKey :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
@@ -152,6 +165,9 @@ isProperSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Boo
 lookupIndex :: Ord k => k -> NEMap k a -> Maybe Int
 findIndex :: Ord k => k -> NEMap k a -> Int
 elemAt :: Int -> NEMap k a -> (k, a)
+
+-- | Variant of <a>updateAt</a> that disallows deletion. Allows us to
+--   guarantee that the result is also a non-empty Map.
 adjustAt :: (k -> a -> a) -> Int -> NEMap k a -> NEMap k a
 updateAt :: (k -> a -> Maybe a) -> Int -> NEMap k a -> Map k a
 deleteAt :: Int -> NEMap k a -> Map k a
