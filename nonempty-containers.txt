@@ -32,6 +32,7 @@ union :: Ord k => NEMap k a -> NEMap k a -> NEMap k a
 elems :: NEMap k a -> NonEmpty a
 size :: NEMap k a -> Int
 traverseWithKey :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
+foldMapWithKey :: Semigroup m => (k -> a -> m) -> NEMap k a -> m
 insertMinMap :: k -> a -> Map k a -> Map k a
 insertMaxMap :: k -> a -> Map k a -> Map k a
 instance GHC.Base.Functor (Data.Map.NonEmpty.Internal.NEMap k)
