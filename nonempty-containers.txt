@@ -149,6 +149,15 @@ isSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
 isSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Bool
 isProperSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
 isProperSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Bool
+lookupIndex :: Ord k => k -> NEMap k a -> Maybe Int
+findIndex :: Ord k => k -> NEMap k a -> Int
+elemAt :: Int -> NEMap k a -> (k, a)
+adjustAt :: (k -> a -> a) -> Int -> NEMap k a -> NEMap k a
+updateAt :: (k -> a -> Maybe a) -> Int -> NEMap k a -> Map k a
+deleteAt :: Int -> NEMap k a -> Map k a
+take :: Int -> NEMap k a -> Map k a
+drop :: Int -> NEMap k a -> Map k a
+splitAt :: Int -> NEMap k a -> (Map k a, Map k a)
 findMin :: NEMap k a -> (k, a)
 findMax :: NEMap k a -> (k, a)
 deleteMin :: NEMap k a -> Map k a
