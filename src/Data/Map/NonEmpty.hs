@@ -161,14 +161,15 @@ module Data.Map.NonEmpty (
   , isProperSubmapOf, isProperSubmapOfBy
 
   -- -- * Indexed
-  -- , lookupIndex
-  -- , findIndex
-  -- , elemAt
-  -- , updateAt
-  -- , deleteAt
-  -- , take
-  -- , drop
-  -- , splitAt
+  , lookupIndex
+  , findIndex
+  , elemAt
+  , adjustAt
+  , updateAt
+  , deleteAt
+  , take
+  , drop
+  , splitAt
 
   -- * Min\/Max
   , findMin
@@ -183,6 +184,8 @@ module Data.Map.NonEmpty (
   , updateMaxWithKey
   , minView
   , maxView
+
+  -- * Debugging
   , valid
   ) where
 
@@ -191,11 +194,12 @@ import           Data.Bifunctor
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.List.NonEmpty         (NonEmpty(..))
+import           Data.Map                   (Map)
 import           Data.Map.NonEmpty.Internal
 import           Data.Maybe hiding          (mapMaybe)
 import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1)
-import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map)
+import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map, take, drop, splitAt)
 import qualified Data.Foldable              as F
 import qualified Data.List.NonEmpty         as NE
 import qualified Data.Map                   as M
@@ -362,10 +366,10 @@ toDescList (NEMap k v m) = maybe kv0 (<> kv0)
   where
     kv0 = (k, v) :| []
 
-nonEmptyMap :: M.Map k a -> Maybe (NEMap k a)
+nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 nonEmptyMap m = uncurry (\(k, v) -> NEMap k v) <$> M.minViewWithKey m
 
-insertMap :: Ord k => k -> a -> M.Map k a -> NEMap k a
+insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
 insertMap k v = maybe (singleton k v) (insert k v) . nonEmptyMap
 
 insertMapWith
@@ -373,7 +377,7 @@ insertMapWith
     => (a -> a -> a)
     -> k
     -> a
-    -> M.Map k a
+    -> Map k a
     -> NEMap k a
 insertMapWith f k v = maybe (singleton k v) (insertWith f k v)
                     . nonEmptyMap
@@ -383,7 +387,7 @@ insertMapWithKey
     => (k -> a -> a -> a)
     -> k
     -> a
-    -> M.Map k a
+    -> Map k a
     -> NEMap k a
 insertMapWithKey f k v = maybe (singleton k v) (insertWithKey f k v)
                        . nonEmptyMap
@@ -391,14 +395,14 @@ insertMapWithKey f k v = maybe (singleton k v) (insertWithKey f k v)
 insertMapMin
     :: k
     -> a
-    -> M.Map k a
+    -> Map k a
     -> NEMap k a
 insertMapMin = NEMap
 
 insertMapMax
     :: k
     -> a
-    -> M.Map k a
+    -> Map k a
     -> NEMap k a
 insertMapMax k v = maybe (singleton k v) go
                  . nonEmptyMap
@@ -528,7 +532,7 @@ fromDistinctDescList ((k, v) :| xs) = insertMapMax k v
                                     . M.fromDistinctDescList
                                     $ xs
 
-delete :: Ord k => k -> NEMap k a -> M.Map k a
+delete :: Ord k => k -> NEMap k a -> Map k a
 delete k n@(NEMap k0 _ m)
     | k == k0   = m
     | otherwise = toMap n
@@ -557,7 +561,7 @@ update
     => (a -> Maybe a)
     -> k
     -> NEMap k a
-    -> M.Map k a
+    -> Map k a
 update f = updateWithKey (const f)
 
 updateWithKey
@@ -565,7 +569,7 @@ updateWithKey
     => (k -> a -> Maybe a)
     -> k
     -> NEMap k a
-    -> M.Map k a
+    -> Map k a
 updateWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> toMap n
     EQ -> maybe m (flip (insertMinMap k) m) . f k $ v
@@ -576,7 +580,7 @@ updateLookupWithKey
     => (k -> a -> Maybe a)
     -> k
     -> NEMap k a
-    -> (Maybe a, M.Map k a)
+    -> (Maybe a, Map k a)
 updateLookupWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> (Nothing, toMap n)
     EQ -> (Just v , maybe m (flip (insertMinMap k) m) . f k $ v)
@@ -587,7 +591,7 @@ alter
     => (Maybe a -> Maybe a)
     -> k
     -> NEMap k a
-    -> M.Map k a
+    -> Map k a
 alter f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> ($ toMap n) . maybe id (insertMinMap k) $ f Nothing
     EQ -> ($ m      ) . maybe id (insertMinMap k) $ f (Just v)
@@ -599,7 +603,7 @@ alterF
     => (Maybe a -> f (Maybe a))
     -> k
     -> NEMap k a
-    -> f (M.Map k a)
+    -> f (Map k a)
 alterF f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> ($ toMap n) . maybe id (insertMinMap k) <$> f Nothing
     EQ -> ($ m      ) . maybe id (insertMinMap k) <$> f (Just v)
@@ -635,7 +639,7 @@ traverseMaybeWithKey
     :: Apply t
     => (k -> a -> t (Maybe b))
     -> NEMap k a
-    -> t (M.Map k b)
+    -> t (Map k b)
 traverseMaybeWithKey f (NEMap k0 v m0) = case runMaybeApply m1 of
     Left  m2 -> combine <$> f k0 v <.> m2
     Right m2 -> (`combine` m2) <$> f k0 v
@@ -705,7 +709,7 @@ mapKeysMonotonic f (NEMap k v m) = NEMap (f k) v
 filter
     :: (a -> Bool)
     -> NEMap k a
-    -> M.Map k a
+    -> Map k a
 filter f (NEMap k v m)
     | f v       = insertMinMap k v . M.filter f $ m
     | otherwise = M.filter f m
@@ -713,7 +717,7 @@ filter f (NEMap k v m)
 filterWithKey
     :: (k -> a -> Bool)
     -> NEMap k a
-    -> M.Map k a
+    -> Map k a
 filterWithKey f (NEMap k v m)
     | f k v     = insertMinMap k v . M.filterWithKey f $ m
     | otherwise = M.filterWithKey f m
@@ -722,7 +726,7 @@ restrictKeys
     :: Ord k
     => NEMap k a
     -> S.Set k
-    -> M.Map k a
+    -> Map k a
 restrictKeys (NEMap k v m) ks
     | S.member k ks = insertMinMap k v . M.restrictKeys m $ ks
     | otherwise     = M.restrictKeys m ks
@@ -731,7 +735,7 @@ withoutKeys
     :: Ord k
     => NEMap k a
     -> S.Set k
-    -> M.Map k a
+    -> Map k a
 withoutKeys (NEMap k v m) ks
     | S.member k ks = M.restrictKeys m ks
     | otherwise     = insertMinMap k v . M.restrictKeys m $ ks
@@ -740,14 +744,14 @@ withoutKeys (NEMap k v m) ks
 partition
     :: (a -> Bool)
     -> NEMap k a
-    -> (M.Map k a, M.Map k a)
+    -> (Map k a, Map k a)
 partition f = partitionWithKey (const f)
 
 -- Requires Ord k
 partitionWithKey
     :: (k -> a -> Bool)
     -> NEMap k a
-    -> (M.Map k a, M.Map k a)
+    -> (Map k a, Map k a)
 partitionWithKey f (NEMap k v m0)
     | f k v     = (insertMinMap k v m1, m2                 )
     | otherwise = (m1                 , insertMinMap k v m2)
@@ -757,7 +761,7 @@ partitionWithKey f (NEMap k v m0)
 takeWhileAntitone
     :: (k -> Bool)
     -> NEMap k a
-    -> M.Map k a
+    -> Map k a
 takeWhileAntitone f (NEMap k v m)
     | f k       = insertMinMap k v . M.takeWhileAntitone f $ m
     | otherwise = M.empty
@@ -765,7 +769,7 @@ takeWhileAntitone f (NEMap k v m)
 dropWhileAntitone
     :: (k -> Bool)
     -> NEMap k a
-    -> M.Map k a
+    -> Map k a
 dropWhileAntitone f n@(NEMap k _ m)
     | f k       = M.dropWhileAntitone f m
     | otherwise = toMap n
@@ -773,7 +777,7 @@ dropWhileAntitone f n@(NEMap k _ m)
 spanAntitone
     :: (k -> Bool)
     -> NEMap k a
-    -> (M.Map k a, M.Map k a)
+    -> (Map k a, Map k a)
 spanAntitone f n@(NEMap k v m)
     | f k       = first (insertMinMap k v) . M.spanAntitone f $ m
     | otherwise = (M.empty, toMap n)
@@ -781,13 +785,13 @@ spanAntitone f n@(NEMap k v m)
 mapMaybe
     :: (a -> Maybe b)
     -> NEMap k a
-    -> M.Map k b
+    -> Map k b
 mapMaybe f = mapMaybeWithKey (const f)
 
 mapMaybeWithKey
     :: (k -> a -> Maybe b)
     -> NEMap k a
-    -> M.Map k b
+    -> Map k b
 mapMaybeWithKey f (NEMap k v m) = ($ M.mapMaybeWithKey f m)
                                 . maybe id (insertMinMap k)
                                 $ f k v
@@ -795,20 +799,20 @@ mapMaybeWithKey f (NEMap k v m) = ($ M.mapMaybeWithKey f m)
 mapEither
     :: (a -> Either b c)
     -> NEMap k a
-    -> (M.Map k b, M.Map k c)
+    -> (Map k b, Map k c)
 mapEither f = mapEitherWithKey (const f)
 
 mapEitherWithKey
     :: (k -> a -> Either b c)
     -> NEMap k a
-    -> (M.Map k b, M.Map k c)
+    -> (Map k b, Map k c)
 mapEitherWithKey f (NEMap k v m0) = case f k v of
     Left  v' -> (insertMinMap k v' m1, m2                  )
     Right v' -> (m1                  , insertMinMap k v' m2)
   where
     (m1, m2) = M.mapEitherWithKey f m0
 
-split :: Ord k => k -> NEMap k a -> (M.Map k a, M.Map k a)
+split :: Ord k => k -> NEMap k a -> (Map k a, Map k a)
 split k n@(NEMap k0 v m) = case compare k k0 of
     LT -> (M.empty, toMap n)
     EQ -> (M.empty, m      )
@@ -818,7 +822,7 @@ splitLookup
     :: Ord k
     => k
     -> NEMap k a
-    -> (M.Map k a, Maybe a, M.Map k a)
+    -> (Map k a, Maybe a, Map k a)
 splitLookup k n@(NEMap k0 v m0) = case compare k k0 of
     LT -> (M.empty, Nothing, toMap n)
     EQ -> (M.empty, Just v , m0     )
@@ -829,7 +833,12 @@ isSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
 isSubmapOf = isSubmapOfBy (==)
 
 -- performance benefit: can short-circuit, skip an insert
-isSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Bool
+isSubmapOfBy
+    :: Ord k
+    => (a -> b -> Bool)
+    -> NEMap k a
+    -> NEMap k b
+    -> Bool
 isSubmapOfBy f (toMap->m0) (NEMap k v m1) = kvSub
                                          && M.isSubmapOfBy f m0 m1
   where
@@ -841,10 +850,86 @@ isSubmapOfBy f (toMap->m0) (NEMap k v m1) = kvSub
 isProperSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
 isProperSubmapOf = isProperSubmapOfBy (==)
 
-
 -- is there a better way to do this?
-isProperSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Bool
+isProperSubmapOfBy
+    :: Ord k
+    => (a -> b -> Bool)
+    -> NEMap k a
+    -> NEMap k b
+    -> Bool
 isProperSubmapOfBy f m1 m2 = M.isProperSubmapOfBy f (toMap m1) (toMap m2)
+
+lookupIndex
+    :: Ord k
+    => k
+    -> NEMap k a
+    -> Maybe Int
+lookupIndex k (NEMap k0 _ m) = case compare k k0 of
+    LT -> Nothing
+    EQ -> Just 0
+    GT -> (+ 1) <$> M.lookupIndex k m
+
+findIndex
+    :: Ord k
+    => k
+    -> NEMap k a
+    -> Int
+findIndex k = fromMaybe e . lookupIndex k
+  where
+    e = error "NEMap.findIndex: element is not in the map"
+
+elemAt
+    :: Int
+    -> NEMap k a
+    -> (k, a)
+elemAt 0 (NEMap k v _) = (k, v)
+elemAt n (NEMap _ _ m) = M.elemAt (n - 1) m
+
+adjustAt
+    :: (k -> a -> a)
+    -> Int
+    -> NEMap k a
+    -> NEMap k a
+adjustAt f 0 (NEMap k0 v m) = NEMap k0 (f k0 v) m
+adjustAt f n (NEMap k0 v m) = NEMap k0 v
+                            . M.updateAt (\k -> Just . f k) (n - 1)
+                            $ m
+
+updateAt
+    :: (k -> a -> Maybe a)
+    -> Int
+    -> NEMap k a
+    -> Map k a
+updateAt f 0 (NEMap k v m) = maybe m (flip (insertMinMap k) m) $ f k v
+updateAt f n (NEMap k v m) = insertMinMap k v . M.updateAt f (n - 1) $ m
+
+deleteAt
+    :: Int
+    -> NEMap k a
+    -> Map k a
+deleteAt 0 (NEMap _ _ m) = m
+deleteAt n (NEMap k v m) = insertMinMap k v . M.deleteAt (n - 1) $ m
+
+take
+    :: Int
+    -> NEMap k a
+    -> Map k a
+take 0 (NEMap _ _ _) = M.empty
+take n (NEMap k v m) = insertMinMap k v . M.take (n - 1) $ m
+
+drop
+    :: Int
+    -> NEMap k a
+    -> Map k a
+drop 0 n             = toMap n
+drop n (NEMap _ _ m) = M.drop (n - 1) m
+
+splitAt
+    :: Int
+    -> NEMap k a
+    -> (Map k a, Map k a)
+splitAt 0 n             = (M.empty, toMap n)
+splitAt n (NEMap k v m) = first (insertMinMap k v) . M.splitAt (n - 1) $ m
 
 findMin :: NEMap k a -> (k, a)
 findMin (NEMap k v _) = (k, v)
@@ -852,39 +937,39 @@ findMin (NEMap k v _) = (k, v)
 findMax :: NEMap k a -> (k, a)
 findMax (NEMap k v m) = fromMaybe (k, v) . M.lookupMax $ m
 
-deleteMin :: NEMap k a -> M.Map k a
+deleteMin :: NEMap k a -> Map k a
 deleteMin (NEMap _ _ m) = m
 
-deleteMax :: NEMap k a -> M.Map k a
+deleteMax :: NEMap k a -> Map k a
 deleteMax (NEMap k v m) = insertMinMap k v . M.deleteMax $ m
 
-updateMin :: (a -> Maybe a) -> NEMap k a -> M.Map k a
+updateMin :: (a -> Maybe a) -> NEMap k a -> Map k a
 updateMin f = updateMinWithKey (const f)
 
-updateMinWithKey :: (k -> a -> Maybe a) -> NEMap k a -> M.Map k a
+updateMinWithKey :: (k -> a -> Maybe a) -> NEMap k a -> Map k a
 updateMinWithKey f (NEMap k v m) = ($ m) . maybe id (insertMinMap k) $ f k v
 
-updateMax :: (a -> Maybe a) -> NEMap k a -> M.Map k a
+updateMax :: (a -> Maybe a) -> NEMap k a -> Map k a
 updateMax f = updateMaxWithKey (const f)
 
-updateMaxWithKey :: (k -> a -> Maybe a) -> NEMap k a -> M.Map k a
+updateMaxWithKey :: (k -> a -> Maybe a) -> NEMap k a -> Map k a
 updateMaxWithKey f (NEMap k v m) = insertMinMap k v
                                  . M.updateMaxWithKey f
                                  $ m
 
 -- deleteFindMin
-minView :: NEMap k a -> (a, M.Map k a)
+minView :: NEMap k a -> (a, Map k a)
 minView = first snd . deleteFindMin
 
-deleteFindMin :: NEMap k a -> ((k, a), M.Map k a)
+deleteFindMin :: NEMap k a -> ((k, a), Map k a)
 deleteFindMin (NEMap k v m) = ((k, v), m)
 
 -- deleteFindMax
-maxView :: NEMap k a -> (a, M.Map k a)
+maxView :: NEMap k a -> (a, Map k a)
 maxView = first snd . deleteFindMax
 
 -- requires Ord
-deleteFindMax :: NEMap k a -> ((k, a), M.Map k a)
+deleteFindMax :: NEMap k a -> ((k, a), Map k a)
 deleteFindMax (NEMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v))
                             . M.maxViewWithKey
                             $ m

@@ -25,6 +25,7 @@ import           Control.Applicative
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.List.NonEmpty         (NonEmpty(..))
+import           Data.Map                   (Map)
 import           Data.Maybe hiding          (mapMaybe)
 import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1(fold1))
@@ -40,7 +41,7 @@ import qualified Data.Semigroup.Foldable    as F1
 data NEMap k a =
     NEMap { nemK0  :: !k   -- ^ invariant: must be smaller than smallest key in map
           , nemV0  :: a
-          , nemMap :: !(M.Map k a)
+          , nemMap :: !(Map k a)
           }
   deriving (Eq, Ord, Functor)
 
@@ -99,7 +100,7 @@ elems (NEMap _ v m) = v :| M.elems m
 size :: NEMap k a -> Int
 size (NEMap _ _ m) = 1 + M.size m
 
-toMap :: NEMap k a -> M.Map k a
+toMap :: NEMap k a -> Map k a
 toMap (NEMap k v m) = insertMinMap k v m
 
 traverseWithKey
@@ -169,10 +170,10 @@ instance Traversable1 (NEMap k) where
 
 
 
-insertMinMap :: k -> a -> M.Map k a -> M.Map k a
+insertMinMap :: k -> a -> Map k a -> Map k a
 insertMinMap kx0 = go kx0 kx0
   where
-    go :: k -> k -> a -> M.Map k a -> M.Map k a
+    go :: k -> k -> a -> Map k a -> Map k a
     go orig !_  x M.Tip = M.singleton (lazy orig) x
     go orig !kx x t@(M.Bin _ ky y l r)
         | l' `ptrEq` l = t
@@ -180,10 +181,10 @@ insertMinMap kx0 = go kx0 kx0
       where
         !l' = go orig kx x l
 
-insertMaxMap :: k -> a -> M.Map k a -> M.Map k a
+insertMaxMap :: k -> a -> Map k a -> Map k a
 insertMaxMap kx0 = go kx0 kx0
   where
-    go :: k -> k -> a -> M.Map k a -> M.Map k a
+    go :: k -> k -> a -> Map k a -> Map k a
     go orig !_  x M.Tip = M.singleton (lazy orig) x
     go orig !kx x t@(M.Bin _ ky y l r)
         | r' `ptrEq` r = t
