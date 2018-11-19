@@ -480,7 +480,7 @@ insertMapMax k v = maybe (singleton k v) go
 
 
 -- this could be implemented using insertWith, but containers implements
--- a custom fromList, so we can use this instead to take advantage of this
+-- a custom insert, so we can use this instead to take advantage of this
 insert
     :: Ord k
     => k
@@ -493,7 +493,7 @@ insert k v n@(NEMap k0 v0 m) = case compare k k0 of
     GT -> NEMap k0 v0 . M.insert k v $ m
 
 -- this could be implemented using insertWithKey, but containers implements
--- a custom fromList, so we can use this instead to take advantage of this
+-- a custom insertWith, so we can use this instead to take advantage of this
 insertWith
     :: Ord k
     => (a -> a -> a)
@@ -754,9 +754,10 @@ mapKeys
     => (k1 -> k2)
     -> NEMap k1 a
     -> NEMap k2 a
-mapKeys f (NEMap k v m) = maybe (singleton (f k) v) (insertWith (const id) (f k) v)     -- BAD ORDER?
-                        . nonEmptyMap
-                        $ M.mapKeys f m
+mapKeys f (NEMap k0 v0 m) = fromList
+                          . ((f k0, v0) :|)
+                          . M.foldrWithKey (\k v kvs -> (f k, v) : kvs) []
+                          $ m
 
 -- Result can be smaller, but not empty
 mapKeysWith
@@ -765,10 +766,10 @@ mapKeysWith
     -> (k1 -> k2)
     -> NEMap k1 a
     -> NEMap k2 a
-mapKeysWith c f (NEMap k v m) = maybe (singleton (f k) v) (insertWith (flip c) (f k) v)     -- THIS BAD! BAD ORDER!
-                              . nonEmptyMap
-                              . M.mapKeysWith c f
-                              $ m
+mapKeysWith c f (NEMap k0 v0 m) = fromListWith c
+                                . ((f k0, v0) :|)
+                                . M.foldrWithKey (\k v kvs -> (f k, v) : kvs) []
+                                $ m
 
 -- Result can be smaller, but not empty
 mapKeysMonotonic
