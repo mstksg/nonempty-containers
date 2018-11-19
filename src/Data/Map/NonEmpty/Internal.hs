@@ -17,6 +17,7 @@ module Data.Map.NonEmpty.Internal (
   , elems
   , size
   , traverseWithKey
+  , foldMapWithKey
   , insertMinMap
   , insertMaxMap
   ) where
@@ -78,11 +79,18 @@ foldl1' :: (a -> a -> a) -> NEMap k a -> a
 foldl1' f (NEMap _ v m) = M.foldl' f v m
 
 -- TODO: benchmark against maxView method
+foldMapWithKey
+    :: Semigroup m
+    => (k -> a -> m)
+    -> NEMap k a
+    -> m
+foldMapWithKey f (NEMap k0 v m) = maybe (f k0 v) (f k0 v <>)
+                                . getOption
+                                . M.foldMapWithKey (\k -> Option . Just . f k)
+                                $ m
+
 foldMap1 :: Semigroup m => (a -> m) -> NEMap k a -> m
-foldMap1 f (NEMap _ v m) = maybe (f v) (f v <>)
-                         . getOption
-                         . foldMap (Option . Just . f)
-                         $ m
+foldMap1 f = foldMapWithKey (const f)
 
 union
     :: Ord k
@@ -133,10 +141,11 @@ instance Foldable (NEMap k) where
     foldl1  = foldl1
     null _  = False
     length  = size
-    elem x (NEMap _ v m) = x == v
-                        || F.elem x m
+    elem x (NEMap _ v m) = F.elem x m
+                        || x == v
     minimum (NEMap _ v _) = v
     maximum (NEMap _ v m) = maybe v snd . M.lookupMax $ m
+    toList  = F.toList . elems
 
 -- | Traverses elements in order ascending keys
 instance Traversable (NEMap k) where
@@ -154,12 +163,7 @@ instance Foldable1 (NEMap k) where
 
 -- | Traverses elements in order ascending keys
 instance Traversable1 (NEMap k) where
-    traverse1 f (NEMap k v m0) = case runMaybeApply m1 of
-        Left  m2 -> NEMap k <$> f v <.> m2
-        Right m2 -> flip (NEMap k) m2 <$> f v
-      where
-        m1 = traverse (MaybeApply . Left . f) m0
-
+    traverse1 f = traverseWithKey (const f)
     sequence1 (NEMap k v m0) = case runMaybeApply m1 of
         Left  m2 -> NEMap k <$> v <.> m2
         Right m2 -> flip (NEMap k) m2 <$> v

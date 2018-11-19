@@ -407,17 +407,6 @@ foldlWithKey' f z (NEMap k v m) = M.foldlWithKey' f x m
   where
     !x = f z k v
 
--- TODO: benchmark against maxView method
-foldMapWithKey
-    :: Semigroup m
-    => (k -> a -> m)
-    -> NEMap k a
-    -> m
-foldMapWithKey f (NEMap k0 v m) = maybe (f k0 v) (f k0 v <>)
-                                . getOption
-                                . M.foldMapWithKey (\k -> Option . Just . f k)
-                                $ m
-
 keys :: NEMap k a -> NonEmpty k
 keys (NEMap k _ m) = k :| M.keys m
 
