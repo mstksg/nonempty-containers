@@ -13,6 +13,7 @@ module Data.Map.NonEmpty (
   , insertMapWith
   , insertMapWithKey
   , insertMapMin
+  , insertMapMax
 
   -- * Construction
   , empty
@@ -31,10 +32,10 @@ module Data.Map.NonEmpty (
   , fromDistinctAscList
 
   -- -- ** From Descending Lists
-  -- , fromDescList
-  -- , fromDescListWith
-  -- , fromDescListWithKey
-  -- , fromDistinctDescList
+  , fromDescList
+  , fromDescListWith
+  , fromDescListWithKey
+  , fromDistinctDescList
 
   -- * Insertion
   , insert
@@ -330,10 +331,10 @@ foldMapWithKey
     => (k -> a -> m)
     -> NEMap k a
     -> m
-foldMapWithKey f (NEMap k v m) = maybe (f k v) (f k v <>)
-                               . getOption
-                               . M.foldMapWithKey (\k' -> Option . Just . f k')
-                               $ m
+foldMapWithKey f (NEMap k0 v m) = maybe (f k0 v) (f k0 v <>)
+                                . getOption
+                                . M.foldMapWithKey (\k -> Option . Just . f k)
+                                $ m
 
 keys :: NEMap k a -> NonEmpty k
 keys (NEMap k _ m) = k :| M.keys m
@@ -394,6 +395,17 @@ insertMapMin
     -> NEMap k a
 insertMapMin = NEMap
 
+insertMapMax
+    :: k
+    -> a
+    -> M.Map k a
+    -> NEMap k a
+insertMapMax k v = maybe (singleton k v) go
+                 . nonEmptyMap
+  where
+    go (NEMap k0 v0 m0) = NEMap k0 v0 . insertMaxMap k v $ m0
+
+
 -- this could be implemented using insertWith, but containers implements
 -- a custom fromList, so we can use this instead to take advantage of this
 insert
@@ -445,8 +457,6 @@ insertLookupWithKey f k v n@(NEMap k0 v0 m) = case compare k k0 of
     EQ -> (Just v , NEMap k  (f k v v0)  m )
     GT -> NEMap k0 v0 <$> M.insertLookupWithKey f k v m
 
--- this could be implemented using fromListWith, but containers implements
--- a custom fromList, so we can use this instead to take advantage of this
 fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
 fromList ((k, v) :| xs) = maybe (singleton k v) (insertWith (const id) k v)
                         . nonEmptyMap
@@ -464,19 +474,15 @@ fromListWithKey
     => (k -> a -> a -> a)
     -> NonEmpty (k, a)
     -> NEMap k a
-fromListWithKey f ((k, v) :| xs) = maybe (singleton k v) (insertWith (flip (f k)) k v)  -- WRONG: might mess up ordering
-                                 . nonEmptyMap
-                                 $ M.fromListWithKey f xs
+fromListWithKey f ((k0, v0) :| xs) = F.foldl' go (singleton k0 v0) xs
+  where
+    go m (k, v) = insertWithKey f k v m
 
 fromAscList
     :: Eq k
     => NonEmpty (k, a)
     -> NEMap k a
-fromAscList ((k, v) :| xs) = NEMap k (NE.last (v :| fmap snd ys))
-                           . M.fromAscList
-                           $ zs
-  where
-    (ys, zs) = span ((== k) . fst) xs
+fromAscList = fromDistinctAscList . combineEq
 
 fromAscListWith
     :: Eq k
@@ -490,17 +496,37 @@ fromAscListWithKey
     => (k -> a -> a -> a)
     -> NonEmpty (k, a)
     -> NEMap k a
-fromAscListWithKey f ((k, v) :| xs) = NEMap k vFinal
-                                    . M.fromAscListWithKey f
-                                    $ zs
-  where
-    (ys, zs) = span ((== k) . fst) xs
-    vFinal   = F.foldl1 (f k) (v :| fmap snd ys)
+fromAscListWithKey f = fromDistinctAscList . combineEqWith f
 
 fromDistinctAscList :: NonEmpty (k, a) -> NEMap k a
-fromDistinctAscList ((k, v) :| xs) = NEMap k v
+fromDistinctAscList ((k, v) :| xs) = insertMapMin k v
                                    . M.fromDistinctAscList
                                    $ xs
+
+fromDescList
+    :: Eq k
+    => NonEmpty (k, a)
+    -> NEMap k a
+fromDescList = fromDistinctDescList . combineEq
+
+fromDescListWith
+    :: Eq k
+    => (a -> a -> a)
+    -> NonEmpty (k, a)
+    -> NEMap k a
+fromDescListWith f = fromDescListWithKey (const f)
+
+fromDescListWithKey
+    :: Eq k
+    => (k -> a -> a -> a)
+    -> NonEmpty (k, a)
+    -> NEMap k a
+fromDescListWithKey f = fromDistinctDescList . combineEqWith f
+
+fromDistinctDescList :: NonEmpty (k, a) -> NEMap k a
+fromDistinctDescList ((k, v) :| xs) = insertMapMax k v
+                                    . M.fromDistinctDescList
+                                    $ xs
 
 delete :: Ord k => k -> NEMap k a -> M.Map k a
 delete k n@(NEMap k0 _ m)
@@ -604,19 +630,19 @@ alterF' f k n@(NEMap k0 v m) = case compare k k0 of
 map :: (a -> b) -> NEMap k a -> NEMap k b
 map = fmap
 
--- TODO: we should actually only need Apply, MaybeApply
+-- TODO: benchmark against M.maxView version
 traverseMaybeWithKey
     :: Apply t
     => (k -> a -> t (Maybe b))
     -> NEMap k a
     -> t (M.Map k b)
-traverseMaybeWithKey f (NEMap k v m0) = case runMaybeApply m1 of
-    Left  m2 -> combine <$> f k v <.> m2
-    Right m2 -> (`combine` m2) <$> f k v
+traverseMaybeWithKey f (NEMap k0 v m0) = case runMaybeApply m1 of
+    Left  m2 -> combine <$> f k0 v <.> m2
+    Right m2 -> (`combine` m2) <$> f k0 v
   where
-    m1 = M.traverseMaybeWithKey (\k' -> MaybeApply . Left . f k') m0
+    m1 = M.traverseMaybeWithKey (\k -> MaybeApply . Left . f k) m0
     combine Nothing   = id
-    combine (Just v') = insertMinMap k v'
+    combine (Just v') = insertMinMap k0 v'
 
 mapAccum
     :: (a -> b -> (a, c))
@@ -865,3 +891,32 @@ deleteFindMax (NEMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v)
 
 valid :: Ord k => NEMap k a -> Bool
 valid (NEMap k _ m) = all (k <) (M.keys m) && M.valid m
+
+-- Combining functions
+
+combineEq :: Eq a => NonEmpty (a, b) -> NonEmpty (a, b)
+combineEq (x :| xs) = case NE.nonEmpty xs of
+    Nothing -> x :| []
+    Just ys -> go x ys
+  where
+    go z@(kz,_) (y@(ky,_) :| ys)
+      | ky == kz  = case NE.nonEmpty ys of
+          Nothing -> y :| []
+          Just zs -> go y zs
+      | otherwise = case NE.nonEmpty ys of
+          Nothing -> z :| [y]
+          Just zs -> z :| F.toList (go y zs)
+
+combineEqWith :: Eq a => (a -> b -> b -> b) -> NonEmpty (a, b) -> NonEmpty (a, b)
+combineEqWith f (x :| xs) = case NE.nonEmpty xs of
+    Nothing -> x :| []
+    Just ys -> go x ys
+  where
+    go z@(kz,zz) (y@(ky,yy) :| ys)
+      | ky == kz  = case NE.nonEmpty ys of
+          Nothing -> y :| []
+          Just zs -> let yy' = f ky yy zz
+                     in  go (ky, yy') zs
+      | otherwise = case NE.nonEmpty ys of
+          Nothing -> z :| [y]
+          Just zs -> z :| F.toList (go y zs)

@@ -107,11 +107,11 @@ traverseWithKey
     => (k -> a -> t b)
     -> NEMap k a
     -> t (NEMap k b)
-traverseWithKey f (NEMap k v m0) = case runMaybeApply m1 of
-    Left  m2 -> NEMap k <$> f k v <.> m2
-    Right m2 -> flip (NEMap k) m2 <$> f k v
+traverseWithKey f (NEMap k0 v m0) = case runMaybeApply m1 of
+    Left  m2 -> NEMap k0 <$> f k0 v <.> m2
+    Right m2 -> flip (NEMap k0) m2 <$> f k0 v
   where
-    m1 = M.traverseWithKey (\k' -> MaybeApply . Left . f k') m0
+    m1 = M.traverseWithKey (\k -> MaybeApply . Left . f k) m0
 
 -- | Left-biased union
 instance Ord k => Semigroup (NEMap k a) where
