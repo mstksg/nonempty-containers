@@ -88,9 +88,9 @@ module Data.Map.NonEmpty (
   , differenceWithKey
 
   -- -- ** Intersection
-  -- , intersection
-  -- , intersectionWith
-  -- , intersectionWithKey
+  , intersection
+  , intersectionWith
+  , intersectionWithKey
 
   -- -- ** Unsafe general combining function
   -- , mergeWithKey
@@ -353,6 +353,41 @@ differenceWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2
     EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinMap k1) $ f k1 v1 v2
     -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
     GT -> M.differenceWithKey f (toMap n1) m2
+
+intersection
+    :: Ord k
+    => NEMap k a
+    -> NEMap k b
+    -> Map k a
+intersection n1@(NEMap k1 v1 m1) n2@(NEMap k2 _ m2) = case compare k1 k2 of
+    -- k1 is not in n2
+    LT -> m1 `M.intersection` toMap n2
+    -- k1 and k2 are a part of the result
+    EQ -> insertMinMap k1 v1 $ m1 `M.intersection` m2
+    -- k2 is not in n1
+    GT -> toMap n1 `M.intersection` m2
+
+intersectionWith
+    :: Ord k
+    => (a -> b -> c)
+    -> NEMap k a
+    -> NEMap k b
+    -> Map k c
+intersectionWith f = intersectionWithKey (const f)
+
+intersectionWithKey
+    :: Ord k
+    => (k -> a -> b -> c)
+    -> NEMap k a
+    -> NEMap k b
+    -> Map k c
+intersectionWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
+    -- k1 is not in n2
+    LT -> M.intersectionWithKey f m1 (toMap n2)
+    -- k1 and k2 are a part of the result
+    EQ -> insertMinMap k1 (f k1 v1 v2) $ M.intersectionWithKey f m1 m2
+    -- k2 is not in n1
+    GT -> M.intersectionWithKey f (toMap n1) m2
 
 
 
