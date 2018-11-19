@@ -1,0 +1,60 @@
+name:                nonempty-containers
+version:             0.1.0.0
+github:              "mstksg/nonempty-containers"
+license:             BSD3
+author:              "Justin Le"
+maintainer:          "justin@jle.im"
+copyright:           "(c) Justin Le 2018"
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+# Metadata used when publishing your package
+synopsis:            Non-empty variants of containers data types, with full API
+category:            Data Structures
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description: |
+  Efficient and optimized non-empty versions of types from /containers/.
+  Inspired by /non-empty-containers/ library, except attempting a more
+  faithful port (with under-the-hood optimizations) of the full /containers/
+  API.
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Werror=incomplete-patterns
+- -Wredundant-constraints
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+- semigroupoids
+
+library:
+  source-dirs: src
+
+# executables:
+#   nonempty-containers-exe:
+#     main:                Main.hs
+#     source-dirs:         app
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     dependencies:
+#     - nonempty-containers
+
+# tests:
+#   nonempty-containers-test:
+#     main:                Spec.hs
+#     source-dirs:         test
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     dependencies:
+#     - nonempty-containers
