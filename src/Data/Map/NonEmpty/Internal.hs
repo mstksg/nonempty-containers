@@ -103,6 +103,7 @@ size (NEMap _ _ m) = 1 + M.size m
 toMap :: NEMap k a -> Map k a
 toMap (NEMap k v m) = insertMinMap k v m
 
+-- TODO: benchmark against maxView-based methods
 traverseWithKey
     :: Apply t
     => (k -> a -> t b)
@@ -132,7 +133,8 @@ instance Foldable (NEMap k) where
     foldl1  = foldl1
     null _  = False
     length  = size
-    elem    = elem
+    elem x (NEMap _ v m) = x == v
+                        || F.elem x m
     minimum (NEMap _ v _) = v
     maximum (NEMap _ v m) = maybe v snd . M.lookupMax $ m
 

@@ -81,11 +81,11 @@ module Data.Map.NonEmpty (
   , unions
   , unionsWith
 
-  -- -- ** Difference
-  -- , difference
-  -- , (\\)
-  -- , differenceWith
-  -- , differenceWithKey
+  -- ** Difference
+  , difference
+  , (\\)
+  , differenceWith
+  , differenceWithKey
 
   -- -- ** Intersection
   -- , intersection
@@ -311,6 +311,49 @@ unionsWith
     -> f (NEMap k a)
     -> NEMap k a
 unionsWith f (F1.toNonEmpty->(m :| ms)) = F.foldl' (unionWith f) m ms
+
+difference
+    :: Ord k
+    => NEMap k a
+    -> NEMap k b
+    -> Map k a
+difference n1@(NEMap k1 v1 m1) n2@(NEMap k2 _ m2) = case compare k1 k2 of
+    -- k1 is not in n2, so cannot be deleted
+    LT -> insertMinMap k1 v1 $ m1 `M.difference` toMap n2
+    -- k2 deletes k1, and only k1
+    EQ -> m1 `M.difference` m2
+    -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
+    GT -> toMap n1 `M.difference` m2
+
+(\\)
+    :: Ord k
+    => NEMap k a
+    -> NEMap k b
+    -> Map k a
+(\\) = difference
+
+differenceWith
+    :: Ord k
+    => (a -> b -> Maybe a)
+    -> NEMap k a
+    -> NEMap k b
+    -> Map k a
+differenceWith f = differenceWithKey (const f)
+
+differenceWithKey
+    :: Ord k
+    => (k -> a -> b -> Maybe a)
+    -> NEMap k a
+    -> NEMap k b
+    -> Map k a
+differenceWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
+    -- k1 is not in n2, so cannot be deleted
+    LT -> insertMinMap k1 v1 $ M.differenceWithKey f m1 (toMap n2)
+    -- k2 deletes k1, and only k1
+    EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinMap k1) $ f k1 v1 v2
+    -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
+    GT -> M.differenceWithKey f (toMap n1) m2
+
 
 
 foldrWithKey :: (k -> a -> b -> b) -> b -> NEMap k a -> b
@@ -609,6 +652,8 @@ alterF f k n@(NEMap k0 v m) = case compare k k0 of
     EQ -> ($ m      ) . maybe id (insertMinMap k) <$> f (Just v)
     GT -> insertMinMap k0 v <$> M.alterF f k m
 
+-- | Variant of 'alter' that disallows deletion.  Allows us to guarantee
+-- that the result is also a non-empty Map.
 alter'
     :: Ord k
     => (Maybe a -> a)
@@ -620,6 +665,8 @@ alter' f k n@(NEMap k0 v m) = case compare k k0 of
     EQ -> NEMap k (f (Just v))             $ m
     GT -> NEMap k v . M.alter (Just . f) k $ m
 
+-- | Variant of 'alterF' that disallows deletion.  Allows us to guarantee
+-- that the result is also a non-empty Map.
 alterF'
     :: (Ord k, Functor f)
     => (Maybe a -> f a)
@@ -885,6 +932,8 @@ elemAt
 elemAt 0 (NEMap k v _) = (k, v)
 elemAt n (NEMap _ _ m) = M.elemAt (n - 1) m
 
+-- | Variant of 'updateAt' that disallows deletion.  Allows us to guarantee
+-- that the result is also a non-empty Map.
 adjustAt
     :: (k -> a -> a)
     -> Int
