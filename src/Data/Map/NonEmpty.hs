@@ -155,6 +155,7 @@ module Data.Map.NonEmpty (
 
   , split
   , splitLookup
+  , splitRoot
 
   -- * Submap
   , isSubmapOf, isSubmapOfBy
@@ -203,6 +204,7 @@ import           Prelude hiding             (lookup, foldr1, foldl1, foldr, fold
 import qualified Data.Foldable              as F
 import qualified Data.List.NonEmpty         as NE
 import qualified Data.Map                   as M
+import qualified Data.Maybe                 as Maybe
 import qualified Data.Semigroup.Foldable    as F1
 import qualified Data.Set                   as S
 
@@ -900,6 +902,12 @@ splitLookup k n@(NEMap k0 v m0) = case compare k k0 of
     GT -> let (m1, x, m2) = M.splitLookup k m0
           in  (insertMinMap k0 v m1, x, m2)
 
+splitRoot
+    :: NEMap k a
+    -> NonEmpty (NEMap k a)
+splitRoot (NEMap k v m) = singleton k v
+                       :| Maybe.mapMaybe nonEmptyMap (M.splitRoot m)
+
 isSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
 isSubmapOf = isSubmapOfBy (==)
 
@@ -1046,9 +1054,6 @@ deleteFindMax :: NEMap k a -> ((k, a), Map k a)
 deleteFindMax (NEMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v))
                             . M.maxViewWithKey
                             $ m
-
-valid :: Ord k => NEMap k a -> Bool
-valid (NEMap k _ m) = all (k <) (M.keys m) && M.valid m
 
 -- Combining functions
 

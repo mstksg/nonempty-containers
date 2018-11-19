@@ -20,6 +20,7 @@ module Data.Map.NonEmpty.Internal (
   , foldMapWithKey
   , insertMinMap
   , insertMaxMap
+  , valid
   ) where
 
 import           Control.Applicative
@@ -170,12 +171,25 @@ instance Traversable1 (NEMap k) where
       where
         m1 = traverse (MaybeApply . Left) m0
 
+-- | /O(n)/. Test if the internal map structure is valid.
+valid :: Ord k => NEMap k a -> Bool
+valid (NEMap k _ m) = M.valid m
+                   && all ((k <) . fst . fst) (M.minViewWithKey m)
 
 
 
 
 
 
+
+-- | /O(log n)/. Insert new key and value into a map where keys are
+-- /strictly greater than/ the new key.  That is, the new key must be
+-- /strictly less than/ all keys present in the 'Map'.  /The precondition
+-- is not checked./
+--
+-- While this has the same asymptotics as 'M.insert', it saves a constant
+-- factor for key comparison (so may be helpful if comparison is
+-- expensive) and also does not require an 'Ord' instance for the key type.
 insertMinMap :: k -> a -> Map k a -> Map k a
 insertMinMap kx0 = go kx0 kx0
   where
@@ -187,6 +201,14 @@ insertMinMap kx0 = go kx0 kx0
       where
         !l' = go orig kx x l
 
+-- | /O(log n)/. Insert new key and value into a map where keys are
+-- /strictly less than/ the new key.  That is, the new key must be
+-- /strictly greater than/ all keys present in the 'Map'.  /The
+-- precondition is not checked./
+--
+-- While this has the same asymptotics as 'M.insert', it saves a constant
+-- factor for key comparison (so may be helpful if comparison is
+-- expensive) and also does not require an 'Ord' instance for the key type.
 insertMaxMap :: k -> a -> Map k a -> Map k a
 insertMaxMap kx0 = go kx0 kx0
   where
