@@ -51,6 +51,8 @@ module Data.Map.NonEmpty (
   , updateLookupWithKey
   , alter
   , alterF
+  , alter'
+  , alterF'
 
   -- * Query
   -- ** Lookup
@@ -561,12 +563,10 @@ alter
     -> NEMap k a
     -> M.Map k a
 alter f k n@(NEMap k0 v m) = case compare k k0 of
-  LT -> ($ toMap n) . maybe id (insertMinMap k) $ f Nothing
-  EQ -> ($ m      ) . maybe id (insertMinMap k) $ f (Just v)
-  GT -> insertMinMap k0 v . M.alter f k $ m
+    LT -> ($ toMap n) . maybe id (insertMinMap k) $ f Nothing
+    EQ -> ($ m      ) . maybe id (insertMinMap k) $ f (Just v)
+    GT -> insertMinMap k0 v . M.alter f k $ m
 
--- TODO: size-preserving alter
---
 -- TODO: is this faster than just toMapping?
 alterF
     :: (Ord k, Functor f)
@@ -578,6 +578,28 @@ alterF f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> ($ toMap n) . maybe id (insertMinMap k) <$> f Nothing
     EQ -> ($ m      ) . maybe id (insertMinMap k) <$> f (Just v)
     GT -> insertMinMap k0 v <$> M.alterF f k m
+
+alter'
+    :: Ord k
+    => (Maybe a -> a)
+    -> k
+    -> NEMap k a
+    -> NEMap k a
+alter' f k n@(NEMap k0 v m) = case compare k k0 of
+    LT -> NEMap k (f Nothing) . toMap      $ n
+    EQ -> NEMap k (f (Just v))             $ m
+    GT -> NEMap k v . M.alter (Just . f) k $ m
+
+alterF'
+    :: (Ord k, Functor f)
+    => (Maybe a -> f a)
+    -> k
+    -> NEMap k a
+    -> f (NEMap k a)
+alterF' f k n@(NEMap k0 v m) = case compare k k0 of
+    LT -> flip (NEMap k) (toMap n) <$> f Nothing
+    EQ -> flip (NEMap k) m         <$> f (Just v)
+    GT -> NEMap k0 v <$> M.alterF (fmap Just . f) k m
 
 map :: (a -> b) -> NEMap k a -> NEMap k b
 map = fmap
