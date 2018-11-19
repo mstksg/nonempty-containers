@@ -51,6 +51,7 @@ insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
 insertMapWith :: Ord k => (a -> a -> a) -> k -> a -> Map k a -> NEMap k a
 insertMapWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> Map k a -> NEMap k a
 insertMapMin :: k -> a -> Map k a -> NEMap k a
+insertMapMax :: k -> a -> Map k a -> NEMap k a
 
 -- | The identity of <a>&lt;|&gt;</a>
 empty :: Alternative f => f a
@@ -62,6 +63,10 @@ fromAscList :: Eq k => NonEmpty (k, a) -> NEMap k a
 fromAscListWith :: Eq k => (a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
 fromAscListWithKey :: Eq k => (k -> a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
 fromDistinctAscList :: NonEmpty (k, a) -> NEMap k a
+fromDescList :: Eq k => NonEmpty (k, a) -> NEMap k a
+fromDescListWith :: Eq k => (a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+fromDescListWithKey :: Eq k => (k -> a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+fromDistinctDescList :: NonEmpty (k, a) -> NEMap k a
 insert :: Ord k => k -> a -> NEMap k a -> NEMap k a
 insertWith :: Ord k => (a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
 insertWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
