@@ -33,8 +33,31 @@ elems :: NEMap k a -> NonEmpty a
 size :: NEMap k a -> Int
 traverseWithKey :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 foldMapWithKey :: Semigroup m => (k -> a -> m) -> NEMap k a -> m
+
+-- | <i>O(log n)</i>. Insert new key and value into a map where keys are
+--   <i>strictly greater than</i> the new key. That is, the new key must be
+--   <i>strictly less than</i> all keys present in the <a>Map</a>. /The
+--   precondition is not checked./
+--   
+--   While this has the same asymptotics as <a>insert</a>, it saves a
+--   constant factor for key comparison (so may be helpful if comparison is
+--   expensive) and also does not require an <a>Ord</a> instance for the
+--   key type.
 insertMinMap :: k -> a -> Map k a -> Map k a
+
+-- | <i>O(log n)</i>. Insert new key and value into a map where keys are
+--   <i>strictly less than</i> the new key. That is, the new key must be
+--   <i>strictly greater than</i> all keys present in the <a>Map</a>. /The
+--   precondition is not checked./
+--   
+--   While this has the same asymptotics as <a>insert</a>, it saves a
+--   constant factor for key comparison (so may be helpful if comparison is
+--   expensive) and also does not require an <a>Ord</a> instance for the
+--   key type.
 insertMaxMap :: k -> a -> Map k a -> Map k a
+
+-- | <i>O(n)</i>. Test if the internal map structure is valid.
+valid :: Ord k => NEMap k a -> Bool
 instance GHC.Base.Functor (Data.Map.NonEmpty.Internal.NEMap k)
 instance (GHC.Classes.Ord k, GHC.Classes.Ord a) => GHC.Classes.Ord (Data.Map.NonEmpty.Internal.NEMap k a)
 instance (GHC.Classes.Eq k, GHC.Classes.Eq a) => GHC.Classes.Eq (Data.Map.NonEmpty.Internal.NEMap k a)
@@ -159,6 +182,7 @@ mapEither :: (a -> Either b c) -> NEMap k a -> (Map k b, Map k c)
 mapEitherWithKey :: (k -> a -> Either b c) -> NEMap k a -> (Map k b, Map k c)
 split :: Ord k => k -> NEMap k a -> (Map k a, Map k a)
 splitLookup :: Ord k => k -> NEMap k a -> (Map k a, Maybe a, Map k a)
+splitRoot :: NEMap k a -> NonEmpty (NEMap k a)
 isSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
 isSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Bool
 isProperSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
@@ -187,4 +211,6 @@ updateMinWithKey :: (k -> a -> Maybe a) -> NEMap k a -> Map k a
 updateMaxWithKey :: (k -> a -> Maybe a) -> NEMap k a -> Map k a
 minView :: NEMap k a -> (a, Map k a)
 maxView :: NEMap k a -> (a, Map k a)
+
+-- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
