@@ -109,9 +109,12 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 3.  You can use the 'IsNonEmpty' and 'IsEmpty' patterns to "pattern
 --     match" on a 'Map' to reveal it as either containing a 'NonEmpty' or an
 --     empty map.
+-- 4.  'withNEMap' offers a continuation-based interface for deconstructing
+--     a 'Map' and treating it as if it were an 'NEMap'.
 --
--- You can convert an 'NEMap' into a (non-empty) 'Map' with 'toMap' or
--- 'IsNonEmpty'.
+-- You can convert an 'NEMap' into a (possibly empty) 'Map' with 'toMap' or
+-- 'IsNonEmpty', essentially "obscuring" the non-empty property from the
+-- type.
 data NEMap k a =
     NEMap { nemK0  :: !k   -- ^ invariant: must be smaller than smallest key in map
           , nemV0  :: a
@@ -135,7 +138,7 @@ instance Ord k => Ord1 (NEMap k) where
 
 instance Show2 NEMap where
     liftShowsPrec2 spk slk spv slv d m =
-        showsUnaryWith (liftShowsPrec sp sl) "fromNonEmpty" d (toList m)
+        showsUnaryWith (liftShowsPrec sp sl) "fromList" d (toList m)
       where
         sp = liftShowsPrec2 spk slk spv slv
         sl = liftShowList2 spk slk spv slv

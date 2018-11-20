@@ -28,6 +28,9 @@
 -- log-time).  All typeclass constraints are identical to their "Data.Map"
 -- counterparts.
 --
+-- Because 'NEMap' is implemented using 'Map', all of the caveats of using
+-- 'Map' apply (such as the limitation of the maximum size of maps).
+--
 -- All functions take non-empty maps as inputs.  In situations where their
 -- results can be guarunteed to also be non-empty, they also return
 -- non-empty maps.  In situations where their results could potentially be
@@ -302,10 +305,10 @@ pattern IsEmpty <- (M.null->True)
 
 {-# COMPLETE IsNonEmpty, IsEmpty #-}
 
--- | /O(log n)/. A general way to consume a 'Map' as if it were an 'NEMap'.
--- @'withNEMap' def f@ will take a 'Map'.  If map is empty, it will evaluate
--- to @def@.  Otherwise, a non-empty map 'NEMap' will be fed to the
--- function @f@ instead.
+-- | /O(log n)/. A general continuation-based way to consume a 'Map' as if
+-- it were an 'NEMap'. @'withNEMap' def f@ will take a 'Map'.  If map is
+-- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NEMap'
+-- will be fed to the function @f@ instead.
 --
 -- @'nonEmptyMap' == 'withNEMap' 'Nothing' 'Just'@
 withNEMap
