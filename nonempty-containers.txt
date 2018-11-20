@@ -57,6 +57,9 @@ module Data.Map.NonEmpty.Internal
 --   <li>You can use the <tt>IsNonEmpty</tt> and <tt>IsEmpty</tt> patterns
 --   to "pattern match" on a <a>Map</a> to reveal it as either containing a
 --   <a>NonEmpty</a> or an empty map.</li>
+--   <li><tt>withNEMap</tt> offers a continuation-based interface for
+--   deconstructing a <a>Map</a> and treating it as if it were an
+--   <a>NEMap</a>.</li>
 --   </ol>
 --   
 --   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
@@ -409,6 +412,9 @@ module Data.Map.NonEmpty
 --   <li>You can use the <tt>IsNonEmpty</tt> and <tt>IsEmpty</tt> patterns
 --   to "pattern match" on a <a>Map</a> to reveal it as either containing a
 --   <a>NonEmpty</a> or an empty map.</li>
+--   <li><tt>withNEMap</tt> offers a continuation-based interface for
+--   deconstructing a <a>Map</a> and treating it as if it were an
+--   <a>NEMap</a>.</li>
 --   </ol>
 --   
 --   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
@@ -488,11 +494,11 @@ nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 --   </pre>
 toMap :: NEMap k a -> Map k a
 
--- | <i>O(log n)</i>. A general way to consume a <a>Map</a> as if it were
---   an <a>NEMap</a>. <tt><a>withNEMap</a> def f</tt> will take a
---   <a>Map</a>. If map is empty, it will evaluate to <tt>def</tt>.
---   Otherwise, a non-empty map <a>NEMap</a> will be fed to the function
---   <tt>f</tt> instead.
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>Map</a> as if it were an <a>NEMap</a>. <tt><a>withNEMap</a> def
+--   f</tt> will take a <a>Map</a>. If map is empty, it will evaluate to
+--   <tt>def</tt>. Otherwise, a non-empty map <a>NEMap</a> will be fed to
+--   the function <tt>f</tt> instead.
 --   
 --   <pre>
 --   <a>nonEmptyMap</a> == <a>withNEMap</a> <a>Nothing</a> <a>Just</a>
