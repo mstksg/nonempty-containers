@@ -3,12 +3,57 @@
 {-# LANGUAGE TupleSections   #-}
 {-# LANGUAGE ViewPatterns    #-}
 
+-- |
+-- Module      : Data.Map.NonEmpty
+-- Copyright   : (c) Justin Le 2018
+-- License     : BSD3
+--
+-- Maintainer  : justin@jle.im
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- = Non-Empty Finite Maps (lazy interface)
+--
+-- The @'NEMap' k v@ type represents a non-empty finite map (sometimes
+-- called a dictionary) from keys of type @k@ to values of type @v@.
+-- An 'NEMap' is strict in its keys but lazy in its values.
+--
+-- See documentation for 'NEMap' for information on how to convert and
+-- manipulate such non-empty maps.
+--
+-- This module essentially re-imports the API of "Data.Map.Lazy" and its
+-- 'Map' type, along with semantics and asymptotics.  In most situations,
+-- asymptotics are different only by a constant factor.  In some
+-- situations, asmyptotics are even better (constant-time instead of
+-- log-time).  All typeclass constraints are identical to their "Data.Map"
+-- counterparts.
+--
+-- All functions take non-empty maps as inputs.  In situations where their
+-- results can be guarunteed to also be non-empty, they also return
+-- non-empty maps.  In situations where their results could potentially be
+-- empty, 'Map' is returned instead.
+--
+-- Some variants of functions (like 'alter'', 'alterF'', 'adjustAt',
+-- 'adjustMin', 'adjustMax', 'adjustMinWithKey', 'adjustMaxWithKey') are
+-- provided in a way restructured to preserve guaruntees of non-empty maps
+-- being returned.
+-- 
+-- Some functions (like 'mapEither', 'partition', 'span', 'spanAntitone',
+-- 'split') have modified return types to account for possible
+-- configurations of non-emptiness.
+--
+-- This module is intended to be imported qualified, to avoid name clashes with
+-- "Prelude" and "Data.Map" functions:
+--
+-- > import qualified Data.Map.NonEmpty as NEM
 module Data.Map.NonEmpty (
   -- * Non-Empty Map type
     NEMap
+  -- ** Conversions between empty and non-empty maps
   , Map(IsNonEmpty, IsEmpty)
   , nonEmptyMap
   , toMap
+  , withNEMap
   , insertMap
   , insertMapWith
   , insertMapWithKey
@@ -16,7 +61,6 @@ module Data.Map.NonEmpty (
   , insertMapMax
 
   -- * Construction
-  , empty
   , singleton
   -- , fromSet
 
@@ -198,7 +242,6 @@ module Data.Map.NonEmpty (
 
 import           Control.Applicative
 import           Data.Bifunctor
-import           Data.Coerce
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.Functor.Identity
@@ -259,7 +302,19 @@ pattern IsEmpty <- (M.null->True)
 
 {-# COMPLETE IsNonEmpty, IsEmpty #-}
 
--- TODO: withNonEmpty
+-- | /O(log n)/. A general way to consume a 'Map' as if it were an 'NEMap'.
+-- @'withNEMap' def f@ will take a 'Map'.  If map is empty, it will evaluate
+-- to @def@.  Otherwise, a non-empty map 'NEMap' will be fed to the
+-- function @f@ instead.
+--
+-- @'nonEmptyMap' == 'withNEMap' 'Nothing' 'Just'@
+withNEMap
+    :: r                    -- ^ value to return if map is empty
+    -> (NEMap k a -> r)     -- ^ function to apply if map is not empty
+    -> Map k a
+    -> r
+withNEMap def f = maybe def f . nonEmptyMap
+{-# INLINE withNEMap #-}
 
 -- fromSet
 --     :: (k -> a)
@@ -267,8 +322,34 @@ pattern IsEmpty <- (M.null->True)
 --     -> NEMap k a
 -- fromSet f (NESet k ks) = NEMap k (f k) (M.fromSet f ks)
 
--- | /O(log n)/. Find largest key smaller than the given one and return the
--- corresponding (key, value) pair.
+-- | /O(log n)/. Lookup the value at a key in the map.
+--
+-- The function will return the corresponding value as @('Just' value)@,
+-- or 'Nothing' if the key isn't in the map.
+--
+-- An example of using @lookup@:
+--
+-- > import Prelude hiding (lookup)
+-- > import Data.Map.NonEmpty
+-- >
+-- > employeeDept = fromList (("John","Sales") :| [("Bob","IT")])
+-- > deptCountry = fromList (("IT","USA") :| [("Sales","France")])
+-- > countryCurrency = fromList (("USA", "Dollar") :| [("France", "Euro")])
+-- >
+-- > employeeCurrency :: String -> Maybe String
+-- > employeeCurrency name = do
+-- >     dept <- lookup name employeeDept
+-- >     country <- lookup dept deptCountry
+-- >     lookup country countryCurrency
+-- >
+-- > main = do
+-- >     putStrLn $ "John's currency: " ++ (show (employeeCurrency "John"))
+-- >     putStrLn $ "Pete's currency: " ++ (show (employeeCurrency "Pete"))
+--
+-- The output of this program:
+--
+-- >   John's currency: Just "Euro"
+-- >   Pete's currency: Nothing
 lookup
     :: Ord k
     => k
@@ -280,14 +361,20 @@ lookup k (NEMap k0 v m) = case compare k k0 of
     GT -> M.lookup k m
 {-# INLINE lookup #-}
 
--- | /O(log n)/. Find the value at a key.
--- Returns 'Nothing' when the element can not be found.
+-- | /O(log n)/. Find the value at a key. Returns 'Nothing' when the
+-- element can not be found.
+--
+-- prop> fromList ((5, 'a') :| [(3, 'b')]) !? 1 == Nothing
+-- prop> fromList ((5, 'a') :| [(3, 'b')]) !? 5 == Just 'a'
 (!?) :: Ord k => NEMap k a -> k -> Maybe a
 (!?) = flip lookup
 {-# INLINE (!?) #-}
 
--- | /O(log n)/. Find the value at a key.
--- Calls 'error' when the element can not be found.
+-- | /O(log n)/. Find the value at a key. Calls 'error' when the element
+-- can not be found.
+--
+-- > fromList ((5,'a') :| [(3,'b')]) ! 1    Error: element not in the map
+-- > fromList ((5,'a') :| [(3,'b')]) ! 5 == 'a'
 (!) :: Ord k => NEMap k a -> k -> a
 (!) m k = fromMaybe e $ m !? k
   where
@@ -297,6 +384,9 @@ lookup k (NEMap k0 v m) = case compare k k0 of
 -- | /O(log n)/. The expression @('findWithDefault' def k map)@ returns
 -- the value at key @k@ or returns default value @def@
 -- when the key is not in the map.
+--
+-- > findWithDefault 'x' 1 (fromList ((5,'a') :| [(3,'b')])) == 'x'
+-- > findWithDefault 'x' 5 (fromList ((5,'a') :| [(3,'b')])) == 'a'
 findWithDefault
     :: Ord k
     => a
@@ -310,6 +400,9 @@ findWithDefault def k (NEMap k0 v m) = case compare k k0 of
 {-# INLINE findWithDefault #-}
 
 -- | /O(log n)/. Is the key a member of the map? See also 'notMember'.
+--
+-- > member 5 (fromList ((5,'a') :| [(3,'b')])) == True
+-- > member 1 (fromList ((5,'a') :| [(3,'b')])) == False
 member :: Ord k => k -> NEMap k a -> Bool
 member k (NEMap k0 _ m) = case compare k k0 of
     LT -> False
@@ -318,12 +411,18 @@ member k (NEMap k0 _ m) = case compare k k0 of
 {-# INLINE member #-}
 
 -- | /O(log n)/. Is the key not a member of the map? See also 'member'.
+--
+-- > notMember 5 (fromList ((5,'a') :| [(3,'b')])) == False
+-- > notMember 1 (fromList ((5,'a') :| [(3,'b')])) == True
 notMember :: Ord k => k -> NEMap k a -> Bool
 notMember k = not . member k
 {-# INLINE notMember #-}
 
 -- | /O(log n)/. Find largest key smaller than the given one and return the
 -- corresponding (key, value) pair.
+--
+-- > lookupLT 3 (fromList ((3,'a') :| [(5,'b')])) == Nothing
+-- > lookupLT 4 (fromList ((3,'a') :| [(5,'b')])) == Just (3, 'a')
 lookupLT :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupLT k (NEMap k0 v m) = case compare k k0 of
     LT -> Nothing
@@ -333,6 +432,9 @@ lookupLT k (NEMap k0 v m) = case compare k k0 of
 
 -- | /O(log n)/. Find smallest key greater than the given one and return the
 -- corresponding (key, value) pair.
+--
+-- > lookupGT 4 (fromList ((3,'a') :| [(5,'b')])) == Just (5, 'b')
+-- > lookupGT 5 (fromList ((3,'a') :| [(5,'b')])) == Nothing
 lookupGT :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupGT k (NEMap k0 v m) = case compare k k0 of
     LT -> Just (k0, v)
@@ -342,6 +444,10 @@ lookupGT k (NEMap k0 v m) = case compare k k0 of
 
 -- | /O(log n)/. Find largest key smaller or equal to the given one and return
 -- the corresponding (key, value) pair.
+--
+-- > lookupLE 2 (fromList ((3,'a') :| [(5,'b')])) == Nothing
+-- > lookupLE 4 (fromList ((3,'a') :| [(5,'b')])) == Just (3, 'a')
+-- > lookupLE 5 (fromList ((3,'a') :| [(5,'b')])) == Just (5, 'b')
 lookupLE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupLE k (NEMap k0 v m) = case compare k k0 of
     LT -> Nothing
@@ -351,6 +457,10 @@ lookupLE k (NEMap k0 v m) = case compare k k0 of
 
 -- | /O(log n)/. Find smallest key greater or equal to the given one and return
 -- the corresponding (key, value) pair.
+--
+-- > lookupGE 3 (fromList ((3,'a') :| [(5,'b')])) == Just (3, 'a')
+-- > lookupGE 4 (fromList ((3,'a') :| [(5,'b')])) == Just (5, 'b')
+-- > lookupGE 6 (fromList ((3,'a') :| [(5,'b')])) == Nothing
 lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupGE k (NEMap k0 v m) = case compare k k0 of
     LT -> Just (k0, v)
@@ -359,6 +469,8 @@ lookupGE k (NEMap k0 v m) = case compare k k0 of
 {-# INLINE lookupGE #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Union with a combining function.
+--
+-- > unionWith (++) (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "aA"), (7, "C")])
 unionWith
     :: Ord k
     => (a -> a -> a)
@@ -373,6 +485,9 @@ unionWith f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
 
 -- | /O(m*log(n\/m + 1)), m <= n/.
 -- Union with a combining function, given the matching key.
+--
+-- > let f key left_value right_value = (show key) ++ ":" ++ left_value ++ "|" ++ right_value
+-- > unionWithKey f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "5:a|A"), (7, "C")])
 unionWithKey
     :: Ord k
     => (k -> a -> a -> a)
@@ -385,7 +500,11 @@ unionWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     GT -> NEMap k2 v2           . M.unionWithKey f (toMap n1) $ m2
 {-# INLINE unionWithKey #-}
 
--- | The union of a list of maps, with a combining operation.
+-- | The union of a non-empty list of maps, with a combining operation:
+--   (@'unionsWith' f == 'Data.Foldable.foldl1' ('unionWith' f)@).
+--
+-- > unionsWith (++) (fromList ((5, "a") :| [(3, "b")]) :| [fromList ((5, "A") :| [(7, "C")]), fromList ((5, "A3") :| [(3, "B3")])])
+-- >     == fromList ((3, "bB3") :| [(5, "aAA3"), (7, "C")])
 unionsWith
     :: (Foldable1 f, Ord k)
     => (a -> a -> a)
@@ -396,6 +515,11 @@ unionsWith f (F1.toNonEmpty->(m :| ms)) = F.foldl' (unionWith f) m ms
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two maps.
 -- Return elements of the first map not existing in the second map.
+--
+-- Returns a potentially empty map ('Map'), in case the first map is
+-- a subset of the second map.
+--
+-- > difference (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.Map.singleton 3 "b"
 difference
     :: Ord k
     => NEMap k a
@@ -424,6 +548,14 @@ difference n1@(NEMap k1 v1 m1) n2@(NEMap k2 _ m2) = case compare k1 k2 of
 -- encountered, the combining function is applied to the values of these keys.
 -- If it returns 'Nothing', the element is discarded (proper set difference). If
 -- it returns (@'Just' y@), the element is updated with a new value @y@.
+--
+-- Returns a potentially empty map ('Map'), in case the first map is
+-- a subset of the second map and the function returns 'Nothing' for every
+-- pair.
+--
+-- > let f al ar = if al == "b" then Just (al ++ ":" ++ ar) else Nothing
+-- > differenceWith f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(3, "B"), (7, "C")]))
+-- >     == Data.Map.singleton 3 "b:B"
 differenceWith
     :: Ord k
     => (a -> b -> Maybe a)
@@ -437,6 +569,14 @@ differenceWith f = differenceWithKey (const f)
 -- encountered, the combining function is applied to the key and both values.
 -- If it returns 'Nothing', the element is discarded (proper set difference). If
 -- it returns (@'Just' y@), the element is updated with a new value @y@.
+--
+-- Returns a potentially empty map ('Map'), in case the first map is
+-- a subset of the second map and the function returns 'Nothing' for every
+-- pair.
+--
+-- > let f k al ar = if al == "b" then Just ((show k) ++ ":" ++ al ++ "|" ++ ar) else Nothing
+-- > differenceWithKey f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(3, "B"), (10, "C")]))
+-- >     == Data.Map.singleton 3 "3:b|B"
 differenceWithKey
     :: Ord k
     => (k -> a -> b -> Maybe a)
@@ -455,6 +595,11 @@ differenceWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2
 -- | /O(m*log(n\/m + 1)), m <= n/. Intersection of two maps.
 -- Return data in the first map for the keys existing in both maps.
 -- (@'intersection' m1 m2 == 'intersectionWith' 'const' m1 m2@).
+--
+-- Returns a potentially empty map ('Map'), in case the two maps share no
+-- keys in common.
+--
+-- > intersection (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.Map.singleton 5 "a"
 intersection
     :: Ord k
     => NEMap k a
@@ -470,6 +615,11 @@ intersection n1@(NEMap k1 v1 m1) n2@(NEMap k2 _ m2) = case compare k1 k2 of
 {-# INLINE intersection #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Intersection with a combining function.
+--
+-- Returns a potentially empty map ('Map'), in case the two maps share no
+-- keys in common.
+--
+-- > intersectionWith (++) (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.Map.singleton 5 "aA"
 intersectionWith
     :: Ord k
     => (a -> b -> c)
@@ -480,6 +630,12 @@ intersectionWith f = intersectionWithKey (const f)
 {-# INLINE intersectionWith #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Intersection with a combining function.
+--
+-- Returns a potentially empty map ('Map'), in case the two maps share no
+-- keys in common.
+--
+-- > let f k al ar = (show k) ++ ":" ++ al ++ "|" ++ ar
+-- > intersectionWithKey f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.Map.singleton 5 "5:a|A"
 intersectionWithKey
     :: Ord k
     => (k -> a -> b -> c)
@@ -537,12 +693,16 @@ foldlWithKey' f z (NEMap k v m) = M.foldlWithKey' f x m
 {-# INLINE foldlWithKey' #-}
 
 -- | /O(n)/. Return all keys of the map in ascending order.
+--
+-- > keys (fromList ((5,"a") :| [(3,"b")])) == (3 :| [5])
 keys :: NEMap k a -> NonEmpty k
 keys (NEMap k _ m) = k :| M.keys m
 {-# INLINE keys #-}
 
 -- | /O(n)/. An alias for 'toAscList'. Return all key\/value pairs in the map
 -- in ascending key order.
+--
+-- > assocs (fromList ((5,"a") :| [(3,"b")])) == ((3,"b") :| [(5,"a")])
 assocs :: NEMap k a -> NonEmpty (k, a)
 assocs = toList
 {-# INLINE assocs #-}
@@ -551,6 +711,9 @@ assocs = toList
 -- keysSet (NEMap k _ m) = NESet k (M.keysSet m)
 
 -- | /O(n)/. Map a function over all values in the map.
+--
+-- > let f key x = (show key) ++ ":" ++ x
+-- > mapWithKey f (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "3:b") :| [(5, "5:a")])
 mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 mapWithKey f (NEMap k v m) = NEMap k (f k v) (M.mapWithKey f m)
 {-# NOINLINE [1] mapWithKey #-}
@@ -565,12 +728,16 @@ mapWithKey f (NEMap k v m) = NEMap k (f k v) (M.mapWithKey f m)
 
 -- | /O(n)/. Convert the map to a list of key\/value pairs where the keys are
 -- in ascending order.
+--
+-- > toAscList (fromList ((5,"a") :| [(3,"b")])) == ((3,"b") :| [(5,"a")])
 toAscList :: NEMap k a -> NonEmpty (k, a)
 toAscList = toList
 {-# INLINE toAscList #-}
 
 -- | /O(n)/. Convert the map to a list of key\/value pairs where the keys
 -- are in descending order.
+--
+-- > toDescList (fromList ((5,"a") :| [(3,"b")])) == ((5,"a") :| [(3,"b")])
 toDescList :: NEMap k a -> NonEmpty (k, a)
 toDescList (NEMap k v m) = maybe kv0 (<> kv0)
                          . NE.nonEmpty
@@ -581,17 +748,26 @@ toDescList (NEMap k v m) = maybe kv0 (<> kv0)
 {-# INLINE toDescList #-}
 
 -- | /O(log n)/. Convert a 'Map' into an 'NEMap' by adding a key-value
--- pair.  If key is already present, will overwrite the original value.
+-- pair.  Because of this, we know that the map must have at least one
+-- element, and so therefore cannot be empty. If key is already present,
+-- will overwrite the original value.
 --
 -- See 'insertMapMin' for a version that is constant-time if the new key is
 -- /strictly smaller than/ all keys in the original map.
+--
+-- > insertMap 4 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
+-- > insertMap 4 "c" Data.Map.empty == singleton 4 "c"
 insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
-insertMap k v = maybe (singleton k v) (insert k v) . nonEmptyMap
+insertMap k v = withNEMap (singleton k v) (insert k v)
 {-# INLINE insertMap #-}
 
 -- | /O(log n)/. Convert a 'Map' into an 'NEMap' by adding a key-value
--- pair.  Uses a combining function with the new value as the first
--- argument if the key is already present.
+-- pair.  Because of this, we know that the map must have at least one
+-- element, and so therefore cannot be empty. Uses a combining function
+-- with the new value as the first argument if the key is already present.
+--
+-- > insertMapWith (++) 4 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
+-- > insertMapWith (++) 5 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(5,"ca")])
 insertMapWith
     :: Ord k
     => (a -> a -> a)
@@ -599,13 +775,19 @@ insertMapWith
     -> a
     -> Map k a
     -> NEMap k a
-insertMapWith f k v = maybe (singleton k v) (insertWith f k v)
-                    . nonEmptyMap
+insertMapWith f k v = withNEMap (singleton k v) (insertWith f k v)
 {-# INLINE insertMapWith #-}
 
 -- | /O(log n)/. Convert a 'Map' into an 'NEMap' by adding a key-value
--- pair.  Uses a combining function with the key and new value as the first
--- and second arguments if the key is already present.
+-- pair.  Because of this, we know that the map must have at least one
+-- element, and so therefore cannot be empty. Uses a combining function
+-- with the key and new value as the first and second arguments if the key
+-- is already present.
+--
+-- > let f key new_value old_value = (show key) ++ ":" ++ new_value ++ "|" ++ old_value
+-- > insertWithKey f 5 "xxx" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((3, "b") :| [(5, "5:xxx|a")])
+-- > insertWithKey f 7 "xxx" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
+-- > insertWithKey f 5 "xxx" Data.Map.empty                         == singleton 5 "xxx"
 insertMapWithKey
     :: Ord k
     => (k -> a -> a -> a)
@@ -613,14 +795,18 @@ insertMapWithKey
     -> a
     -> Map k a
     -> NEMap k a
-insertMapWithKey f k v = maybe (singleton k v) (insertWithKey f k v)
-                       . nonEmptyMap
+insertMapWithKey f k v = withNEMap (singleton k v) (insertWithKey f k v)
 {-# INLINE insertMapWithKey #-}
 
 -- | /O(1)/ Convert a 'Map' into an 'NEMap' by adding a key-value pair
 -- where the key is /strictly less than/ all keys in the input map.  The
 -- keys in the original map must all be /strictly greater than/ the new
 -- key.  /The precondition is not checked./
+--
+-- > insertMap 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((2,"c") :| [(3,"b"), (5,"a")])
+-- > valid (insertMap 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == True
+-- > valid (insertMap 7 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
+-- > valid (insertMap 3 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
 insertMapMin
     :: k
     -> a
@@ -637,13 +823,17 @@ insertMapMin = NEMap
 -- While this has the same asymptotics as 'insertMap', it saves a constant
 -- factor for key comparison (so may be helpful if comparison is expensive)
 -- and also does not require an 'Ord' instance for the key type.
+--
+-- > insertMap 7 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(5,"a"), (7,"c")])
+-- > valid (insertMap 7 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == True
+-- > valid (insertMap 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
+-- > valid (insertMap 5 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
 insertMapMax
     :: k
     -> a
     -> Map k a
     -> NEMap k a
-insertMapMax k v = maybe (singleton k v) go
-                 . nonEmptyMap
+insertMapMax k v = withNEMap (singleton k v) go
   where
     go (NEMap k0 v0 m0) = NEMap k0 v0 . insertMaxMap k v $ m0
 {-# INLINE insertMapMax #-}
@@ -653,6 +843,11 @@ insertMapMax k v = maybe (singleton k v) go
 -- If the key is already present in the map, the associated value is
 -- replaced with the supplied value. 'insert' is equivalent to
 -- @'insertWith' 'const'@.
+--
+-- See 'insertMap' for a version where the first argument is a 'Map'.
+--
+-- > insert 5 'x' (fromList ((5,'a') :| [(3,'b')])) == fromList ((3, 'b') :| [(5, 'x')])
+-- > insert 7 'x' (fromList ((5,'a') :| [(3,'b')])) == fromList ((3, 'b') :| [(5, 'a'), (7, 'x')])
 insert
     :: Ord k
     => k
@@ -671,6 +866,12 @@ insert k v n@(NEMap k0 v0 m) = case compare k k0 of
 -- exist, the function will insert the pair @(key,f key new_value
 -- old_value)@. Note that the key passed to f is the same key passed to
 -- 'insertWithKey'.
+--
+-- See 'insertMapWithKey' for a version where the first argument is a 'Map'.
+--
+-- > let f key new_value old_value = (show key) ++ ":" ++ new_value ++ "|" ++ old_value
+-- > insertWithKey f 5 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "5:xxx|a")])
+-- > insertWithKey f 7 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
 insertWithKey
     :: Ord k
     => (k -> a -> a -> a)
@@ -688,6 +889,16 @@ insertWithKey f k v n@(NEMap k0 v0 m) = case compare k k0 of
 -- expression (@'insertLookupWithKey' f k x map@) is a pair where the first
 -- element is equal to (@'lookup' k map@) and the second element equal to
 -- (@'insertWithKey' f k x map@).
+--
+-- > let f key new_value old_value = (show key) ++ ":" ++ new_value ++ "|" ++ old_value
+-- > insertLookupWithKey f 5 "xxx" (fromList ((5,"a") :| [(3,"b")])) == (Just "a", fromList ((3, "b") :| [(5, "5:xxx|a")]))
+-- > insertLookupWithKey f 7 "xxx" (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  fromList ((3, "b") :| [(5, "a"), (7, "xxx")]))
+--
+-- This is how to define @insertLookup@ using @insertLookupWithKey@:
+--
+-- > let insertLookup kx x t = insertLookupWithKey (\_ a _ -> a) kx x t
+-- > insertLookup 5 "x" (fromList ((5,"a") :| [(3,"b")])) == (Just "a", fromList ((3, "b") :| [(5, "x")]))
+-- > insertLookup 7 "x" (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  fromList ((3, "b") :| [(5, "a"), (7, "x")]))
 insertLookupWithKey
     :: Ord k
     => (k -> a -> a -> a)
@@ -1479,7 +1690,7 @@ spanAntitone f n@(NEMap k v m0)
 -- potentially return 'Nothing' on all items in the 'NEMap'.
 --
 -- > let f x = if x == "a" then Just "new a" else Nothing
--- > mapMaybe f (fromList ((5,"a") :| [(3,"b")])) == singleton 5 "new a"
+-- > mapMaybe f (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "new a"
 mapMaybe
     :: (a -> Maybe b)
     -> NEMap k a

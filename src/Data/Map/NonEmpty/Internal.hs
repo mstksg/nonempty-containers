@@ -166,6 +166,11 @@ instance (NFData k, NFData a) => NFData (NEMap k a) where
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
+--
+-- > elemsList map = foldr (:) [] map
+--
+-- > let f a len = len + (length a)
+-- > foldr f 0 (fromList ((5,"a") :| [(3,"bbb")])) == 4
 foldr :: (a -> b -> b) -> b -> NEMap k a -> b
 foldr f z (NEMap _ v m) = v `f` M.foldr f z m
 {-# INLINE foldr #-}
@@ -201,6 +206,11 @@ foldr1' f (NEMap _ v m) = case M.maxView m of
 
 -- | /O(n)/. Fold the values in the map using the given left-associative
 -- binary operator, such that @'foldl' f z == 'Prelude.foldl' f z . 'elems'@.
+--
+-- > elemsList = reverse . foldl (flip (:)) []
+--
+-- > let f len a = len + (length a)
+-- > foldl f 0 (fromList ((5,"a") :| [(3,"bbb")])) == 4
 foldl :: (a -> b -> a) -> a -> NEMap k b -> a
 foldl f z (NEMap _ v m) = M.foldl f (f z v) m
 {-# INLINE foldl #-}
@@ -256,7 +266,9 @@ foldMap1 :: Semigroup m => (a -> m) -> NEMap k a -> m
 foldMap1 f = foldMapWithKey (const f)
 {-# INLINE foldMap1 #-}
 
--- TODO: write from scratch with rules
+-- | /O(n)/. Map a function over all values in the map.
+--
+-- > map (++ "x") (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "bx") :| [(5, "ax")])
 map :: (a -> b) -> NEMap k a -> NEMap k b
 map f (NEMap k0 v m) = NEMap k0 (f v) (M.map f m)
 {-# NOINLINE [1] map #-}
@@ -271,6 +283,8 @@ map f (NEMap k0 v m) = NEMap k0 (f v) (M.map f m)
 -- The expression (@'union' t1 t2@) takes the left-biased union of @t1@ and
 -- @t2@. It prefers @t1@ when duplicate keys are encountered, i.e.
 -- (@'union' == 'unionWith' 'const'@).
+--
+-- > union (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "a"), (7, "C")])
 union
     :: Ord k
     => NEMap k a
@@ -282,7 +296,12 @@ union n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     GT -> NEMap k2 v2 . M.union (toMap n1) $ m2
 {-# INLINE union #-}
 
--- | The left-biased union of a list of maps.
+-- | The left-biased union of a non-empty list of maps.
+--
+-- > unions (fromList ((5, "a") :| [(3, "b")]) :| [fromList ((5, "A") :| [(7, "C")]), fromList ((5, "A3") :| [(3, "B3")])])
+-- >     == fromList [(3, "b"), (5, "a"), (7, "C")]
+-- > unions (fromList ((5, "A3") :| [(3, "B3")]) :| [fromList ((5, "A") :| [(7, "C")]), fromList ((5, "a") :| [(3, "b")])])
+-- >     == fromList ((3, "B3") :| [(5, "A3"), (7, "C")])
 unions
     :: (Foldable1 f, Ord k)
     => f (NEMap k a)
@@ -292,11 +311,16 @@ unions (F1.toNonEmpty->(m :| ms)) = F.foldl' union m ms
 
 -- | /O(n)/.
 -- Return all elements of the map in the ascending order of their keys.
+--
+-- > elems (fromList ((5,"a") :| [(3,"b")])) == ("b" :| ["a"])
 elems :: NEMap k a -> NonEmpty a
 elems (NEMap _ v m) = v :| M.elems m
 {-# INLINE elems #-}
 
 -- | /O(1)/. The number of elements in the map.
+--
+-- > size (singleton 1 'a')                          == 1
+-- > size (fromList ((1,'a') :| [(2,'c'), (3,'b')])) == 3
 size :: NEMap k a -> Int
 size (NEMap _ _ m) = 1 + M.size m
 {-# INLINE size #-}
@@ -307,6 +331,11 @@ size (NEMap _ _ m) = 1 + M.size m
 --
 -- Can be thought of as "obscuring" the non-emptiness of the map in its
 -- type.  See the 'IsNotEmpty' pattern.
+--
+-- 'nonEmptyMap' and @'maybe' 'M.empty' 'toMap'@ form an isomorphism: they
+-- are perfect structure-preserving inverses of eachother.
+--
+-- > toMap (fromList ((3,"a") :| [(5,"b")])) == Data.Map.fromList [(3,"a"), (5,"b")]
 toMap :: NEMap k a -> Map k a
 toMap (NEMap k v m) = insertMinMap k v m
 {-# INLINE toMap #-}
@@ -355,6 +384,8 @@ traverseWithKey1 f (NEMap k0 v m0) = case runMaybeApply m1 of
 {-# INLINE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
+--
+-- > toList (fromList ((5,"a") :| [(3,"b")])) == ((3,"b") :| [(5,"a")])
 toList :: NEMap k a -> NonEmpty (k, a)
 toList (NEMap k v m) = (k,v) :| M.toList m
 {-# INLINE toList #-}
@@ -363,8 +394,13 @@ toList (NEMap k v m) = (k,v) :| M.toList m
 -- 'Nothing' if the 'Map' was originally actually empty, and @'Just' n@
 -- with an 'NEMap', if the 'Map' was not empty.
 --
+-- 'nonEmptyMap' and @'maybe' 'M.empty' 'toMap'@ form an isomorphism: they
+-- are perfect structure-preserving inverses of eachother.
+--
 -- See 'IsNonEmpty' for a pattern synonym that lets you "match on" the
 -- possiblity of a 'Map' being an 'NEMap'.
+--
+-- > nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 nonEmptyMap m = uncurry (\(k, v) -> NEMap k v) <$> M.minViewWithKey m
 {-# INLINE nonEmptyMap #-}
@@ -372,6 +408,9 @@ nonEmptyMap m = uncurry (\(k, v) -> NEMap k v) <$> M.minViewWithKey m
 -- | /O(n*log n)/. Build a non-empty map from a non-empty list of
 -- key\/value pairs. See also 'fromAscList'. If the list contains more than
 -- one value for the same key, the last value for the key is retained.
+--
+-- > fromList ((5,"a") :| [(3,"b"), (5, "c")]) == fromList ((5,"c") :| [(3,"b")])
+-- > fromList ((5,"c") :| [(3,"b"), (5, "a")]) == fromList ((5,"a") :| [(3,"b")])
 
 -- TODO: write manually and optimize to be equivalent to
 -- 'fromDistinctAscList' if items are ordered, just like the actual
@@ -383,6 +422,9 @@ fromList ((k, v) :| xs) = maybe (singleton k v) (insertWith (const id) k v)
 {-# INLINE fromList #-}
 
 -- | /O(1)/. A map with a single element.
+--
+-- > singleton 1 'a'        == fromList ((1, 'a') :| [])
+-- > size (singleton 1 'a') == 1
 singleton :: k -> a -> NEMap k a
 singleton k v = NEMap k v M.empty
 {-# INLINE singleton #-}
@@ -391,6 +433,11 @@ singleton k v = NEMap k v M.empty
 -- @'insertWith' f key value mp@ will insert the pair (key, value) into
 -- @mp@ if key does not exist in the map. If the key does exist, the
 -- function will insert the pair @(key, f new_value old_value)@.
+--
+-- See 'insertMapWith' for a version where the first argument is a 'Map'.
+--
+-- > insertWith (++) 5 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "xxxa")])
+-- > insertWith (++) 7 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
 insertWith
     :: Ord k
     => (a -> a -> a)
