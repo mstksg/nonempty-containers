@@ -6,7 +6,8 @@
  asymptotics are different only by a constant factor.  In some
  situations, asmyptotics are even better (constant-time instead of
  log-time).  All typeclass constraints are identical to their <a href="../containers-0.6.0.1/Data-Map.html">Data.Map</a>
- counterparts.</p><p>All functions take non-empty maps as inputs.  In situations where their
+ counterparts.</p><p>Because <code><a href="Data-Map-NonEmpty.html#t:NEMap" title="Data.Map.NonEmpty">NEMap</a></code> is implemented using <code><a href="Data-Map-NonEmpty.html#t:Map" title="Data.Map.NonEmpty">Map</a></code>, all of the caveats of using
+ <code><a href="Data-Map-NonEmpty.html#t:Map" title="Data.Map.NonEmpty">Map</a></code> apply (such as the limitation of the maximum size of maps).</p><p>All functions take non-empty maps as inputs.  In situations where their
  results can be guarunteed to also be non-empty, they also return
  non-empty maps.  In situations where their results could potentially be
  empty, <code><a href="Data-Map-NonEmpty.html#t:Map" title="Data.Map.NonEmpty">Map</a></code> is returned instead.</p><p>Some variants of functions (like <code><a href="Data-Map-NonEmpty.html#v:alter-39-" title="Data.Map.NonEmpty">alter'</a></code>, <code><a href="Data-Map-NonEmpty.html#v:alterF-39-" title="Data.Map.NonEmpty">alterF'</a></code>, <code><a href="Data-Map-NonEmpty.html#v:adjustAt" title="Data.Map.NonEmpty">adjustAt</a></code>,

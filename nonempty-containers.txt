@@ -350,6 +350,10 @@ instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Intern
 --   log-time). All typeclass constraints are identical to their
 --   <a>Data.Map</a> counterparts.
 --   
+--   Because <a>NEMap</a> is implemented using <a>Map</a>, all of the
+--   caveats of using <a>Map</a> apply (such as the limitation of the
+--   maximum size of maps).
+--   
 --   All functions take non-empty maps as inputs. In situations where their
 --   results can be guarunteed to also be non-empty, they also return
 --   non-empty maps. In situations where their results could potentially be
