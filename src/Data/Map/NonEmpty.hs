@@ -1126,6 +1126,19 @@ update
 update f = updateWithKey (const f)
 {-# INLINE update #-}
 
+-- | /O(log n)/. The expression (@'updateWithKey' f k map@) updates the
+-- value @x@ at @k@ (if it is in the map). If (@f k x@) is 'Nothing',
+-- the element is deleted. If it is (@'Just' y@), the key @k@ is bound
+-- to the new value @y@.
+--
+-- Returns a potentially empty map ('Map'), because we can't know ahead of
+-- time if the function returns 'Nothing' and deletes the final item in the
+-- 'NEMap'.
+--
+-- > let f k x = if x == "a" then Just ((show k) ++ ":new a") else Nothing
+-- > updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "5:new a")]
+-- > updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a")]
+-- > updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
 updateWithKey
     :: Ord k
     => (k -> a -> Maybe a)
@@ -1238,7 +1251,7 @@ alter f k n@(NEMap k0 v m) = case compare k k0 of
 -- private copy of the 'Identity' type.
 --
 -- Note: Unlike @Data.Map.alterF@ for 'Map', 'alterF' is /not/ a flipped
--- version of the 'at' combinator from 'Control.Lens.At'.
+-- version of the 'Control.Lens.At.at' combinator from "Control.Lens.At".
 alterF
     :: (Ord k, Functor f)
     => (Maybe a -> f (Maybe a))
@@ -1284,7 +1297,7 @@ alter' f k n@(NEMap k0 v m) = case compare k k0 of
 -- See 'alterF' for usage information and caveats.
 --
 -- Note: Neither 'alterF' nor 'alterF'' can be considered flipped versions
--- of the 'at' combinator from 'Control.Lens.At'.
+-- of the 'Control.Lens.At.at' combinator from "Control.Lens.At".
 alterF'
     :: (Ord k, Functor f)
     => (Maybe a -> f a)
@@ -1506,11 +1519,11 @@ filterWithKey f (NEMap k v m)
 {-# INLINE filterWithKey #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Restrict an 'NEMap' to only those keys
--- found in a 'Set'.
+-- found in a 'Data.Set.Set'.
 --
 -- @
 -- m \`restrictKeys\` s = 'filterWithKey' (\k _ -> k ``Set.member`` s) m
--- m \`restrictKeys\` s = m ``intersect`` 'fromSet' (const ()) s
+-- m \`restrictKeys\` s = m ``intersection`` 'fromSet' (const ()) s
 -- @
 
 -- TODO: rewrite with NonEmpty set?

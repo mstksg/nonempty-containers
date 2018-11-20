@@ -93,8 +93,9 @@ import qualified Data.Semigroup.Foldable    as F1
 -- "Data.Map.NonEmpty" re-exports the API of "Data.Map", faithfully
 -- reproducing asymptotics, typeclass constraints, and semantics.
 -- Functions that ensure that input and output maps are both non-empty
--- (like 'insert') return 'NEMap', but functions that might potentially
--- return an empty map (like 'delete') return a 'Map' instead.
+-- (like 'Data.Map.NonEmpty.insert') return 'NEMap', but functions that
+-- might potentially return an empty map (like 'Data.Map.NonEmpty.delete')
+-- return a 'Map' instead.
 --
 -- You can directly construct an 'NEMap' with the API from
 -- "Data.Map.NonEmpty"; it's more or less the same as constructing a normal
@@ -104,16 +105,16 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 1.  The 'nonEmptyMap' smart constructor will convert a @'Map' k a@ into
 --     a @'Maybe' ('NEMap' k a)@, returning 'Nothing' if the original 'Map'
 --     was empty.
--- 2.  You can use the 'insertMap' family of functions to insert a value
---     into a 'Map' to create a guarunteed 'NEMap'.
--- 3.  You can use the 'IsNonEmpty' and 'IsEmpty' patterns to "pattern
---     match" on a 'Map' to reveal it as either containing a 'NonEmpty' or an
---     empty map.
--- 4.  'withNEMap' offers a continuation-based interface for deconstructing
---     a 'Map' and treating it as if it were an 'NEMap'.
+-- 2.  You can use the 'Data.Map.NonEmpty.insertMap' family of functions to
+--     insert a value into a 'Map' to create a guarunteed 'NEMap'.
+-- 3.  You can use the 'Data.Map.NonEmpty.IsNonEmpty' and
+--     'Data.Map.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Map'
+--     to reveal it as either containing a 'NEMap' or an empty map.
+-- 4.  'Data.Map.withNEMap' offers a continuation-based interface for
+--     deconstructing a 'Map' and treating it as if it were an 'NEMap'.
 --
 -- You can convert an 'NEMap' into a (possibly empty) 'Map' with 'toMap' or
--- 'IsNonEmpty', essentially "obscuring" the non-empty property from the
+-- 'Data.Map.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty property from the
 -- type.
 data NEMap k a =
     NEMap { nemK0  :: !k   -- ^ invariant: must be smaller than smallest key in map
@@ -246,10 +247,11 @@ foldl1' f (NEMap _ v m) = M.foldl' f v m
 -- | /O(n)/. Fold the keys and values in the map using the given semigroup,
 -- such that
 --
--- @'foldMapWithKey' f = 'Data.Semigroup.Foldable.fold1' . 'mapWithKey' f@
+-- @'foldMapWithKey' f = 'Data.Semigroup.Foldable.fold1' . 'Data.Map.NonEmpty.mapWithKey' f@
 --
--- This can be an asymptotically faster than 'foldrWithKey' or
--- 'foldlWithKey' for some monoids.
+-- This can be an asymptotically faster than
+-- 'Data.Map.NonEmpty.foldrWithKey' or 'Data.Map.NonEmpty.foldlWithKey' for
+-- some monoids.
 
 -- TODO: benchmark against maxView method
 foldMapWithKey
@@ -285,7 +287,7 @@ map f (NEMap k0 v m) = NEMap k0 (f v) (M.map f m)
 -- | /O(m*log(n\/m + 1)), m <= n/.
 -- The expression (@'union' t1 t2@) takes the left-biased union of @t1@ and
 -- @t2@. It prefers @t1@ when duplicate keys are encountered, i.e.
--- (@'union' == 'unionWith' 'const'@).
+-- (@'union' == 'Data.Map.NonEmpty.unionWith' 'const'@).
 --
 -- > union (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "a"), (7, "C")])
 union
@@ -333,7 +335,7 @@ size (NEMap _ _ m) = 1 + M.size m
 -- with functions that expect 'Map'.
 --
 -- Can be thought of as "obscuring" the non-emptiness of the map in its
--- type.  See the 'IsNotEmpty' pattern.
+-- type.  See the 'Data.Map.NonEmpty.IsNotEmpty' pattern.
 --
 -- 'nonEmptyMap' and @'maybe' 'M.empty' 'toMap'@ form an isomorphism: they
 -- are perfect structure-preserving inverses of eachother.
@@ -344,7 +346,7 @@ toMap (NEMap k v m) = insertMinMap k v m
 {-# INLINE toMap #-}
 
 -- | /O(n)/.
--- @'traverseWithKey' f m == 'fromNonEmpty' <$> 'traverse' (\(k, v) -> (,) k <$> f k v) ('toList' m)@
+-- @'traverseWithKey' f m == 'fromList' <$> 'traverse' (\(k, v) -> (,) k <$> f k v) ('toList' m)@
 -- That is, behaves exactly like a regular 'traverse' except that the traversing
 -- function also has access to the key associated with a value.
 --
@@ -365,7 +367,7 @@ traverseWithKey f (NEMap k v m0) = NEMap k <$> f k v <*> M.traverseWithKey f m0
 {-# INLINE traverseWithKey #-}
 
 -- | /O(n)/.
--- @'traverseWithKey1' f m == 'fromNonEmpty' <$> 'traverse1' (\(k, v) -> (,) k <$> f k v) ('toList' m)@
+-- @'traverseWithKey1' f m == 'fromList' <$> 'traverse1' (\(k, v) -> (,) k <$> f k v) ('toList' m)@
 --
 -- That is, behaves exactly like a regular 'traverse1' except that the traversing
 -- function also has access to the key associated with a value.
@@ -400,8 +402,8 @@ toList (NEMap k v m) = (k,v) :| M.toList m
 -- 'nonEmptyMap' and @'maybe' 'M.empty' 'toMap'@ form an isomorphism: they
 -- are perfect structure-preserving inverses of eachother.
 --
--- See 'IsNonEmpty' for a pattern synonym that lets you "match on" the
--- possiblity of a 'Map' being an 'NEMap'.
+-- See 'Data.Map.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
+-- "match on" the possiblity of a 'Map' being an 'NEMap'.
 --
 -- > nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
@@ -409,8 +411,9 @@ nonEmptyMap m = uncurry (\(k, v) -> NEMap k v) <$> M.minViewWithKey m
 {-# INLINE nonEmptyMap #-}
 
 -- | /O(n*log n)/. Build a non-empty map from a non-empty list of
--- key\/value pairs. See also 'fromAscList'. If the list contains more than
--- one value for the same key, the last value for the key is retained.
+-- key\/value pairs. See also 'Data.Map.NonEmpty.fromAscList'. If the list
+-- contains more than one value for the same key, the last value for the
+-- key is retained.
 --
 -- > fromList ((5,"a") :| [(3,"b"), (5, "c")]) == fromList ((5,"c") :| [(3,"b")])
 -- > fromList ((5,"c") :| [(3,"b"), (5, "a")]) == fromList ((5,"a") :| [(3,"b")])
@@ -437,7 +440,8 @@ singleton k v = NEMap k v M.empty
 -- @mp@ if key does not exist in the map. If the key does exist, the
 -- function will insert the pair @(key, f new_value old_value)@.
 --
--- See 'insertMapWith' for a version where the first argument is a 'Map'.
+-- See 'Data.Map.NonEmpty.insertMapWith' for a version where the first
+-- argument is a 'Map'.
 --
 -- > insertWith (++) 5 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "xxxa")])
 -- > insertWith (++) 7 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
