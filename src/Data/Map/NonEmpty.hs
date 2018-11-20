@@ -1,8 +1,5 @@
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE PatternSynonyms   #-}
-{-# LANGUAGE TupleSections     #-}
-{-# LANGUAGE ViewPatterns      #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Data.Map.NonEmpty (
   -- * Map type
@@ -100,6 +97,7 @@ module Data.Map.NonEmpty (
   , map
   , mapWithKey
   , traverseWithKey
+  , traverseWithKey1
   , traverseMaybeWithKey
   , mapAccum
   , mapAccumWithKey
@@ -131,7 +129,7 @@ module Data.Map.NonEmpty (
   -- , keysSet
 
   -- ** Lists
-  , toNonEmpty
+  , toList
 
   -- ** Ordered lists
   , toAscList
@@ -207,9 +205,6 @@ import qualified Data.Map                   as M
 import qualified Data.Maybe                 as Maybe
 import qualified Data.Semigroup.Foldable    as F1
 import qualified Data.Set                   as S
-
-singleton :: k -> a -> NEMap k a
-singleton k v = NEMap k v M.empty
 
 -- fromSet
 --     :: (k -> a)
@@ -413,7 +408,7 @@ keys :: NEMap k a -> NonEmpty k
 keys (NEMap k _ m) = k :| M.keys m
 
 assocs :: NEMap k a -> NonEmpty (k, a)
-assocs = toNonEmpty
+assocs = toList
 
 -- keysSet :: NEMap k a -> NESet k
 -- keysSet (NEMap k _ m) = NESet k (M.keysSet m)
@@ -421,11 +416,8 @@ assocs = toNonEmpty
 mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 mapWithKey f (NEMap k v m) = NEMap k (f k v) (M.mapWithKey f m)
 
-toNonEmpty :: NEMap k a -> NonEmpty (k, a)
-toNonEmpty (NEMap k v m) = (k,v) :| M.toList m
-
 toAscList :: NEMap k a -> NonEmpty (k, a)
-toAscList = toNonEmpty
+toAscList = toList
 
 toDescList :: NEMap k a -> NonEmpty (k, a)
 toDescList (NEMap k v m) = maybe kv0 (<> kv0)
@@ -434,9 +426,6 @@ toDescList (NEMap k v m) = maybe kv0 (<> kv0)
                          $ m
   where
     kv0 = (k, v) :| []
-
-nonEmptyMap :: Map k a -> Maybe (NEMap k a)
-nonEmptyMap m = uncurry (\(k, v) -> NEMap k v) <$> M.minViewWithKey m
 
 insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
 insertMap k v = maybe (singleton k v) (insert k v) . nonEmptyMap
@@ -492,20 +481,6 @@ insert k v n@(NEMap k0 v0 m) = case compare k k0 of
     EQ -> NEMap k  v  m
     GT -> NEMap k0 v0 . M.insert k v $ m
 
--- this could be implemented using insertWithKey, but containers implements
--- a custom insertWith, so we can use this instead to take advantage of this
-insertWith
-    :: Ord k
-    => (a -> a -> a)
-    -> k
-    -> a
-    -> NEMap k a
-    -> NEMap k a
-insertWith f k v n@(NEMap k0 v0 m) = case compare k k0 of
-    LT -> NEMap k  v        . toMap            $ n
-    EQ -> NEMap k  (f v v0) m
-    GT -> NEMap k0 v0       $ M.insertWith f k v m
-
 insertWithKey
     :: Ord k
     => (k -> a -> a -> a)
@@ -529,11 +504,6 @@ insertLookupWithKey f k v n@(NEMap k0 v0 m) = case compare k k0 of
     LT -> (Nothing, NEMap k  v . toMap $ n )
     EQ -> (Just v , NEMap k  (f k v v0)  m )
     GT -> NEMap k0 v0 <$> M.insertLookupWithKey f k v m
-
-fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
-fromList ((k, v) :| xs) = maybe (singleton k v) (insertWith (const id) k v)
-                        . nonEmptyMap
-                        $ M.fromList xs
 
 fromListWith
     :: Ord k
