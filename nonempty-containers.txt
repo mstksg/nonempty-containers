@@ -38,9 +38,9 @@ module Data.Map.NonEmpty.Internal
 --   <a>Data.Map.NonEmpty</a> re-exports the API of <a>Data.Map</a>,
 --   faithfully reproducing asymptotics, typeclass constraints, and
 --   semantics. Functions that ensure that input and output maps are both
---   non-empty (like <tt>insert</tt>) return <a>NEMap</a>, but functions
---   that might potentially return an empty map (like <tt>delete</tt>)
---   return a <a>Map</a> instead.
+--   non-empty (like <a>insert</a>) return <a>NEMap</a>, but functions that
+--   might potentially return an empty map (like <a>delete</a>) return a
+--   <a>Map</a> instead.
 --   
 --   You can directly construct an <a>NEMap</a> with the API from
 --   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
@@ -52,18 +52,18 @@ module Data.Map.NonEmpty.Internal
 --   <tt><a>Map</a> k a</tt> into a <tt><a>Maybe</a> (<a>NEMap</a> k
 --   a)</tt>, returning <a>Nothing</a> if the original <a>Map</a> was
 --   empty.</li>
---   <li>You can use the <tt>insertMap</tt> family of functions to insert a
+--   <li>You can use the <a>insertMap</a> family of functions to insert a
 --   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
---   <li>You can use the <tt>IsNonEmpty</tt> and <tt>IsEmpty</tt> patterns
---   to "pattern match" on a <a>Map</a> to reveal it as either containing a
---   <a>NonEmpty</a> or an empty map.</li>
---   <li><tt>withNEMap</tt> offers a continuation-based interface for
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>Map</a> to reveal it as either containing a
+--   <a>NEMap</a> or an empty map.</li>
+--   <li><a>withNEMap</a> offers a continuation-based interface for
 --   deconstructing a <a>Map</a> and treating it as if it were an
 --   <a>NEMap</a>.</li>
 --   </ol>
 --   
 --   You can convert an <a>NEMap</a> into a (possibly empty) <a>Map</a>
---   with <a>toMap</a> or <tt>IsNonEmpty</tt>, essentially "obscuring" the
+--   with <a>toMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
 --   non-empty property from the type.
 data NEMap k a
 NEMap :: !k -> a -> !Map k a -> NEMap k a
@@ -141,7 +141,7 @@ insertWith :: Ord k => (a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
 -- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The expression (<tt><a>union</a>
 --   t1 t2</tt>) takes the left-biased union of <tt>t1</tt> and
 --   <tt>t2</tt>. It prefers <tt>t1</tt> when duplicate keys are
---   encountered, i.e. (<tt><a>union</a> == <tt>unionWith</tt>
+--   encountered, i.e. (<tt><a>union</a> == <a>unionWith</a>
 --   <a>const</a></tt>).
 --   
 --   <pre>
@@ -285,11 +285,11 @@ traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 --   semigroup, such that
 --   
 --   <pre>
---   <a>foldMapWithKey</a> f = <a>fold1</a> . <tt>mapWithKey</tt> f
+--   <a>foldMapWithKey</a> f = <a>fold1</a> . <a>mapWithKey</a> f
 --   </pre>
 --   
---   This can be an asymptotically faster than <tt>foldrWithKey</tt> or
---   <tt>foldlWithKey</tt> for some monoids.
+--   This can be an asymptotically faster than <a>foldrWithKey</a> or
+--   <a>foldlWithKey</a> for some monoids.
 foldMapWithKey :: Semigroup m => (k -> a -> m) -> NEMap k a -> m
 
 -- | <i>O(log n)</i>. Insert new key and value into a map where keys are
@@ -394,9 +394,9 @@ module Data.Map.NonEmpty
 --   <a>Data.Map.NonEmpty</a> re-exports the API of <a>Data.Map</a>,
 --   faithfully reproducing asymptotics, typeclass constraints, and
 --   semantics. Functions that ensure that input and output maps are both
---   non-empty (like <tt>insert</tt>) return <a>NEMap</a>, but functions
---   that might potentially return an empty map (like <tt>delete</tt>)
---   return a <a>Map</a> instead.
+--   non-empty (like <a>insert</a>) return <a>NEMap</a>, but functions that
+--   might potentially return an empty map (like <a>delete</a>) return a
+--   <a>Map</a> instead.
 --   
 --   You can directly construct an <a>NEMap</a> with the API from
 --   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
@@ -408,18 +408,18 @@ module Data.Map.NonEmpty
 --   <tt><a>Map</a> k a</tt> into a <tt><a>Maybe</a> (<a>NEMap</a> k
 --   a)</tt>, returning <a>Nothing</a> if the original <a>Map</a> was
 --   empty.</li>
---   <li>You can use the <tt>insertMap</tt> family of functions to insert a
+--   <li>You can use the <a>insertMap</a> family of functions to insert a
 --   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
---   <li>You can use the <tt>IsNonEmpty</tt> and <tt>IsEmpty</tt> patterns
---   to "pattern match" on a <a>Map</a> to reveal it as either containing a
---   <a>NonEmpty</a> or an empty map.</li>
---   <li><tt>withNEMap</tt> offers a continuation-based interface for
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>Map</a> to reveal it as either containing a
+--   <a>NEMap</a> or an empty map.</li>
+--   <li><a>withNEMap</a> offers a continuation-based interface for
 --   deconstructing a <a>Map</a> and treating it as if it were an
 --   <a>NEMap</a>.</li>
 --   </ol>
 --   
 --   You can convert an <a>NEMap</a> into a (possibly empty) <a>Map</a>
---   with <a>toMap</a> or <tt>IsNonEmpty</tt>, essentially "obscuring" the
+--   with <a>toMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
 --   non-empty property from the type.
 data NEMap k a
 
@@ -1069,7 +1069,7 @@ size :: NEMap k a -> Int
 -- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The expression (<tt><a>union</a>
 --   t1 t2</tt>) takes the left-biased union of <tt>t1</tt> and
 --   <tt>t2</tt>. It prefers <tt>t1</tt> when duplicate keys are
---   encountered, i.e. (<tt><a>union</a> == <tt>unionWith</tt>
+--   encountered, i.e. (<tt><a>union</a> == <a>unionWith</a>
 --   <a>const</a></tt>).
 --   
 --   <pre>
@@ -1401,11 +1401,11 @@ foldlWithKey :: (a -> k -> b -> a) -> a -> NEMap k b -> a
 --   semigroup, such that
 --   
 --   <pre>
---   <a>foldMapWithKey</a> f = <a>fold1</a> . <tt>mapWithKey</tt> f
+--   <a>foldMapWithKey</a> f = <a>fold1</a> . <a>mapWithKey</a> f
 --   </pre>
 --   
---   This can be an asymptotically faster than <tt>foldrWithKey</tt> or
---   <tt>foldlWithKey</tt> for some monoids.
+--   This can be an asymptotically faster than <a>foldrWithKey</a> or
+--   <a>foldlWithKey</a> for some monoids.
 foldMapWithKey :: Semigroup m => (k -> a -> m) -> NEMap k a -> m
 
 -- | <i>O(n)</i>. A strict version of <a>foldr</a>. Each application of the
