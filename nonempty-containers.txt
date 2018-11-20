@@ -54,10 +54,13 @@ module Data.Map.NonEmpty.Internal
 --   empty.</li>
 --   <li>You can use the <tt>insertMap</tt> family of functions to insert a
 --   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
+--   <li>You can use the <tt>IsNonEmpty</tt> and <tt>IsEmpty</tt> patterns
+--   to "pattern match" on a <a>Map</a> to reveal it as either containing a
+--   <a>NonEmpty</a> or an empty map.</li>
 --   </ol>
 --   
 --   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
---   <a>toMap</a>.
+--   <a>toMap</a> or <tt>IsNonEmpty</tt>.
 data NEMap k a
 NEMap :: !k -> a -> !Map k a -> NEMap k a
 
@@ -73,6 +76,9 @@ singleton :: k -> a -> NEMap k a
 --   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
 --   actually empty, and <tt><a>Just</a> n</tt> with an <a>NEMap</a>, if
 --   the <a>Map</a> was not empty.
+--   
+--   See <tt>IsNonEmpty</tt> for a pattern synonym that lets you "match on"
+--   the possiblity of a <a>Map</a> being an <a>NEMap</a>.
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 
 -- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
@@ -111,6 +117,9 @@ size :: NEMap k a -> Int
 
 -- | <i>O(log n)</i>. Convert a non-empty map back into a normal
 --   possibly-empty map, for usage with functions that expect <a>Map</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the map in its
+--   type. See the <tt>IsNotEmpty</tt> pattern.
 toMap :: NEMap k a -> Map k a
 
 -- | <i>O(n)</i>. Fold the values in the map using the given
@@ -181,6 +190,9 @@ traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b
 --   That is, behaves exactly like a regular <a>traverse1</a> except that
 --   the traversing function also has access to the key associated with a
 --   value.
+--   
+--   Is more general than <a>traverseWithKey</a>, since works with all
+--   <a>Apply</a>, and not just <a>Applicative</a>.
 traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 
 -- | <i>O(n)</i>. Fold the keys and values in the map using the given
@@ -269,30 +281,33 @@ module Data.Map.NonEmpty
 --   empty.</li>
 --   <li>You can use the <tt>insertMap</tt> family of functions to insert a
 --   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
+--   <li>You can use the <tt>IsNonEmpty</tt> and <tt>IsEmpty</tt> patterns
+--   to "pattern match" on a <a>Map</a> to reveal it as either containing a
+--   <a>NonEmpty</a> or an empty map.</li>
 --   </ol>
 --   
 --   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
---   <a>toMap</a>.
+--   <a>toMap</a> or <tt>IsNonEmpty</tt>.
 data NEMap k a
 
 -- | A Map from keys <tt>k</tt> to values <tt>a</tt>.
 data Map k a
 
--- | <i>O(log n)</i>. The <a>NonEmptyMap</a> and <a>EmptyMap</a> patterns
---   allow you to treat a <a>Map</a> as if it were either a
---   <tt><a>NonEmptyMap</a> n</tt> (where <tt>n</tt> is a <a>NEMap</a>) or
---   an <a>EmptyMap</a>.
+-- | <i>O(1)</i> match, <i>O(log n)</i> usage of contents. The
+--   <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow you to treat a
+--   <a>Map</a> as if it were either a <tt><a>IsNonEmpty</a> n</tt> (where
+--   <tt>n</tt> is a <a>NEMap</a>) or an <a>IsEmpty</a>.
 --   
 --   For example, you can pattern match on a <a>Map</a>:
 --   
 --   <pre>
 --   myFunc :: <a>Map</a> K X -&gt; Y
 --   myFunc m = case m of
---       <a>NonEmptyMap</a> n -&gt; -- here, n is a <a>NonEmptyMap</a>, m is proven not empty.
---       <a>EmptyMap</a>      -&gt; -- here, m is empty.
+--       <a>IsNonEmpty</a> n -&gt; -- here, n is a <a>IsNonEmpty</a>, m is proven not empty.
+--       <a>IsEmpty</a>      -&gt; -- here, m is empty.
 --   </pre>
 --   
---   Matching on <tt><a>NonEmptyMap</a> n</tt> means that the original
+--   Matching on <tt><a>IsNonEmpty</a> n</tt> means that the original
 --   <a>Map</a> was <i>not</i> empty, and you have a verified-non-empty
 --   <a>NEMap</a> <tt>n</tt> to use.
 --   
@@ -300,27 +315,36 @@ data Map k a
 --   contents requires a <i>O(log n)</i> cost that is deferred until after
 --   the pattern is matched on (and is not incurred at all if the contents
 --   are never used).
-pattern NonEmptyMap :: NEMap k a -> Map k a
-
--- | <i>O(1)</i>. The <a>NonEmptyMap</a> and <a>EmptyMap</a> patterns allow
---   you to treat a <a>Map</a> as if it were either a
---   <tt><a>NonEmptyMap</a> n</tt> (where <tt>n</tt> is a <a>NEMap</a>) or
---   an <a>EmptyMap</a>.
 --   
---   Matching on <a>EmptyMap</a> means that the original <a>Map</a> was
+--   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
+--   convert a <a>NEMap</a> back into a <a>Map</a>, obscuring its
+--   non-emptiness (see <a>toMap</a>).
+pattern IsNonEmpty :: NEMap k a -> Map k a
+
+-- | <i>O(1)</i>. The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow
+--   you to treat a <a>Map</a> as if it were either a <tt><a>IsNonEmpty</a>
+--   n</tt> (where <tt>n</tt> is a <a>NEMap</a>) or an <a>IsEmpty</a>.
+--   
+--   Matching on <a>IsEmpty</a> means that the original <a>Map</a> was
 --   empty.
 --   
---   See <a>NonEmptyMap</a> for more information.
-pattern EmptyMap :: Map k a
+--   See <a>IsNonEmpty</a> for more information.
+pattern IsEmpty :: Map k a
 
 -- | <i>O(log n)</i> Smart constructor for an <a>NEMap</a> from a
 --   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
 --   actually empty, and <tt><a>Just</a> n</tt> with an <a>NEMap</a>, if
 --   the <a>Map</a> was not empty.
+--   
+--   See <tt>IsNonEmpty</tt> for a pattern synonym that lets you "match on"
+--   the possiblity of a <a>Map</a> being an <a>NEMap</a>.
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 
 -- | <i>O(log n)</i>. Convert a non-empty map back into a normal
 --   possibly-empty map, for usage with functions that expect <a>Map</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the map in its
+--   type. See the <tt>IsNotEmpty</tt> pattern.
 toMap :: NEMap k a -> Map k a
 
 -- | <i>O(log n)</i>. Convert a <a>Map</a> into an <a>NEMap</a> by adding a
@@ -369,16 +393,118 @@ singleton :: k -> a -> NEMap k a
 --   more than one value for the same key, the last value for the key is
 --   retained.
 fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n*log n)</i>. Build a map from a non-empty list of key/value
+--   pairs with a combining function. See also <a>fromAscListWith</a>.
+--   
+--   <pre>
+--   fromListWith (++) ((5,"a") :| [(5,"b"), (3,"b"), (3,"a"), (5,"a")]) == fromList ((3, "ab") :| [(5, "aba")])
+--   </pre>
 fromListWith :: Ord k => (a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n*log n)</i>. Build a map from a non-empty list of key/value
+--   pairs with a combining function. See also <a>fromAscListWithKey</a>.
+--   
+--   <pre>
+--   let f k a1 a2 = (show k) ++ a1 ++ a2
+--   fromListWithKey f ((5,"a") :| [(5,"b"), (3,"b"), (3,"a"), (5,"a")]) == fromList ((3, "3ab") :| [(5, "5a5ba")])
+--   </pre>
 fromListWithKey :: Ord k => (k -> a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from an ascending non-empty list in linear
+--   time. <i>The precondition (input list is ascending) is not
+--   checked.</i>
+--   
+--   <pre>
+--   fromAscList ((3,"b") :| [(5,"a")])          == fromList ((3, "b") :| [(5, "a")])
+--   fromAscList ((3,"b") :| [(5,"a"), (5,"b")]) == fromList ((3, "b") :| [(5, "b")])
+--   valid (fromAscList ((3,"b") :| [(5,"a"), (5,"b")])) == True
+--   valid (fromAscList ((5,"a") :| [(3,"b"), (5,"b")])) == False
+--   </pre>
 fromAscList :: Eq k => NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from an ascending non-empty list in linear
+--   time with a combining function for equal keys. /The precondition
+--   (input list is ascending) is not checked./
+--   
+--   <pre>
+--   fromAscListWith (++) ((3,"b") :| [(5,"a"), (5,"b")]) == fromList ((3, "b") :| [(5, "ba")])
+--   valid (fromAscListWith (++) ((3,"b") :| [(5,"a"), (5,"b"))]) == True
+--   valid (fromAscListWith (++) ((5,"a") :| [(3,"b"), (5,"b"))]) == False
+--   </pre>
 fromAscListWith :: Eq k => (a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from an ascending non-empty list in linear
+--   time with a combining function for equal keys. /The precondition
+--   (input list is ascending) is not checked./
+--   
+--   <pre>
+--   let f k a1 a2 = (show k) ++ ":" ++ a1 ++ a2
+--   fromAscListWithKey f ((3,"b") :| [(5,"a"), (5,"b"), (5,"b")]) == fromList ((3, "b") :| [(5, "5:b5:ba")])
+--   valid (fromAscListWithKey f ((3,"b") :| [(5,"a"), (5,"b"), (5,"b")])) == True
+--   valid (fromAscListWithKey f ((5,"a") :| [(3,"b"), (5,"b"), (5,"b")])) == False
+--   </pre>
 fromAscListWithKey :: Eq k => (k -> a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from an ascending non-empty list of distinct
+--   elements in linear time. <i>The precondition is not checked.</i>
+--   
+--   <pre>
+--   fromDistinctAscList ((3,"b") :| [(5,"a")]) == fromList ((3, "b") :| [(5, "a")])
+--   valid (fromDistinctAscList ((3,"b") :| [(5,"a")]))          == True
+--   valid (fromDistinctAscList ((3,"b") :| [(5,"a"), (5,"b")])) == False
+--   </pre>
 fromDistinctAscList :: NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from a descending non-empty list in linear
+--   time. <i>The precondition (input list is descending) is not
+--   checked.</i>
+--   
+--   <pre>
+--   fromDescList ((5,"a") :| [(3,"b")])          == fromList ((3, "b") :| [(5, "a")])
+--   fromDescList ((5,"a") :| [(5,"b"), (3,"b")]) == fromList ((3, "b") :| [(5, "b")])
+--   valid (fromDescList ((5,"a") :| [(5,"b"), (3,"b")])) == True
+--   valid (fromDescList ((5,"a") :| [(3,"b"), (5,"b")])) == False
+--   </pre>
 fromDescList :: Eq k => NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from a descending non-empty list in linear
+--   time with a combining function for equal keys. /The precondition
+--   (input list is descending) is not checked./
+--   
+--   <pre>
+--   fromDescListWith (++) ((5,"a") :| [(5,"b"), (3,"b")]) == fromList ((3, "b") :| [(5, "ba")])
+--   valid (fromDescListWith (++) ((5,"a") :| [(5,"b"), (3,"b")])) == True
+--   valid (fromDescListWith (++) ((5,"a") :| [(3,"b"), (5,"b")])) == False
+--   </pre>
 fromDescListWith :: Eq k => (a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from a descending non-empty list in linear
+--   time with a combining function for equal keys. /The precondition
+--   (input list is descending) is not checked./
+--   
+--   <pre>
+--   let f k a1 a2 = (show k) ++ ":" ++ a1 ++ a2
+--   fromDescListWithKey f ((5,"a") :| [(5,"b"), (5,"b"), (3,"b")]) == fromList ((3, "b") :| [(5, "5:b5:ba")])
+--   valid (fromDescListWithKey f ((5,"a") :| [(5,"b"), (5,"b"), (3,"b")])) == True
+--   valid (fromDescListWithKey f ((5,"a") :| [(3,"b"), (5,"b"), (5,"b")])) == False
+--   </pre>
 fromDescListWithKey :: Eq k => (k -> a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Build a map from a descending list of distinct elements
+--   in linear time. <i>The precondition is not checked.</i>
+--   
+--   <pre>
+--   fromDistinctDescList ((5,"a") :| [(3,"b")]) == fromList ((3, "b") :| [(5, "a")])
+--   valid (fromDistinctDescList ((5,"a") :| [(3,"b")]))          == True
+--   valid (fromDistinctDescList ((5,"a") :| [(5,"b"), (3,"b")])) == False
+--   </pre>
 fromDistinctDescList :: NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(log n)</i>. Insert a new key and value in the map. If the key is
+--   already present in the map, the associated value is replaced with the
+--   supplied value. <a>insert</a> is equivalent to <tt><a>insertWith</a>
+--   <a>const</a></tt>.
 insert :: Ord k => k -> a -> NEMap k a -> NEMap k a
 
 -- | <i>O(log n)</i>. Insert with a function, combining new value and old
@@ -387,29 +513,214 @@ insert :: Ord k => k -> a -> NEMap k a -> NEMap k a
 --   key does exist, the function will insert the pair <tt>(key, f
 --   new_value old_value)</tt>.
 insertWith :: Ord k => (a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. Insert with a function, combining key, new value and
+--   old value. <tt><a>insertWithKey</a> f key value mp</tt> will insert
+--   the pair (key, value) into <tt>mp</tt> if key does not exist in the
+--   map. If the key does exist, the function will insert the pair
+--   <tt>(key,f key new_value old_value)</tt>. Note that the key passed to
+--   f is the same key passed to <a>insertWithKey</a>.
 insertWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. Combines insert operation with old value retrieval.
+--   The expression (<tt><a>insertLookupWithKey</a> f k x map</tt>) is a
+--   pair where the first element is equal to (<tt><a>lookup</a> k
+--   map</tt>) and the second element equal to (<tt><a>insertWithKey</a> f
+--   k x map</tt>).
 insertLookupWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> NEMap k a -> (Maybe a, NEMap k a)
+
+-- | <i>O(log n)</i>. Delete a key and its value from the non-empty map. A
+--   potentially empty map (<a>Map</a>) is returned, since this might
+--   delete the last item in the <a>NEMap</a>. When the key is not a member
+--   of the map, is equivalent to <a>toMap</a>.
+--   
+--   <pre>
+--   delete 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
+--   delete 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.Singleton [(3, "b"), (5, "a")]
+--   </pre>
 delete :: Ord k => k -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Update a value at a specific key with the result of
+--   the provided function. When the key is not a member of the map, the
+--   original map is returned.
+--   
+--   <pre>
+--   adjust ("new " ++) 5 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "new a")])
+--   adjust ("new " ++) 7 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a")])
+--   </pre>
 adjust :: Ord k => (a -> a) -> k -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. Adjust a value at a specific key. When the key is not
+--   a member of the map, the original map is returned.
+--   
+--   <pre>
+--   let f key x = (show key) ++ ":new " ++ x
+--   adjustWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "5:new a")])
+--   adjustWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a")])
+--   </pre>
 adjustWithKey :: Ord k => (k -> a -> a) -> k -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. The expression (<tt><a>update</a> f k map</tt>)
+--   updates the value <tt>x</tt> at <tt>k</tt> (if it is in the map). If
+--   (<tt>f x</tt>) is <a>Nothing</a>, the element is deleted. If it is
+--   (<tt><a>Just</a> y</tt>), the key <tt>k</tt> is bound to the new value
+--   <tt>y</tt>.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because we can't know
+--   ahead of time if the function returns <a>Nothing</a> and deletes the
+--   final item in the <a>NEMap</a>.
+--   
+--   <pre>
+--   let f x = if x == "a" then Just "new a" else Nothing
+--   update f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "new a")]
+--   update f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a")]
+--   update f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   </pre>
 update :: Ord k => (a -> Maybe a) -> k -> NEMap k a -> Map k a
 updateWithKey :: Ord k => (k -> a -> Maybe a) -> k -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. The expression (<tt><a>updateWithKey</a> f k
+--   map</tt>) updates the value <tt>x</tt> at <tt>k</tt> (if it is in the
+--   map). If (<tt>f k x</tt>) is <a>Nothing</a>, the element is deleted.
+--   If it is (<tt><a>Just</a> y</tt>), the key <tt>k</tt> is bound to the
+--   new value <tt>y</tt>.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because we can't know
+--   ahead of time if the function returns <a>Nothing</a> and deletes the
+--   final item in the <a>NEMap</a>.
+--   
+--   <pre>
+--   let f k x = if x == "a" then Just ((show k) ++ ":new a") else Nothing
+--   updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "5:new a")]
+--   updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a")]
+--   updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   </pre>
 updateLookupWithKey :: Ord k => (k -> a -> Maybe a) -> k -> NEMap k a -> (Maybe a, Map k a)
+
+-- | <i>O(log n)</i>. The expression (<tt><a>alter</a> f k map</tt>) alters
+--   the value <tt>x</tt> at <tt>k</tt>, or absence thereof. <a>alter</a>
+--   can be used to insert, delete, or update a value in a <a>Map</a>. In
+--   short : <tt>Data.Map.lookup k (<a>alter</a> f k m) = f (<a>lookup</a>
+--   k m)</tt>.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because we can't know
+--   ahead of time if the function returns <a>Nothing</a> and deletes the
+--   final item in the <a>NEMap</a>.
+--   
+--   See <a>alterF'</a> for a version that disallows deletion, and so
+--   therefore can return <a>NEMap</a>.
+--   
+--   <pre>
+--   let f _ = Nothing
+--   alter f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a")]
+--   alter f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
+--   
+--   let f _ = Just "c"
+--   alter f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a"), (7, "c")]
+--   alter f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "c")]
+--   </pre>
 alter :: Ord k => (Maybe a -> Maybe a) -> k -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. The expression (<tt><a>alterF</a> f k map</tt>)
+--   alters the value <tt>x</tt> at <tt>k</tt>, or absence thereof.
+--   <a>alterF</a> can be used to inspect, insert, delete, or update a
+--   value in a <a>Map</a>. In short: <tt>Data.Map.lookup k &lt;$&gt;
+--   <a>alterF</a> f k m = f (<a>lookup</a> k m)</tt>.
+--   
+--   Example:
+--   
+--   <pre>
+--   interactiveAlter :: Int -&gt; NEMap Int String -&gt; IO (Map Int String)
+--   interactiveAlter k m = alterF f k m where
+--     f Nothing = do
+--        putStrLn $ show k ++
+--            " was not found in the map. Would you like to add it?"
+--        getUserResponse1 :: IO (Maybe String)
+--     f (Just old) = do
+--        putStrLn $ "The key is currently bound to " ++ show old ++
+--            ". Would you like to change or delete it?"
+--        getUserResponse2 :: IO (Maybe String)
+--   </pre>
+--   
+--   Like <tt>Data.Map.alterF</tt> for <a>Map</a>, <a>alterF</a> can be
+--   considered to be a unifying generalization of <a>lookup</a> and
+--   <a>delete</a>; however, as a constrast, it cannot be used to implement
+--   <a>insert</a>, because it must return a <a>Map</a> instead of an
+--   <a>NEMap</a> (because the function might delete the final item in the
+--   <a>NEMap</a>). When used with trivial functors like <a>Identity</a>
+--   and <a>Const</a>, it is often slightly slower than specialized
+--   <a>lookup</a> and <a>delete</a>. However, when the functor is
+--   non-trivial and key comparison is not particularly cheap, it is the
+--   fastest way.
+--   
+--   See <a>alterF'</a> for a version that disallows deletion, and so
+--   therefore can return <a>NEMap</a> and be used to implement
+--   <a>insert</a>
+--   
+--   Note on rewrite rules:
+--   
+--   This module includes GHC rewrite rules to optimize <a>alterF</a> for
+--   the <a>Const</a> and <a>Identity</a> functors. In general, these rules
+--   improve performance. The sole exception is that when using
+--   <a>Identity</a>, deleting a key that is already absent takes longer
+--   than it would without the rules. If you expect this to occur a very
+--   large fraction of the time, you might consider using a private copy of
+--   the <a>Identity</a> type.
+--   
+--   Note: Unlike <tt>Data.Map.alterF</tt> for <a>Map</a>, <a>alterF</a> is
+--   <i>not</i> a flipped version of the <tt>at</tt> combinator from
+--   <a>At</a>.
 alterF :: (Ord k, Functor f) => (Maybe a -> f (Maybe a)) -> k -> NEMap k a -> f (Map k a)
 
--- | Variant of <a>alter</a> that disallows deletion. Allows us to
---   guarantee that the result is also a non-empty Map.
+-- | <i>O(log n)</i>. Variant of <a>alter</a> that disallows deletion.
+--   Allows us to guarantee that the result is also a non-empty Map.
 alter' :: Ord k => (Maybe a -> a) -> k -> NEMap k a -> NEMap k a
 
--- | Variant of <a>alterF</a> that disallows deletion. Allows us to
---   guarantee that the result is also a non-empty Map.
+-- | <i>O(log n)</i>. Variant of <a>alterF</a> that disallows deletion.
+--   Allows us to guarantee that the result is also a non-empty Map.
 --   
---   TODO: RULES
+--   Like <tt>Data.Map.alterF</tt> for <a>Map</a>, can be used to
+--   generalize and unify <a>lookup</a> and <a>insert</a>. However, because
+--   it disallows deletion, it cannot be used to implement <a>delete</a>.
+--   
+--   See <a>alterF</a> for usage information and caveats.
+--   
+--   Note: Neither <a>alterF</a> nor <a>alterF'</a> can be considered
+--   flipped versions of the <tt>at</tt> combinator from <a>At</a>.
 alterF' :: (Ord k, Functor f) => (Maybe a -> f a) -> k -> NEMap k a -> f (NEMap k a)
 
--- | <i>O(log n)</i>. Find largest key smaller than the given one and
---   return the corresponding (key, value) pair.
+-- | <i>O(log n)</i>. Lookup the value at a key in the map.
+--   
+--   The function will return the corresponding value as <tt>(<a>Just</a>
+--   value)</tt>, or <a>Nothing</a> if the key isn't in the map.
+--   
+--   An example of using <tt>lookup</tt>:
+--   
+--   <pre>
+--   import Prelude hiding (lookup)
+--   import Data.Map.NonEmpty
+--   
+--   employeeDept = fromList (("John","Sales") :| [("Bob","IT")])
+--   deptCountry = fromList (("IT","USA") :| [("Sales","France")])
+--   countryCurrency = fromList (("USA", "Dollar") :| [("France", "Euro")])
+--   
+--   employeeCurrency :: String -&gt; Maybe String
+--   employeeCurrency name = do
+--       dept &lt;- lookup name employeeDept
+--       country &lt;- lookup dept deptCountry
+--       lookup country countryCurrency
+--   
+--   main = do
+--       putStrLn $ "John's currency: " ++ (show (employeeCurrency "John"))
+--       putStrLn $ "Pete's currency: " ++ (show (employeeCurrency "Pete"))
+--   </pre>
+--   
+--   The output of this program:
+--   
+--   <pre>
+--   John's currency: Just "Euro"
+--   Pete's currency: Nothing
+--   </pre>
 lookup :: Ord k => k -> NEMap k a -> Maybe a
 
 -- | <i>O(log n)</i>. Find the value at a key. Returns <a>Nothing</a> when
@@ -523,6 +834,9 @@ mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 --   That is, behaves exactly like a regular <a>traverse1</a> except that
 --   the traversing function also has access to the key associated with a
 --   value.
+--   
+--   Is more general than <a>traverseWithKey</a>, since works with all
+--   <a>Apply</a>, and not just <a>Applicative</a>.
 traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 
 -- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <tt>fromNonEmpty</tt>
@@ -541,12 +855,111 @@ traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 --   <a>traverseWithKey</a> f = <a>unwrapApplicative</a> . <a>traverseWithKey1</a> (\k -&gt; WrapApplicative . f k)
 --   </pre>
 traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
-traverseMaybeWithKey :: Apply t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
+
+-- | <i>O(n)</i>. Traverse keys/values and collect the <a>Just</a> results.
+--   
+--   Returns a potentially empty map (<a>Map</a>), our function might
+--   return <a>Nothing</a> on every item in the <a>NEMap</a>.
+--   
+--   <i>Use <a>traverseMaybeWithKey1</a></i> whenever possible (if your
+--   <a>Applicative</a> also has <a>Apply</a> instance). This version is
+--   provided only for types that do not have <a>Apply</a> instance, since
+--   <a>Apply</a> is not at the moment (and might not ever be) an official
+--   superclass of <a>Applicative</a>.
+traverseMaybeWithKey :: Applicative t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
+
+-- | <i>O(n)</i>. Traverse keys/values and collect the <a>Just</a> results.
+--   
+--   Returns a potentially empty map (<a>Map</a>), our function might
+--   return <a>Nothing</a> on every item in the <a>NEMap</a>.
+--   
+--   Is more general than <a>traverseWithKey</a>, since works with all
+--   <a>Apply</a>, and not just <a>Applicative</a>.
+traverseMaybeWithKey1 :: Apply t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
+
+-- | <i>O(n)</i>. The function <a>mapAccum</a> threads an accumulating
+--   argument through the map in ascending order of keys.
+--   
+--   <pre>
+--   let f a b = (a ++ b, b ++ "X")
+--   mapAccum f "Everything: " (fromList ((5,"a") :| [(3,"b")])) == ("Everything: ba", fromList ((3, "bX") :| [(5, "aX")]))
+--   </pre>
 mapAccum :: (a -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
+
+-- | <i>O(n)</i>. The function <a>mapAccumWithKey</a> threads an
+--   accumulating argument through the map in ascending order of keys.
+--   
+--   <pre>
+--   let f a k b = (a ++ " " ++ (show k) ++ "-" ++ b, b ++ "X")
+--   mapAccumWithKey f "Everything:" (fromList ((5,"a") :| [(3,"b")])) == ("Everything: 3-b 5-a", fromList ((3, "bX") :| [(5, "aX")]))
+--   </pre>
 mapAccumWithKey :: (a -> k -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
+
+-- | <i>O(n)</i>. The function <a>mapAccumRWithKey</a> threads an
+--   accumulating argument through the map in descending order of keys.
 mapAccumRWithKey :: (a -> k -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
+
+-- | <i>O(n*log n)</i>. <tt><a>mapKeys</a> f s</tt> is the map obtained by
+--   applying <tt>f</tt> to each key of <tt>s</tt>.
+--   
+--   The size of the result may be smaller if <tt>f</tt> maps two or more
+--   distinct keys to the same new key. In this case the value at the
+--   greatest of the original keys is retained.
+--   
+--   While the size of the result map may be smaller than the input map,
+--   the output map is still guaranteed to be non-empty if the input map is
+--   non-empty.
+--   
+--   <pre>
+--   mapKeys (+ 1) (fromList ((5,"a") :| [(3,"b")]))                        == fromList ((4, "b") :| [(6, "a")])
+--   mapKeys (\ _ -&gt; 1) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 1 "c"
+--   mapKeys (\ _ -&gt; 3) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 3 "c"
+--   </pre>
 mapKeys :: Ord k2 => (k1 -> k2) -> NEMap k1 a -> NEMap k2 a
+
+-- | <i>O(n*log n)</i>. <tt><a>mapKeysWith</a> c f s</tt> is the map
+--   obtained by applying <tt>f</tt> to each key of <tt>s</tt>.
+--   
+--   The size of the result may be smaller if <tt>f</tt> maps two or more
+--   distinct keys to the same new key. In this case the associated values
+--   will be combined using <tt>c</tt>. The value at the greater of the two
+--   original keys is used as the first argument to <tt>c</tt>.
+--   
+--   While the size of the result map may be smaller than the input map,
+--   the output map is still guaranteed to be non-empty if the input map is
+--   non-empty.
+--   
+--   <pre>
+--   mapKeysWith (++) (\ _ -&gt; 1) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 1 "cdab"
+--   mapKeysWith (++) (\ _ -&gt; 3) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 3 "cdab"
+--   </pre>
 mapKeysWith :: Ord k2 => (a -> a -> a) -> (k1 -> k2) -> NEMap k1 a -> NEMap k2 a
+
+-- | <i>O(n)</i>. <tt><a>mapKeysMonotonic</a> f s == <a>mapKeys</a> f
+--   s</tt>, but works only when <tt>f</tt> is strictly monotonic. That is,
+--   for any values <tt>x</tt> and <tt>y</tt>, if <tt>x</tt> &lt;
+--   <tt>y</tt> then <tt>f x</tt> &lt; <tt>f y</tt>. <i>The precondition is
+--   not checked.</i> Semi-formally, we have:
+--   
+--   <pre>
+--   and [x &lt; y ==&gt; f x &lt; f y | x &lt;- ls, y &lt;- ls]
+--                       ==&gt; mapKeysMonotonic f s == mapKeys f s
+--       where ls = keys s
+--   </pre>
+--   
+--   This means that <tt>f</tt> maps distinct original keys to distinct
+--   resulting keys. This function has better performance than
+--   <a>mapKeys</a>.
+--   
+--   While the size of the result map may be smaller than the input map,
+--   the output map is still guaranteed to be non-empty if the input map is
+--   non-empty.
+--   
+--   <pre>
+--   mapKeysMonotonic (\ k -&gt; k * 2) (fromList ((5,"a") :| [(3,"b")])) == fromList ((6, "b") :| [(10, "a")])
+--   valid (mapKeysMonotonic (\ k -&gt; k * 2) (fromList ((5,"a") :| [(3,"b")]))) == True
+--   valid (mapKeysMonotonic (\ _ -&gt; 1)     (fromList ((5,"a") :| [(3,"b")]))) == False
+--   </pre>
 mapKeysMonotonic :: (k1 -> k2) -> NEMap k1 a -> NEMap k2 a
 
 -- | <i>O(n)</i>. Fold the values in the map using the given
@@ -651,7 +1064,27 @@ toAscList :: NEMap k a -> NonEmpty (k, a)
 -- | <i>O(n)</i>. Convert the map to a list of key/value pairs where the
 --   keys are in descending order.
 toDescList :: NEMap k a -> NonEmpty (k, a)
+
+-- | <i>O(n)</i>. Filter all values that satisfy the predicate.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because we could
+--   potentailly filter out all items in the original <a>NEMap</a>.
+--   
+--   <pre>
+--   filter (&gt; "a") (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
+--   filter (&gt; "x") (fromList ((5,"a") :| [(3,"b")])) == Data.Map.empty
+--   filter (&lt; "a") (fromList ((5,"a") :| [(3,"b")])) == Data.Map.empty
+--   </pre>
 filter :: (a -> Bool) -> NEMap k a -> Map k a
+
+-- | <i>O(n)</i>. Filter all keys/values that satisfy the predicate.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because we could
+--   potentailly filter out all items in the original <a>NEMap</a>.
+--   
+--   <pre>
+--   filterWithKey (\k _ -&gt; k &gt; 4) (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   </pre>
 filterWithKey :: (k -> a -> Bool) -> NEMap k a -> Map k a
 
 -- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Restrict an <a>NEMap</a> to only
@@ -671,45 +1104,561 @@ restrictKeys :: Ord k => NEMap k a -> Set k -> Map k a
 --   m `withoutKeys` s = m `<a>difference</a>` <tt>fromSet</tt> (const ()) s
 --   </pre>
 withoutKeys :: Ord k => NEMap k a -> Set k -> Map k a
-partition :: (a -> Bool) -> NEMap k a -> (Map k a, Map k a)
-partitionWithKey :: (k -> a -> Bool) -> NEMap k a -> (Map k a, Map k a)
+
+-- | <i>O(n)</i>. Partition the map according to a predicate.
+--   
+--   Returns a <a>These</a> with potentially two maps:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
+--   items.</li>
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
+--   items.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   that were true for the predicate) and <tt>n2</tt> (all of the items
+--   that were false for the predicate).</li>
+--   </ul>
+--   
+--   See also <a>split</a>.
+--   
+--   <pre>
+--   partition (&gt; "a") (fromList ((5,"a") :| [(3,"b")])) == These (singleton 3 "b") (singleton 5 "a")
+--   partition (&lt; "x") (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
+--   partition (&gt; "x") (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
+--   </pre>
+partition :: (a -> Bool) -> NEMap k a -> These (NEMap k a) (NEMap k a)
+
+-- | <i>O(n)</i>. Partition the map according to a predicate.
+--   
+--   Returns a <a>These</a> with potentially two maps:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
+--   items, returning the original map.</li>
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
+--   items, returning the original map.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   that were true for the predicate) and <tt>n2</tt> (all of the items
+--   that were false for the predicate).</li>
+--   </ul>
+--   
+--   See also <a>split</a>.
+--   
+--   <pre>
+--   partitionWithKey (\ k _ -&gt; k &gt; 3) (fromList ((5,"a") :| [(3,"b")])) == These (singleton 5 "a") (singleton 3 "b")
+--   partitionWithKey (\ k _ -&gt; k &lt; 7) (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
+--   partitionWithKey (\ k _ -&gt; k &gt; 7) (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
+--   </pre>
+partitionWithKey :: (k -> a -> Bool) -> NEMap k a -> These (NEMap k a) (NEMap k a)
+
+-- | <i>O(log n)</i>. Take while a predicate on the keys holds. The user is
+--   responsible for ensuring that for all keys <tt>j</tt> and <tt>k</tt>
+--   in the map, <tt>j &lt; k ==&gt; p j &gt;= p k</tt>. See note at
+--   <a>spanAntitone</a>.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because the predicate
+--   might fail on the first input.
+--   
+--   <pre>
+--   takeWhileAntitone p = Data.Map.fromDistinctAscList . Data.List.takeWhile (p . fst) . Data.Foldable.toList
+--   takeWhileAntitone p = <a>filterWithKey</a> (k _ -&gt; p k)
+--   </pre>
 takeWhileAntitone :: (k -> Bool) -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Drop while a predicate on the keys holds. The user is
+--   responsible for ensuring that for all keys <tt>j</tt> and <tt>k</tt>
+--   in the map, <tt>j &lt; k ==&gt; p j &gt;= p k</tt>. See note at
+--   <a>spanAntitone</a>.
+--   
+--   <pre>
+--   dropWhileAntitone p = Data.Map.fromDistinctAscList . Data.List.dropWhile (p . fst) . Data.Foldable.toList
+--   dropWhileAntitone p = <a>filterWithKey</a> (k -&gt; not (p k))
+--   </pre>
 dropWhileAntitone :: (k -> Bool) -> NEMap k a -> Map k a
-spanAntitone :: (k -> Bool) -> NEMap k a -> (Map k a, Map k a)
+
+-- | <i>O(log n)</i>. Divide a map at the point where a predicate on the
+--   keys stops holding. The user is responsible for ensuring that for all
+--   keys <tt>j</tt> and <tt>k</tt> in the map, <tt>j &lt; k ==&gt; p j
+--   &gt;= p k</tt>.
+--   
+--   Returns a <a>These</a> with potentially two maps:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the predicate never failed for
+--   any item, returning the original map.</li>
+--   <li><tt><a>That</a> n2</tt> means that the predicate failed for the
+--   first item, returning the original map.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map up to the
+--   point where the predicate on the keys stops holding) and <tt>n2</tt>
+--   (the map starting from the point where the predicate stops
+--   holding)</li>
+--   </ul>
+--   
+--   <pre>
+--   spanAntitone p xs = (<a>takeWhileAntitone</a> p xs, <a>dropWhileAntitone</a> p xs)
+--   spanAntitone p xs = partitionWithKey (k _ -&gt; p k) xs
+--   </pre>
+--   
+--   Note: if <tt>p</tt> is not actually antitone, then
+--   <tt>spanAntitone</tt> will split the map at some <i>unspecified</i>
+--   point where the predicate switches from holding to not holding (where
+--   the predicate is seen to hold before the first key and to fail after
+--   the last key).
+spanAntitone :: (k -> Bool) -> NEMap k a -> These (NEMap k a) (NEMap k a)
+
+-- | <i>O(n)</i>. Map values and collect the <a>Just</a> results.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because the function
+--   could potentially return <a>Nothing</a> on all items in the
+--   <a>NEMap</a>.
+--   
+--   <pre>
+--   let f x = if x == "a" then Just "new a" else Nothing
+--   mapMaybe f (fromList ((5,"a") :| [(3,"b")])) == singleton 5 "new a"
+--   </pre>
 mapMaybe :: (a -> Maybe b) -> NEMap k a -> Map k b
+
+-- | <i>O(n)</i>. Map keys/values and collect the <a>Just</a> results.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because the function
+--   could potentially return <a>Nothing</a> on all items in the
+--   <a>NEMap</a>.
+--   
+--   <pre>
+--   let f k _ = if k &lt; 5 then Just ("key : " ++ (show k)) else Nothing
+--   mapMaybeWithKey f (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "key : 3"
+--   </pre>
 mapMaybeWithKey :: (k -> a -> Maybe b) -> NEMap k a -> Map k b
-mapEither :: (a -> Either b c) -> NEMap k a -> (Map k b, Map k c)
-mapEitherWithKey :: (k -> a -> Either b c) -> NEMap k a -> (Map k b, Map k c)
-split :: Ord k => k -> NEMap k a -> (Map k a, Map k a)
-splitLookup :: Ord k => k -> NEMap k a -> (Map k a, Maybe a, Map k a)
+
+-- | <i>O(n)</i>. Map values and separate the <a>Left</a> and <a>Right</a>
+--   results.
+--   
+--   Returns a <a>These</a> with potentially two maps:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the results were all
+--   <a>Left</a>.</li>
+--   <li><tt><a>That</a> n2</tt> means that the results were all
+--   <a>Right</a>.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
+--   results were <a>Left</a>) and <tt>n2</tt> (the map where the results
+--   were <a>Right</a>)</li>
+--   </ul>
+--   
+--   <pre>
+--   let f a = if a &lt; "c" then Left a else Right a
+--   mapEither f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+--       == These (fromList ((3,"b") :| [(5,"a")])) (fromList ((1,"x") :| [(7,"z")]))
+--   
+--   mapEither (\ a -&gt; Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+--       == That (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+--   </pre>
+mapEither :: (a -> Either b c) -> NEMap k a -> These (NEMap k b) (NEMap k c)
+
+-- | <i>O(n)</i>. Map keys/values and separate the <a>Left</a> and
+--   <a>Right</a> results.
+--   
+--   Returns a <a>These</a> with potentially two maps:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the results were all
+--   <a>Left</a>.</li>
+--   <li><tt><a>That</a> n2</tt> means that the results were all
+--   <a>Right</a>.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
+--   results were <a>Left</a>) and <tt>n2</tt> (the map where the results
+--   were <a>Right</a>)</li>
+--   </ul>
+--   
+--   <pre>
+--   let f k a = if k &lt; 5 then Left (k * 2) else Right (a ++ a)
+--   mapEitherWithKey f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+--       == These (fromList ((1,2) :| [(3,6)])) (fromList ((5,"aa") :| [(7,"zz")]))
+--   
+--   mapEitherWithKey (\_ a -&gt; Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+--       == That (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
+--   </pre>
+mapEitherWithKey :: (k -> a -> Either b c) -> NEMap k a -> These (NEMap k b) (NEMap k c)
+
+-- | <i>O(log n)</i>. The expression (<tt><a>split</a> k map</tt>) is
+--   potentially a <a>These</a> containing up to two <a>NEMap</a>s based on
+--   splitting the map into maps containing items before and after the
+--   given key <tt>k</tt>. It will never return a map that contains
+--   <tt>k</tt> itself.
+--   
+--   <ul>
+--   <li><a>Nothing</a> means that <tt>k</tt> was the only key in the the
+--   original map, and so there are no items before or after it.</li>
+--   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>k</tt> was larger
+--   than all items in the map, and <tt>n1</tt> is the entire original
+--   map.</li>
+--   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>k</tt> was smaller
+--   than all items in the map, and <tt>n2</tt> is the entire original
+--   map.</li>
+--   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
+--   map of all keys from the original map less than <tt>k</tt>) and
+--   <tt>n2</tt> (the map of all keys from the original map greater than
+--   <tt>k</tt>)</li>
+--   </ul>
+--   
+--   <pre>
+--   split 2 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (fromList ((3,"b") :| [(5,"a")]))  )
+--   split 3 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (singleton 5 "a")                  )
+--   split 4 (fromList ((5,"a") :| [(3,"b")])) == Just (These (singleton 3 "b") (singleton 5 "a"))
+--   split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (singleton 3 "b")                  )
+--   split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (fromList ((3,"b") :| [(5,"a")]))  )
+--   split 5 (singleton 5 "a")                 == Nothing
+--   </pre>
+split :: Ord k => k -> NEMap k a -> Maybe (These (NEMap k a) (NEMap k a))
+
+-- | <i>O(log n)</i>. The expression (<tt><a>splitLookup</a> k map</tt>)
+--   splits a map just like <a>split</a> but also returns <tt><a>lookup</a>
+--   k map</tt>, as a <tt><a>Maybe</a> a</tt>.
+--   
+--   <pre>
+--   splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (That  (fromList ((3,"b") :| [(5,"a")]))))
+--   splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (That  (singleton 5 "a")))
+--   splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (These (singleton 3 "b") (singleton 5 "a")))
+--   splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (This  (singleton 3 "b"))
+--   splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (This  (fromList ((3,"b") :| [(5,"a")])))
+--   splitLookup 5 (singleton 5 "a")                 == (Just "a", Nothing)
+--   </pre>
+splitLookup :: Ord k => k -> NEMap k a -> (Maybe a, Maybe (These (NEMap k a) (NEMap k a)))
+
+-- | <i>O(1)</i>. Decompose a map into pieces based on the structure of the
+--   underlying tree. This function is useful for consuming a map in
+--   parallel.
+--   
+--   No guarantee is made as to the sizes of the pieces; an internal, but
+--   deterministic process determines this. However, it is guaranteed that
+--   the pieces returned will be in ascending order (all elements in the
+--   first submap less than all elements in the second, and so on).
+--   
+--   Note that the current implementation does not return more than four
+--   submaps, but you should not depend on this behaviour because it can
+--   change in the future without notice.
 splitRoot :: NEMap k a -> NonEmpty (NEMap k a)
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. This function is defined as
+--   (<tt><a>isSubmapOf</a> = <a>isSubmapOfBy</a> (==)</tt>).
 isSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The expression
+--   (<tt><a>isSubmapOfBy</a> f t1 t2</tt>) returns <a>True</a> if all keys
+--   in <tt>t1</tt> are in tree <tt>t2</tt>, and when <tt>f</tt> returns
+--   <a>True</a> when applied to their respective values. For example, the
+--   following expressions are all <a>True</a>:
+--   
+--   <pre>
+--   isSubmapOfBy (==) (singleton 'a' 1) (fromList (('a',1) :| [('b',2)]))
+--   isSubmapOfBy (&lt;=) (singleton 'a' 1) (fromList (('a',1) :| [('b',2)]))
+--   isSubmapOfBy (==) (fromList (('a',1) :| [('b',2)])) (fromList (('a',1) :| [('b',2)]))
+--   </pre>
+--   
+--   But the following are all <a>False</a>:
+--   
+--   <pre>
+--   isSubmapOfBy (==) (singleton 'a' 2) (fromList (('a',1) :| [('b',2)]))
+--   isSubmapOfBy (&lt;)  (singleton 'a' 1) (fromList (('a',1) :| [('b',2)]))
+--   isSubmapOfBy (==) (fromList (('a',1) :| [('b',2)])) (singleton 'a' 1)
+--   </pre>
 isSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Bool
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Is this a proper submap? (ie. a
+--   submap but not equal). Defined as (<tt><a>isProperSubmapOf</a> =
+--   <a>isProperSubmapOfBy</a> (==)</tt>).
 isProperSubmapOf :: (Ord k, Eq a) => NEMap k a -> NEMap k a -> Bool
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Is this a proper submap? (ie. a
+--   submap but not equal). The expression (<tt><a>isProperSubmapOfBy</a> f
+--   m1 m2</tt>) returns <a>True</a> when <tt>m1</tt> and <tt>m2</tt> are
+--   not equal, all keys in <tt>m1</tt> are in <tt>m2</tt>, and when
+--   <tt>f</tt> returns <a>True</a> when applied to their respective
+--   values. For example, the following expressions are all <a>True</a>:
+--   
+--   <pre>
+--   isProperSubmapOfBy (==) (singleton 1 1) (fromList ((1,1) :| [(2,2)]))
+--   isProperSubmapOfBy (&lt;=) (singleton 1 1) (fromList ((1,1) :| [(2,2)]))
+--   </pre>
+--   
+--   But the following are all <a>False</a>:
+--   
+--   <pre>
+--   isProperSubmapOfBy (==) (fromList ((1,1) :| [(2,2)])) (fromList ((1,1) :| [(2,2)]))
+--   isProperSubmapOfBy (==) (fromList ((1,1) :| [(2,2)])) (singleton 1 1))
+--   isProperSubmapOfBy (&lt;)  (singleton 1 1)               (fromList ((1,1) :| [(2,2)]))
+--   </pre>
 isProperSubmapOfBy :: Ord k => (a -> b -> Bool) -> NEMap k a -> NEMap k b -> Bool
+
+-- | <i>O(log n)</i>. Lookup the <i>index</i> of a key, which is its
+--   zero-based index in the sequence sorted by keys. The index is a number
+--   from <i>0</i> up to, but not including, the <a>size</a> of the map.
+--   
+--   <pre>
+--   isJust (lookupIndex 2 (fromList ((5,"a") :| [(3,"b")])))   == False
+--   fromJust (lookupIndex 3 (fromList ((5,"a") :| [(3,"b")]))) == 0
+--   fromJust (lookupIndex 5 (fromList ((5,"a") :| [(3,"b")]))) == 1
+--   isJust (lookupIndex 6 (fromList ((5,"a") :| [(3,"b")])))   == False
+--   </pre>
 lookupIndex :: Ord k => k -> NEMap k a -> Maybe Int
+
+-- | <i>O(log n)</i>. Return the <i>index</i> of a key, which is its
+--   zero-based index in the sequence sorted by keys. The index is a number
+--   from <i>0</i> up to, but not including, the <a>size</a> of the map.
+--   Calls <a>error</a> when the key is not a <a>member</a> of the map.
+--   
+--   <pre>
+--   findIndex 2 (fromList ((5,"a") :| [(3,"b")]))    Error: element is not in the map
+--   findIndex 3 (fromList ((5,"a") :| [(3,"b")])) == 0
+--   findIndex 5 (fromList ((5,"a") :| [(3,"b")])) == 1
+--   findIndex 6 (fromList ((5,"a") :| [(3,"b")]))    Error: element is not in the map
+--   </pre>
 findIndex :: Ord k => k -> NEMap k a -> Int
+
+-- | <i>O(log n)</i>. Retrieve an element by its <i>index</i>, i.e. by its
+--   zero-based index in the sequence sorted by keys. If the <i>index</i>
+--   is out of range (less than zero, greater or equal to <a>size</a> of
+--   the map), <a>error</a> is called.
+--   
+--   <pre>
+--   elemAt 0 (fromList ((5,"a") :| [(3,"b")])) == (3,"b")
+--   elemAt 1 (fromList ((5,"a") :| [(3,"b")])) == (5, "a")
+--   elemAt 2 (fromList ((5,"a") :| [(3,"b")]))    Error: index out of range
+--   </pre>
 elemAt :: Int -> NEMap k a -> (k, a)
 
--- | Variant of <a>updateAt</a> that disallows deletion. Allows us to
---   guarantee that the result is also a non-empty Map.
+-- | <i>O(log n)</i>. Variant of <a>updateAt</a> that disallows deletion.
+--   Allows us to guarantee that the result is also a non-empty Map.
 adjustAt :: (k -> a -> a) -> Int -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. Update the element at <i>index</i>, i.e. by its
+--   zero-based index in the sequence sorted by keys. If the <i>index</i>
+--   is out of range (less than zero, greater or equal to <a>size</a> of
+--   the map), <a>error</a> is called.
+--   
+--   Returns a possibly empty map (<a>Map</a>), because the function might
+--   end up deleting the last key in the map. See <a>adjustAt</a> for a
+--   version that disallows deletion, guaranteeing that the result is also
+--   a non-empty Map.
+--   
+--   <pre>
+--   updateAt (\ _ _ -&gt; Just "x") 0    (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "x"), (5, "a")]
+--   updateAt (\ _ _ -&gt; Just "x") 1    (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "x")]
+--   updateAt (\ _ _ -&gt; Just "x") 2    (fromList ((5,"a") :| [(3,"b")]))    Error: index out of range
+--   updateAt (\ _ _ -&gt; Just "x") (-1) (fromList ((5,"a") :| [(3,"b")]))    Error: index out of range
+--   updateAt (\_ _  -&gt; Nothing)  0    (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   updateAt (\_ _  -&gt; Nothing)  1    (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
+--   updateAt (\_ _  -&gt; Nothing)  2    (fromList ((5,"a") :| [(3,"b")]))    Error: index out of range
+--   updateAt (\_ _  -&gt; Nothing)  (-1) (fromList ((5,"a") :| [(3,"b")]))    Error: index out of range
+--   </pre>
 updateAt :: (k -> a -> Maybe a) -> Int -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Delete the element at <i>index</i>, i.e. by its
+--   zero-based index in the sequence sorted by keys. If the <i>index</i>
+--   is out of range (less than zero, greater or equal to <a>size</a> of
+--   the map), <a>error</a> is called.
+--   
+--   Returns a potentially empty map (<a>Map</a>) because of the
+--   possibility of deleting the last item in a map.
+--   
+--   <pre>
+--   deleteAt 0  (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   deleteAt 1  (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
+--   deleteAt 2 (fromList ((5,"a") :| [(3,"b")]))     Error: index out of range
+--   deleteAt (-1) (fromList ((5,"a") :| [(3,"b")]))  Error: index out of range
+--   </pre>
 deleteAt :: Int -> NEMap k a -> Map k a
+
+-- | Take a given number of entries in key order, beginning with the
+--   smallest keys.
+--   
+--   Returns a possibly empty map (<a>Map</a>), in case we take zero
+--   elements.
+--   
+--   <pre>
+--   take n = <a>fromDistinctAscList</a> . <a>take</a> n . Foldable.toList . <a>toList</a>
+--   </pre>
 take :: Int -> NEMap k a -> Map k a
+
+-- | Drop a given number of entries in key order, beginning with the
+--   smallest keys.
+--   
+--   Returns a possibly empty map (<a>Map</a>), in case we drop all of the
+--   elements.
+--   
+--   <pre>
+--   drop n = <a>fromDistinctAscList</a> . <a>drop</a> n . Foldable.toList . <a>toList</a>
+--   </pre>
 drop :: Int -> NEMap k a -> Map k a
-splitAt :: Int -> NEMap k a -> (Map k a, Map k a)
+
+-- | <i>O(log n)</i>. Split a map at a particular index <tt>i</tt>.
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that there are less than <tt>i</tt>
+--   items in the map, and <tt>n1</tt> is the original map.</li>
+--   <li><tt><a>That</a> n2</tt> means <tt>i</tt> was 0; we dropped 0
+--   items, so <tt>n2</tt> is the original map.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (taking <tt>i</tt>
+--   items from the original map) and <tt>n2</tt> (dropping <tt>i</tt>
+--   items from the original map))</li>
+--   </ul>
+splitAt :: Int -> NEMap k a -> These (NEMap k a) (NEMap k a)
+
+-- | <i>O(1)</i>. The minimal key of the map. Note that this is total,
+--   making <a>lookupMin</a> obsolete. It is constant-time, so has better
+--   asymptotics than <a>lookupMin</a> and <a>findMin</a>, as well.
+--   
+--   <pre>
+--   findMin (fromList ((5,"a") :| [(3,"b")])) == (3,"b")
+--   </pre>
 findMin :: NEMap k a -> (k, a)
+
+-- | <i>O(log n)</i>. The maximal key of the map. Note that this is total,
+--   making <a>lookupMin</a> obsolete. It is constant-time, so has better
+--   asymptotics than <a>lookupMin</a> and <a>findMin</a>, as well.
+--   
+--   <pre>
+--   findMin (fromList ((5,"a") :| [(3,"b")])) == (3,"b")
+--   </pre>
 findMax :: NEMap k a -> (k, a)
+
+-- | <i>O(1)</i>. Delete the minimal key. Returns a potentially empty map
+--   (<a>Map</a>), because we might end up deleting the final key in the
+--   map. It is constant-time, so has better asymptotics than
+--   <a>deleteMin</a>.
+--   
+--   <pre>
+--   deleteMin (fromList ((5,"a") :| [(3,"b"), (7,"c")])) == Data.Map.fromList [(5,"a"), (7,"c")]
+--   deleteMin (singleton 5 "a") == Data.Map.empty
+--   </pre>
 deleteMin :: NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Delete the maximal key. Returns a potentially empty
+--   map (<a>Map</a>), because we might end up deleting the final key in
+--   the map.
+--   
+--   <pre>
+--   deleteMax (fromList ((5,"a") :| [(3,"b"), (7,"c")])) == Data.Map.fromList [(3,"b"), (5,"a")]
+--   deleteMax (singleton 5 "a") == Data.Map.empty
+--   </pre>
 deleteMax :: NEMap k a -> Map k a
+
+-- | <i>O(1)</i>. Delete and find the minimal key-value pair. It is
+--   constant-time, so has better asymptotics that <a>minView</a> for
+--   <a>Map</a>.
+--   
+--   Note that unlike <a>deleteFindMin</a> for <a>Map</a>, this cannot ever
+--   fail, and so is a total function. However, the result <a>Map</a> is
+--   potentially empty, since the original map might have contained just a
+--   single item.
+--   
+--   <pre>
+--   deleteFindMin (fromList ((5,"a") :| [(3,"b"), (10,"c")])) == ((3,"b"), Data.Map.fromList [(5,"a"), (10,"c")])
+--   </pre>
 deleteFindMin :: NEMap k a -> ((k, a), Map k a)
+
+-- | <i>O(log n)</i>. Delete and find the minimal key-value pair.
+--   
+--   Note that unlike <a>deleteFindMax</a> for <a>Map</a>, this cannot ever
+--   fail, and so is a total function. However, the result <a>Map</a> is
+--   potentially empty, since the original map might have contained just a
+--   single item.
+--   
+--   <pre>
+--   deleteFindMax (fromList ((5,"a") :| [(3,"b"), (10,"c")])) == ((10,"c"), Data.Map.fromList [(3,"b"), (5,"a")])
+--   </pre>
 deleteFindMax :: NEMap k a -> ((k, a), Map k a)
+
+-- | <i>O(1)</i> if delete, <i>O(log n)</i> otherwise. Update the value at
+--   the minimal key. Returns a potentially empty map (<a>Map</a>), because
+--   we might end up deleting the final key in the map if the function
+--   returns <a>Nothing</a>. See <a>adjustMin</a> for a version that can
+--   guaruntee that we return a non-empty map.
+--   
+--   <pre>
+--   updateMin (\ a -&gt; Just ("X" ++ a)) (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "Xb"), (5, "a")]
+--   updateMin (\ _ -&gt; Nothing)         (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   </pre>
 updateMin :: (a -> Maybe a) -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Update the value at the maximal key. Returns a
+--   potentially empty map (<a>Map</a>), because we might end up deleting
+--   the final key in the map if the function returns <a>Nothing</a>. See
+--   <a>adjustMax</a> for a version that can guarantee that we return a
+--   non-empty map.
+--   
+--   <pre>
+--   updateMax (\ a -&gt; Just ("X" ++ a)) (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "Xa")]
+--   updateMax (\ _ -&gt; Nothing)         (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
+--   </pre>
 updateMax :: (a -> Maybe a) -> NEMap k a -> Map k a
+
+-- | <i>O(1)</i>. A version of <a>updateMin</a> that disallows deletion,
+--   allowing us to guarantee that the result is also non-empty.
+adjustMin :: (a -> a) -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. A version of <a>updateMax</a> that disallows
+--   deletion, allowing us to guarantee that the result is also non-empty.
+adjustMax :: (a -> a) -> NEMap k a -> NEMap k a
+
+-- | <i>O(1)</i> if delete, <i>O(log n)</i> otherwise. Update the value at
+--   the minimal key. Returns a potentially empty map (<a>Map</a>), because
+--   we might end up deleting the final key in the map if the function
+--   returns <a>Nothing</a>. See <a>adjustMinWithKey</a> for a version that
+--   guaruntees a non-empty map.
+--   
+--   <pre>
+--   updateMinWithKey (\ k a -&gt; Just ((show k) ++ ":" ++ a)) (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3,"3:b"), (5,"a")]
+--   updateMinWithKey (\ _ _ -&gt; Nothing)                     (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   </pre>
 updateMinWithKey :: (k -> a -> Maybe a) -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Update the value at the maximal key. Returns a
+--   potentially empty map (<a>Map</a>), because we might end up deleting
+--   the final key in the map if the function returns <a>Nothing</a>. See
+--   <a>adjustMaxWithKey</a> for a version that guaruntees a non-empty map.
+--   
+--   <pre>
+--   updateMinWithKey (\ k a -&gt; Just ((show k) ++ ":" ++ a)) (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3,"3:b"), (5,"a")]
+--   updateMinWithKey (\ _ _ -&gt; Nothing)                     (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   </pre>
 updateMaxWithKey :: (k -> a -> Maybe a) -> NEMap k a -> Map k a
+
+-- | <i>O(1)</i>. A version of <a>adjustMaxWithKey</a> that disallows
+--   deletion, allowing us to guarantee that the result is also non-empty.
+--   Note that it also is able to have better asymptotics than
+--   <a>updateMinWithKey</a> in general.
+adjustMinWithKey :: (k -> a -> a) -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. A version of <a>updateMaxWithKey</a> that disallows
+--   deletion, allowing us to guarantee that the result is also non-empty.
+adjustMaxWithKey :: (k -> a -> a) -> NEMap k a -> NEMap k a
+
+-- | <i>O(1)</i>. Retrieves the value associated with minimal key of the
+--   map, and the map stripped of that element. It is constant-time, so has
+--   better asymptotics than <a>minView</a> for <a>Map</a>.
+--   
+--   Note that unlike <a>minView</a> for <a>Map</a>, this cannot ever fail,
+--   so doesn't need to return in a <a>Maybe</a>. However, the result
+--   <a>Map</a> is potentially empty, since the original map might have
+--   contained just a single item.
+--   
+--   <pre>
+--   minView (fromList ((5,"a") :| [(3,"b")])) == ("b", Data.Map.singleton 5 "a")
+--   </pre>
 minView :: NEMap k a -> (a, Map k a)
+
+-- | <i>O(log n)</i>. Retrieves the value associated with maximal key of
+--   the map, and the map stripped of that element.
+--   
+--   Note that unlike <a>maxView</a> from <a>Map</a>, this cannot ever
+--   fail, so doesn't need to return in a <a>Maybe</a>. However, the result
+--   <a>Map</a> is potentially empty, since the original map might have
+--   contained just a single item.
+--   
+--   <pre>
+--   maxView (fromList ((5,"a") :| [(3,"b")])) == ("a", Data.Map.singleton 3 "b")
+--   </pre>
 maxView :: NEMap k a -> (a, Map k a)
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
