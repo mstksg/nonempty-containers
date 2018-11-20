@@ -90,7 +90,7 @@ singleton :: k -> a -> NEMap k a
 --   form an isomorphism: they are perfect structure-preserving inverses of
 --   eachother.
 --   
---   See <tt>IsNonEmpty</tt> for a pattern synonym that lets you "match on"
+--   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>Map</a> being an <a>NEMap</a>.
 --   
 --   <pre>
@@ -473,7 +473,7 @@ pattern IsEmpty :: Map k a
 --   form an isomorphism: they are perfect structure-preserving inverses of
 --   eachother.
 --   
---   See <tt>IsNonEmpty</tt> for a pattern synonym that lets you "match on"
+--   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>Map</a> being an <a>NEMap</a>.
 --   
 --   <pre>
