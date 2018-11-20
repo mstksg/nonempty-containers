@@ -1,16 +1,45 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveFunctor      #-}
 {-# LANGUAGE MagicHash          #-}
+{-# LANGUAGE ViewPatterns       #-}
+
+-- |
+-- Module      : Data.Map.NonEmpty.Internal
+-- Copyright   : (c) Justin Le 2018
+-- License     : BSD3
+--
+-- Maintainer  : justin@jle.im
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- = WARNING
+--
+-- This module is considered __internal__.
+--
+-- The Package Versioning Policy __does not apply__.
+--
+-- This contents of this module may change __in any way whatsoever__
+-- and __without any warning__ between minor versions of this package.
+--
+-- Authors importing this module are expected to track development
+-- closely.
+
 
 module Data.Map.NonEmpty.Internal (
+  -- * Non-Empty Map type
     NEMap(..)
-  , toMap
-  , toList
   , singleton
-  , fromList
   , nonEmptyMap
+  , fromList
+  , toList
+  , map
   , insertWith
+  , union
+  , unions
+  , elems
+  , size
+  , toMap
+  -- * Folds
   , foldr
   , foldr'
   , foldr1
@@ -19,20 +48,21 @@ module Data.Map.NonEmpty.Internal (
   , foldl'
   , foldl1
   , foldl1'
-  , union
-  , elems
-  , size
+  -- * Traversals
   , traverseWithKey
   , traverseWithKey1
   , foldMapWithKey
+  -- * Unsafe Map Functions
   , insertMinMap
   , insertMaxMap
+  -- * Debug
   , valid
   ) where
 
 import           Control.Applicative
-import           Data.Data                  (Data)
 import           Control.DeepSeq
+import           Data.Coerce
+import           Data.Data                  (Data)
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.Functor.Classes
@@ -83,7 +113,7 @@ data NEMap k a =
           , nemV0  :: a
           , nemMap :: !(Map k a)
           }
-  deriving (Eq, Ord, Functor, Data, Typeable)
+  deriving (Eq, Ord, Data, Typeable)
 
 instance Eq2 NEMap where
     liftEq2 eqk eqv m n =
@@ -222,6 +252,17 @@ foldMap1 :: Semigroup m => (a -> m) -> NEMap k a -> m
 foldMap1 f = foldMapWithKey (const f)
 {-# INLINE foldMap1 #-}
 
+-- TODO: write from scratch with rules
+map :: (a -> b) -> NEMap k a -> NEMap k b
+map f (NEMap k0 v m) = NEMap k0 (f v) (M.map f m)
+{-# NOINLINE [1] map #-}
+{-# RULES
+"map/map" forall f g xs . map f (map g xs) = map (f . g) xs
+ #-}
+{-# RULES
+"map/coerce" map coerce = coerce
+ #-}
+
 -- | /O(m*log(n\/m + 1)), m <= n/.
 -- The expression (@'union' t1 t2@) takes the left-biased union of @t1@ and
 -- @t2@. It prefers @t1@ when duplicate keys are encountered, i.e.
@@ -235,7 +276,15 @@ union n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     LT -> NEMap k1 v1 . M.union m1 . toMap $ n2
     EQ -> NEMap k1 v1 . M.union m1 . toMap $ n2
     GT -> NEMap k2 v2 . M.union (toMap n1) $ m2
-{-# INLINABLE union #-}
+{-# INLINE union #-}
+
+-- | The left-biased union of a list of maps.
+unions
+    :: (Foldable1 f, Ord k)
+    => f (NEMap k a)
+    -> NEMap k a
+unions (F1.toNonEmpty->(m :| ms)) = F.foldl' union m ms
+{-# INLINE unions #-}
 
 -- | /O(n)/.
 -- Return all elements of the map in the ascending order of their keys.
@@ -278,6 +327,7 @@ traverseWithKey f (NEMap k v m0) = NEMap k <$> f k v <*> M.traverseWithKey f m0
 
 -- | /O(n)/.
 -- @'traverseWithKey1' f m == 'fromNonEmpty' <$> 'traverse1' (\(k, v) -> (,) k <$> f k v) ('toList' m)@
+--
 -- That is, behaves exactly like a regular 'traverse1' except that the traversing
 -- function also has access to the key associated with a value.
 
@@ -339,13 +389,21 @@ insertWith f k v n@(NEMap k0 v0 m) = case compare k k0 of
     LT -> NEMap k  v        . toMap            $ n
     EQ -> NEMap k  (f v v0) m
     GT -> NEMap k0 v0       $ M.insertWith f k v m
-{-# INLINABLE insertWith #-}
+{-# INLINE insertWith #-}
 
 
 -- | Left-biased union
 instance Ord k => Semigroup (NEMap k a) where
     (<>) = union
     {-# INLINE (<>) #-}
+    sconcat = unions
+    {-# INLINE sconcat #-}
+
+instance Functor (NEMap k) where
+    fmap = map
+    {-# INLINE fmap #-}
+    x <$ NEMap k _ m = NEMap k x (x <$ m)
+    {-# INLINE (<$) #-}
 
 -- | Traverses elements in order ascending keys
 --

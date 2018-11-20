@@ -2,7 +2,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 module Data.Map.NonEmpty (
-  -- * Map type
+  -- * Non-Empty Map type
     NEMap
   , nonEmptyMap
   , toMap
@@ -96,8 +96,8 @@ module Data.Map.NonEmpty (
   -- ** Map
   , map
   , mapWithKey
-  , traverseWithKey
   , traverseWithKey1
+  , traverseWithKey
   , traverseMaybeWithKey
   , mapAccum
   , mapAccumWithKey
@@ -212,6 +212,8 @@ import qualified Data.Set                   as S
 --     -> NEMap k a
 -- fromSet f (NESet k ks) = NEMap k (f k) (M.fromSet f ks)
 
+-- | /O(log n)/. Find largest key smaller than the given one and return the
+-- corresponding (key, value) pair.
 lookup
     :: Ord k
     => k
@@ -221,15 +223,25 @@ lookup k (NEMap k0 v m) = case compare k k0 of
     LT -> Nothing
     EQ -> Just v
     GT -> M.lookup k m
+{-# INLINE lookup #-}
 
+-- | /O(log n)/. Find the value at a key.
+-- Returns 'Nothing' when the element can not be found.
 (!?) :: Ord k => NEMap k a -> k -> Maybe a
 (!?) = flip lookup
+{-# INLINE (!?) #-}
 
+-- | /O(log n)/. Find the value at a key.
+-- Calls 'error' when the element can not be found.
 (!) :: Ord k => NEMap k a -> k -> a
 (!) m k = fromMaybe e $ m !? k
   where
     e = error "NEMap.!: given key is not an element in the map"
+{-# INLINE (!) #-}
 
+-- | /O(log n)/. The expression @('findWithDefault' def k map)@ returns
+-- the value at key @k@ or returns default value @def@
+-- when the key is not in the map.
 findWithDefault
     :: Ord k
     => a
@@ -240,40 +252,58 @@ findWithDefault def k (NEMap k0 v m) = case compare k k0 of
     LT -> def
     EQ -> v
     GT -> M.findWithDefault def k m
+{-# INLINE findWithDefault #-}
 
+-- | /O(log n)/. Is the key a member of the map? See also 'notMember'.
 member :: Ord k => k -> NEMap k a -> Bool
 member k (NEMap k0 _ m) = case compare k k0 of
     LT -> False
     EQ -> True
     GT -> M.member k m
+{-# INLINE member #-}
 
+-- | /O(log n)/. Is the key not a member of the map? See also 'member'.
 notMember :: Ord k => k -> NEMap k a -> Bool
 notMember k = not . member k
+{-# INLINE notMember #-}
 
+-- | /O(log n)/. Find largest key smaller than the given one and return the
+-- corresponding (key, value) pair.
 lookupLT :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupLT k (NEMap k0 v m) = case compare k k0 of
     LT -> Nothing
     EQ -> Nothing
     GT -> M.lookupLT k m <|> Just (k0, v)
+{-# INLINE lookupLT #-}
 
+-- | /O(log n)/. Find smallest key greater than the given one and return the
+-- corresponding (key, value) pair.
 lookupGT :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupGT k (NEMap k0 v m) = case compare k k0 of
     LT -> Just (k0, v)
     EQ -> M.lookupMin m
     GT -> M.lookupGT k m
+{-# INLINE lookupGT #-}
 
+-- | /O(log n)/. Find largest key smaller or equal to the given one and return
+-- the corresponding (key, value) pair.
 lookupLE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupLE k (NEMap k0 v m) = case compare k k0 of
     LT -> Nothing
     EQ -> Just (k, v)
-    GT -> M.lookupLT k m <|> Just (k0, v)
+    GT -> M.lookupLE k m <|> Just (k0, v)
+{-# INLINE lookupLE #-}
 
+-- | /O(log n)/. Find smallest key greater or equal to the given one and return
+-- the corresponding (key, value) pair.
 lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupGE k (NEMap k0 v m) = case compare k k0 of
     LT -> Just (k0, v)
     EQ -> Just (k , v)
-    GT -> M.lookupGT k m
+    GT -> M.lookupGE k m
+{-# INLINE lookupGE #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Union with a combining function.
 unionWith
     :: Ord k
     => (a -> a -> a)
@@ -284,7 +314,10 @@ unionWith f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     LT -> NEMap k1 v1        . M.unionWith f m1 . toMap $ n2
     EQ -> NEMap k1 (f v1 v2) . M.unionWith f m1 . toMap $ n2
     GT -> NEMap k2 v2        . M.unionWith f (toMap n1) $ m2
+{-# INLINE unionWith #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/.
+-- Union with a combining function, given the matching key.
 unionWithKey
     :: Ord k
     => (k -> a -> a -> a)
@@ -295,20 +328,19 @@ unionWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     LT -> NEMap k1 v1           . M.unionWithKey f m1 . toMap $ n2
     EQ -> NEMap k1 (f k1 v1 v2) . M.unionWithKey f m1 . toMap $ n2
     GT -> NEMap k2 v2           . M.unionWithKey f (toMap n1) $ m2
+{-# INLINE unionWithKey #-}
 
-unions
-    :: (Foldable1 f, Ord k)
-    => f (NEMap k a)
-    -> NEMap k a
-unions (F1.toNonEmpty->(m :| ms)) = F.foldl' union m ms
-
+-- | The union of a list of maps, with a combining operation.
 unionsWith
     :: (Foldable1 f, Ord k)
     => (a -> a -> a)
     -> f (NEMap k a)
     -> NEMap k a
 unionsWith f (F1.toNonEmpty->(m :| ms)) = F.foldl' (unionWith f) m ms
+{-# INLINE unionsWith #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Difference of two maps.
+-- Return elements of the first map not existing in the second map.
 difference
     :: Ord k
     => NEMap k a
@@ -321,14 +353,22 @@ difference n1@(NEMap k1 v1 m1) n2@(NEMap k2 _ m2) = case compare k1 k2 of
     EQ -> m1 `M.difference` m2
     -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
     GT -> toMap n1 `M.difference` m2
+{-# INLINE difference #-}
 
+-- | Same as 'difference'.
 (\\)
     :: Ord k
     => NEMap k a
     -> NEMap k b
     -> Map k a
 (\\) = difference
+{-# INLINE (\\) #-}
 
+-- | /O(n+m)/. Difference with a combining function.
+-- When two equal keys are
+-- encountered, the combining function is applied to the values of these keys.
+-- If it returns 'Nothing', the element is discarded (proper set difference). If
+-- it returns (@'Just' y@), the element is updated with a new value @y@.
 differenceWith
     :: Ord k
     => (a -> b -> Maybe a)
@@ -336,7 +376,12 @@ differenceWith
     -> NEMap k b
     -> Map k a
 differenceWith f = differenceWithKey (const f)
+{-# INLINE differenceWith #-}
 
+-- | /O(n+m)/. Difference with a combining function. When two equal keys are
+-- encountered, the combining function is applied to the key and both values.
+-- If it returns 'Nothing', the element is discarded (proper set difference). If
+-- it returns (@'Just' y@), the element is updated with a new value @y@.
 differenceWithKey
     :: Ord k
     => (k -> a -> b -> Maybe a)
@@ -350,7 +395,11 @@ differenceWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2
     EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinMap k1) $ f k1 v1 v2
     -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
     GT -> M.differenceWithKey f (toMap n1) m2
+{-# INLINE differenceWithKey #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Intersection of two maps.
+-- Return data in the first map for the keys existing in both maps.
+-- (@'intersection' m1 m2 == 'intersectionWith' 'const' m1 m2@).
 intersection
     :: Ord k
     => NEMap k a
@@ -363,7 +412,9 @@ intersection n1@(NEMap k1 v1 m1) n2@(NEMap k2 _ m2) = case compare k1 k2 of
     EQ -> insertMinMap k1 v1 $ m1 `M.intersection` m2
     -- k2 is not in n1
     GT -> toMap n1 `M.intersection` m2
+{-# INLINE intersection #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Intersection with a combining function.
 intersectionWith
     :: Ord k
     => (a -> b -> c)
@@ -371,7 +422,9 @@ intersectionWith
     -> NEMap k b
     -> Map k c
 intersectionWith f = intersectionWithKey (const f)
+{-# INLINE intersectionWith #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Intersection with a combining function.
 intersectionWithKey
     :: Ord k
     => (k -> a -> b -> c)
@@ -385,40 +438,84 @@ intersectionWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 
     EQ -> insertMinMap k1 (f k1 v1 v2) $ M.intersectionWithKey f m1 m2
     -- k2 is not in n1
     GT -> M.intersectionWithKey f (toMap n1) m2
+{-# INLINE intersectionWithKey #-}
 
 
-
+-- | /O(n)/. Fold the keys and values in the map using the given right-associative
+-- binary operator, such that
+-- @'foldrWithKey' f z == 'Prelude.foldr' ('uncurry' f) z . 'toAscList'@.
+--
+-- For example,
+--
+-- > keysList map = foldrWithKey (\k x ks -> k:ks) [] map
 foldrWithKey :: (k -> a -> b -> b) -> b -> NEMap k a -> b
 foldrWithKey f z (NEMap k v m) = f k v . M.foldrWithKey f z $ m
+{-# INLINE foldrWithKey #-}
 
+-- | /O(n)/. A strict version of 'foldrWithKey'. Each application of the operator is
+-- evaluated before using the result in the next application. This
+-- function is strict in the starting value.
 foldrWithKey' :: (k -> a -> b -> b) -> b -> NEMap k a -> b
 foldrWithKey' f z (NEMap k v m) = f k v y
   where
     !y = M.foldrWithKey f z m
+{-# INLINE foldrWithKey' #-}
 
+-- | /O(n)/. Fold the keys and values in the map using the given left-associative
+-- binary operator, such that
+-- @'foldlWithKey' f z == 'Prelude.foldl' (\\z' (kx, x) -> f z' kx x) z . 'toAscList'@.
+--
+-- For example,
+--
+-- > keysList = reverse . foldlWithKey (\ks k x -> k:ks) []
 foldlWithKey :: (a -> k -> b -> a) -> a -> NEMap k b -> a
 foldlWithKey f z (NEMap k v m) = M.foldlWithKey f (f z k v) m
+{-# INLINE foldlWithKey #-}
 
+-- | /O(n)/. A strict version of 'foldlWithKey'. Each application of the operator is
+-- evaluated before using the result in the next application. This
+-- function is strict in the starting value.
 foldlWithKey' :: (a -> k -> b -> a) -> a -> NEMap k b -> a
 foldlWithKey' f z (NEMap k v m) = M.foldlWithKey' f x m
   where
     !x = f z k v
+{-# INLINE foldlWithKey' #-}
 
+-- | /O(n)/. Return all keys of the map in ascending order.
 keys :: NEMap k a -> NonEmpty k
 keys (NEMap k _ m) = k :| M.keys m
+{-# INLINE keys #-}
 
+-- | /O(n)/. An alias for 'toAscList'. Return all key\/value pairs in the map
+-- in ascending key order.
 assocs :: NEMap k a -> NonEmpty (k, a)
 assocs = toList
+{-# INLINE assocs #-}
 
 -- keysSet :: NEMap k a -> NESet k
 -- keysSet (NEMap k _ m) = NESet k (M.keysSet m)
 
+-- | /O(n)/. Map a function over all values in the map.
 mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 mapWithKey f (NEMap k v m) = NEMap k (f k v) (M.mapWithKey f m)
+{-# NOINLINE [1] mapWithKey #-}
+{-# RULES
+"mapWithKey/mapWithKey" forall f g xs . mapWithKey f (mapWithKey g xs) =
+  mapWithKey (\k a -> f k (g k a)) xs
+"mapWithKey/map" forall f g xs . mapWithKey f (map g xs) =
+  mapWithKey (\k a -> f k (g a)) xs
+"map/mapWithKey" forall f g xs . map f (mapWithKey g xs) =
+  mapWithKey (\k a -> f (g k a)) xs
+ #-}
 
+-- | /O(n)/. Convert the map to a list of key\/value pairs where the keys are
+-- in ascending order.
 toAscList :: NEMap k a -> NonEmpty (k, a)
 toAscList = toList
+{-# INLINE toAscList #-}
 
+-- | /O(n)/. Convert the map to a list of key\/value pairs where the keys
+-- are in descending order.
 toDescList :: NEMap k a -> NonEmpty (k, a)
 toDescList (NEMap k v m) = maybe kv0 (<> kv0)
                          . NE.nonEmpty
@@ -426,6 +523,7 @@ toDescList (NEMap k v m) = maybe kv0 (<> kv0)
                          $ m
   where
     kv0 = (k, v) :| []
+{-# INLINE toDescList #-}
 
 insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
 insertMap k v = maybe (singleton k v) (insert k v) . nonEmptyMap
@@ -637,6 +735,8 @@ alter f k n@(NEMap k0 v m) = case compare k k0 of
     GT -> insertMinMap k0 v . M.alter f k $ m
 
 -- TODO: is this faster than just toMapping?
+--
+-- TODO: RULES
 alterF
     :: (Ord k, Functor f)
     => (Maybe a -> f (Maybe a))
@@ -663,6 +763,8 @@ alter' f k n@(NEMap k0 v m) = case compare k k0 of
 
 -- | Variant of 'alterF' that disallows deletion.  Allows us to guarantee
 -- that the result is also a non-empty Map.
+--
+-- TODO: RULES
 alterF'
     :: (Ord k, Functor f)
     => (Maybe a -> f a)
@@ -673,9 +775,6 @@ alterF' f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> flip (NEMap k) (toMap n) <$> f Nothing
     EQ -> flip (NEMap k) m         <$> f (Just v)
     GT -> NEMap k0 v <$> M.alterF (fmap Just . f) k m
-
-map :: (a -> b) -> NEMap k a -> NEMap k b
-map = fmap
 
 -- TODO: benchmark against M.maxView version
 traverseMaybeWithKey
@@ -766,23 +865,52 @@ filterWithKey f (NEMap k v m)
     | f k v     = insertMinMap k v . M.filterWithKey f $ m
     | otherwise = M.filterWithKey f m
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Restrict an 'NEMap' to only those keys
+-- found in a 'Set'.
+--
+-- @
+-- m \`restrictKeys\` s = 'filterWithKey' (\k _ -> k ``Set.member`` s) m
+-- m \`restrictKeys\` s = m ``intersect`` 'fromSet' (const ()) s
+-- @
+
+-- TODO: rewrite with NonEmpty set?
 restrictKeys
     :: Ord k
     => NEMap k a
     -> S.Set k
     -> Map k a
-restrictKeys (NEMap k v m) ks
-    | S.member k ks = insertMinMap k v . M.restrictKeys m $ ks
-    | otherwise     = M.restrictKeys m ks
+restrictKeys n@(NEMap k v m) xs = case S.minView xs of
+    Nothing      -> M.empty
+    Just (y, ys) -> case compare k y of
+      -- k is not in xs
+      LT -> m `M.restrictKeys` xs
+      -- k and y are a part of the result
+      EQ -> insertMinMap k v $ m `M.restrictKeys` ys
+      -- y is not in m
+      GT -> toMap n `M.restrictKeys` ys
+{-# INLINE restrictKeys #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Remove all keys in a 'Set' from an 'NEMap'.
+--
+-- @
+-- m \`withoutKeys\` s = 'filterWithKey' (\k _ -> k ``Set.notMember`` s) m
+-- m \`withoutKeys\` s = m ``difference`` 'fromSet' (const ()) s
+-- @
 withoutKeys
     :: Ord k
     => NEMap k a
     -> S.Set k
     -> Map k a
-withoutKeys (NEMap k v m) ks
-    | S.member k ks = M.restrictKeys m ks
-    | otherwise     = insertMinMap k v . M.restrictKeys m $ ks
+withoutKeys n@(NEMap k v m) xs = case S.minView xs of
+    Nothing      -> toMap n
+    Just (y, ys) -> case compare k y of
+      -- k is not in xs, so cannot be deleted
+      LT -> insertMinMap k v $ m `M.withoutKeys` xs
+      -- y deletes k, and only k
+      EQ -> m `M.withoutKeys` ys
+      -- y is not in n, so cannot delete anything, so we can just difference n and ys
+      GT -> toMap n `M.withoutKeys` ys
+{-# INLINE withoutKeys #-}
 
 -- Requires Ord k
 partition
