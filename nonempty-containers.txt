@@ -99,7 +99,7 @@ singleton :: k -> a -> NEMap k a
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 
 -- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
---   key/value pairs. See also <tt>fromAscList</tt>. If the list contains
+--   key/value pairs. See also <a>fromAscList</a>. If the list contains
 --   more than one value for the same key, the last value for the key is
 --   retained.
 --   
@@ -129,7 +129,7 @@ map :: (a -> b) -> NEMap k a -> NEMap k b
 --   key does exist, the function will insert the pair <tt>(key, f
 --   new_value old_value)</tt>.
 --   
---   See <tt>insertMapWith</tt> for a version where the first argument is a
+--   See <a>insertMapWith</a> for a version where the first argument is a
 --   <a>Map</a>.
 --   
 --   <pre>
@@ -179,7 +179,7 @@ size :: NEMap k a -> Int
 --   possibly-empty map, for usage with functions that expect <a>Map</a>.
 --   
 --   Can be thought of as "obscuring" the non-emptiness of the map in its
---   type. See the <tt>IsNotEmpty</tt> pattern.
+--   type. See the <a>IsNotEmpty</a> pattern.
 --   
 --   <a>nonEmptyMap</a> and <tt><a>maybe</a> <a>empty</a> <a>toMap</a></tt>
 --   form an isomorphism: they are perfect structure-preserving inverses of
@@ -252,7 +252,7 @@ foldl1 :: (a -> a -> a) -> NEMap k a -> a
 --   application. This function is strict in the starting value.
 foldl1' :: (a -> a -> a) -> NEMap k a -> a
 
--- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <tt>fromNonEmpty</tt>
+-- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <a>fromList</a>
 --   <a>$</a> <a>traverse</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
 --   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
 --   <a>traverse</a> except that the traversing function also has access to
@@ -269,7 +269,7 @@ foldl1' :: (a -> a -> a) -> NEMap k a -> a
 --   </pre>
 traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 
--- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <tt>fromNonEmpty</tt>
+-- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <a>fromList</a>
 --   <a>$</a> <a>traverse1</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
 --   (<a>toList</a> m)</tt>
 --   
@@ -485,7 +485,7 @@ nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 --   possibly-empty map, for usage with functions that expect <a>Map</a>.
 --   
 --   Can be thought of as "obscuring" the non-emptiness of the map in its
---   type. See the <tt>IsNotEmpty</tt> pattern.
+--   type. See the <a>IsNotEmpty</a> pattern.
 --   
 --   <a>nonEmptyMap</a> and <tt><a>maybe</a> <a>empty</a> <a>toMap</a></tt>
 --   form an isomorphism: they are perfect structure-preserving inverses of
@@ -587,7 +587,7 @@ insertMapMax :: k -> a -> Map k a -> NEMap k a
 singleton :: k -> a -> NEMap k a
 
 -- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
---   key/value pairs. See also <tt>fromAscList</tt>. If the list contains
+--   key/value pairs. See also <a>fromAscList</a>. If the list contains
 --   more than one value for the same key, the last value for the key is
 --   retained.
 --   
@@ -724,7 +724,7 @@ insert :: Ord k => k -> a -> NEMap k a -> NEMap k a
 --   key does exist, the function will insert the pair <tt>(key, f
 --   new_value old_value)</tt>.
 --   
---   See <tt>insertMapWith</tt> for a version where the first argument is a
+--   See <a>insertMapWith</a> for a version where the first argument is a
 --   <a>Map</a>.
 --   
 --   <pre>
@@ -1211,7 +1211,7 @@ map :: (a -> b) -> NEMap k a -> NEMap k b
 --   </pre>
 mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 
--- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <tt>fromNonEmpty</tt>
+-- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <a>fromList</a>
 --   <a>$</a> <a>traverse1</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
 --   (<a>toList</a> m)</tt>
 --   
@@ -1223,7 +1223,7 @@ mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 --   <a>Apply</a>, and not just <a>Applicative</a>.
 traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 
--- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <tt>fromNonEmpty</tt>
+-- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <a>fromList</a>
 --   <a>$</a> <a>traverse</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
 --   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
 --   <a>traverse</a> except that the traversing function also has access to
