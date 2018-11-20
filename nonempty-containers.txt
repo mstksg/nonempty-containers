@@ -275,6 +275,44 @@ module Data.Map.NonEmpty
 --   <a>toMap</a>.
 data NEMap k a
 
+-- | A Map from keys <tt>k</tt> to values <tt>a</tt>.
+data Map k a
+
+-- | <i>O(log n)</i>. The <a>NonEmptyMap</a> and <a>EmptyMap</a> patterns
+--   allow you to treat a <a>Map</a> as if it were either a
+--   <tt><a>NonEmptyMap</a> n</tt> (where <tt>n</tt> is a <a>NEMap</a>) or
+--   an <a>EmptyMap</a>.
+--   
+--   For example, you can pattern match on a <a>Map</a>:
+--   
+--   <pre>
+--   myFunc :: <a>Map</a> K X -&gt; Y
+--   myFunc m = case m of
+--       <a>NonEmptyMap</a> n -&gt; -- here, n is a <a>NonEmptyMap</a>, m is proven not empty.
+--       <a>EmptyMap</a>      -&gt; -- here, m is empty.
+--   </pre>
+--   
+--   Matching on <tt><a>NonEmptyMap</a> n</tt> means that the original
+--   <a>Map</a> was <i>not</i> empty, and you have a verified-non-empty
+--   <a>NEMap</a> <tt>n</tt> to use.
+--   
+--   Note that patching on this pattern is <i>O(1)</i>. However, using the
+--   contents requires a <i>O(log n)</i> cost that is deferred until after
+--   the pattern is matched on (and is not incurred at all if the contents
+--   are never used).
+pattern NonEmptyMap :: NEMap k a -> Map k a
+
+-- | <i>O(1)</i>. The <a>NonEmptyMap</a> and <a>EmptyMap</a> patterns allow
+--   you to treat a <a>Map</a> as if it were either a
+--   <tt><a>NonEmptyMap</a> n</tt> (where <tt>n</tt> is a <a>NEMap</a>) or
+--   an <a>EmptyMap</a>.
+--   
+--   Matching on <a>EmptyMap</a> means that the original <a>Map</a> was
+--   empty.
+--   
+--   See <a>NonEmptyMap</a> for more information.
+pattern EmptyMap :: Map k a
+
 -- | <i>O(log n)</i> Smart constructor for an <a>NEMap</a> from a
 --   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
 --   actually empty, and <tt><a>Just</a> n</tt> with an <a>NEMap</a>, if
@@ -284,10 +322,40 @@ nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 -- | <i>O(log n)</i>. Convert a non-empty map back into a normal
 --   possibly-empty map, for usage with functions that expect <a>Map</a>.
 toMap :: NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Convert a <a>Map</a> into an <a>NEMap</a> by adding a
+--   key-value pair. If key is already present, will overwrite the original
+--   value.
+--   
+--   See <a>insertMapMin</a> for a version that is constant-time if the new
+--   key is <i>strictly smaller than</i> all keys in the original map.
 insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
+
+-- | <i>O(log n)</i>. Convert a <a>Map</a> into an <a>NEMap</a> by adding a
+--   key-value pair. Uses a combining function with the new value as the
+--   first argument if the key is already present.
 insertMapWith :: Ord k => (a -> a -> a) -> k -> a -> Map k a -> NEMap k a
+
+-- | <i>O(log n)</i>. Convert a <a>Map</a> into an <a>NEMap</a> by adding a
+--   key-value pair. Uses a combining function with the key and new value
+--   as the first and second arguments if the key is already present.
 insertMapWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> Map k a -> NEMap k a
+
+-- | <i>O(1)</i> Convert a <a>Map</a> into an <a>NEMap</a> by adding a
+--   key-value pair where the key is <i>strictly less than</i> all keys in
+--   the input map. The keys in the original map must all be <i>strictly
+--   greater than</i> the new key. <i>The precondition is not checked.</i>
 insertMapMin :: k -> a -> Map k a -> NEMap k a
+
+-- | <i>O(log n)</i> Convert a <a>Map</a> into an <a>NEMap</a> by adding a
+--   key-value pair where the key is <i>strictly greater than</i> all keys
+--   in the input map. The keys in the original map must all be <i>strictly
+--   less than</i> the new key. <i>The precondition is not checked.</i>
+--   
+--   While this has the same asymptotics as <a>insertMap</a>, it saves a
+--   constant factor for key comparison (so may be helpful if comparison is
+--   expensive) and also does not require an <a>Ord</a> instance for the
+--   key type.
 insertMapMax :: k -> a -> Map k a -> NEMap k a
 
 -- | The identity of <a>&lt;|&gt;</a>
