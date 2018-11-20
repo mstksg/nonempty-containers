@@ -11,6 +11,18 @@
 @package nonempty-containers
 @version 0.1.0.0
 
+
+-- | <h1>WARNING</h1>
+--   
+--   This module is considered <b>internal</b>.
+--   
+--   The Package Versioning Policy <b>does not apply</b>.
+--   
+--   This contents of this module may change <b>in any way whatsoever</b>
+--   and <b>without any warning</b> between minor versions of this package.
+--   
+--   Authors importing this module are expected to track development
+--   closely.
 module Data.Map.NonEmpty.Internal
 
 -- | A non-empty Map from keys <tt>k</tt> to values <tt>a</tt>. At least
@@ -54,21 +66,8 @@ NEMap :: !k -> a -> !Map k a -> NEMap k a
 [nemV0] :: NEMap k a -> a
 [nemMap] :: NEMap k a -> !Map k a
 
--- | <i>O(log n)</i>. Convert a non-empty map back into a normal
---   possibly-empty map, for usage with functions that expect <a>Map</a>.
-toMap :: NEMap k a -> Map k a
-
--- | <i>O(n)</i>. Convert the map to a non-empty list of key/value pairs.
-toList :: NEMap k a -> NonEmpty (k, a)
-
 -- | <i>O(1)</i>. A map with a single element.
 singleton :: k -> a -> NEMap k a
-
--- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
---   key/value pairs. See also <tt>fromAscList</tt>. If the list contains
---   more than one value for the same key, the last value for the key is
---   retained.
-fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
 
 -- | <i>O(log n)</i> Smart constructor for an <a>NEMap</a> from a
 --   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
@@ -76,12 +75,43 @@ fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
 --   the <a>Map</a> was not empty.
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 
+-- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
+--   key/value pairs. See also <tt>fromAscList</tt>. If the list contains
+--   more than one value for the same key, the last value for the key is
+--   retained.
+fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(n)</i>. Convert the map to a non-empty list of key/value pairs.
+toList :: NEMap k a -> NonEmpty (k, a)
+map :: (a -> b) -> NEMap k a -> NEMap k b
+
 -- | <i>O(log n)</i>. Insert with a function, combining new value and old
 --   value. <tt><a>insertWith</a> f key value mp</tt> will insert the pair
 --   (key, value) into <tt>mp</tt> if key does not exist in the map. If the
 --   key does exist, the function will insert the pair <tt>(key, f
 --   new_value old_value)</tt>.
 insertWith :: Ord k => (a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The expression (<tt><a>union</a>
+--   t1 t2</tt>) takes the left-biased union of <tt>t1</tt> and
+--   <tt>t2</tt>. It prefers <tt>t1</tt> when duplicate keys are
+--   encountered, i.e. (<tt><a>union</a> == <tt>unionWith</tt>
+--   <a>const</a></tt>).
+union :: Ord k => NEMap k a -> NEMap k a -> NEMap k a
+
+-- | The left-biased union of a list of maps.
+unions :: (Foldable1 f, Ord k) => f (NEMap k a) -> NEMap k a
+
+-- | <i>O(n)</i>. Return all elements of the map in the ascending order of
+--   their keys.
+elems :: NEMap k a -> NonEmpty a
+
+-- | <i>O(1)</i>. The number of elements in the map.
+size :: NEMap k a -> Int
+
+-- | <i>O(log n)</i>. Convert a non-empty map back into a normal
+--   possibly-empty map, for usage with functions that expect <a>Map</a>.
+toMap :: NEMap k a -> Map k a
 
 -- | <i>O(n)</i>. Fold the values in the map using the given
 --   right-associative binary operator, such that <tt><a>foldr</a> f z ==
@@ -127,20 +157,6 @@ foldl1 :: (a -> a -> a) -> NEMap k a -> a
 --   application. This function is strict in the starting value.
 foldl1' :: (a -> a -> a) -> NEMap k a -> a
 
--- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The expression (<tt><a>union</a>
---   t1 t2</tt>) takes the left-biased union of <tt>t1</tt> and
---   <tt>t2</tt>. It prefers <tt>t1</tt> when duplicate keys are
---   encountered, i.e. (<tt><a>union</a> == <tt>unionWith</tt>
---   <a>const</a></tt>).
-union :: Ord k => NEMap k a -> NEMap k a -> NEMap k a
-
--- | <i>O(n)</i>. Return all elements of the map in the ascending order of
---   their keys.
-elems :: NEMap k a -> NonEmpty a
-
--- | <i>O(1)</i>. The number of elements in the map.
-size :: NEMap k a -> Int
-
 -- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <tt>fromNonEmpty</tt>
 --   <a>$</a> <a>traverse</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
 --   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
@@ -160,9 +176,11 @@ traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b
 
 -- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <tt>fromNonEmpty</tt>
 --   <a>$</a> <a>traverse1</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
---   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
---   <a>traverse1</a> except that the traversing function also has access
---   to the key associated with a value.
+--   (<a>toList</a> m)</tt>
+--   
+--   That is, behaves exactly like a regular <a>traverse1</a> except that
+--   the traversing function also has access to the key associated with a
+--   value.
 traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 
 -- | <i>O(n)</i>. Fold the keys and values in the map using the given
@@ -201,7 +219,6 @@ insertMaxMap :: k -> a -> Map k a -> Map k a
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
 instance (Data.Data.Data k, Data.Data.Data a, GHC.Classes.Ord k) => Data.Data.Data (Data.Map.NonEmpty.Internal.NEMap k a)
-instance GHC.Base.Functor (Data.Map.NonEmpty.Internal.NEMap k)
 instance (GHC.Classes.Ord k, GHC.Classes.Ord a) => GHC.Classes.Ord (Data.Map.NonEmpty.Internal.NEMap k a)
 instance (GHC.Classes.Eq k, GHC.Classes.Eq a) => GHC.Classes.Eq (Data.Map.NonEmpty.Internal.NEMap k a)
 instance Data.Functor.Classes.Eq2 Data.Map.NonEmpty.Internal.NEMap
@@ -215,6 +232,7 @@ instance (GHC.Classes.Ord k, GHC.Read.Read k, GHC.Read.Read e) => GHC.Read.Read 
 instance (GHC.Show.Show k, GHC.Show.Show a) => GHC.Show.Show (Data.Map.NonEmpty.Internal.NEMap k a)
 instance (Control.DeepSeq.NFData k, Control.DeepSeq.NFData a) => Control.DeepSeq.NFData (Data.Map.NonEmpty.Internal.NEMap k a)
 instance GHC.Classes.Ord k => GHC.Base.Semigroup (Data.Map.NonEmpty.Internal.NEMap k a)
+instance GHC.Base.Functor (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Foldable.Foldable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEMap k)
@@ -318,16 +336,49 @@ alter' :: Ord k => (Maybe a -> a) -> k -> NEMap k a -> NEMap k a
 
 -- | Variant of <a>alterF</a> that disallows deletion. Allows us to
 --   guarantee that the result is also a non-empty Map.
+--   
+--   TODO: RULES
 alterF' :: (Ord k, Functor f) => (Maybe a -> f a) -> k -> NEMap k a -> f (NEMap k a)
+
+-- | <i>O(log n)</i>. Find largest key smaller than the given one and
+--   return the corresponding (key, value) pair.
 lookup :: Ord k => k -> NEMap k a -> Maybe a
+
+-- | <i>O(log n)</i>. Find the value at a key. Returns <a>Nothing</a> when
+--   the element can not be found.
 (!?) :: Ord k => NEMap k a -> k -> Maybe a
+
+-- | <i>O(log n)</i>. Find the value at a key. Calls <a>error</a> when the
+--   element can not be found.
 (!) :: Ord k => NEMap k a -> k -> a
+
+-- | <i>O(log n)</i>. The expression <tt>(<a>findWithDefault</a> def k
+--   map)</tt> returns the value at key <tt>k</tt> or returns default value
+--   <tt>def</tt> when the key is not in the map.
 findWithDefault :: Ord k => a -> k -> NEMap k a -> a
+
+-- | <i>O(log n)</i>. Is the key a member of the map? See also
+--   <a>notMember</a>.
 member :: Ord k => k -> NEMap k a -> Bool
+
+-- | <i>O(log n)</i>. Is the key not a member of the map? See also
+--   <a>member</a>.
 notMember :: Ord k => k -> NEMap k a -> Bool
+
+-- | <i>O(log n)</i>. Find largest key smaller than the given one and
+--   return the corresponding (key, value) pair.
 lookupLT :: Ord k => k -> NEMap k a -> Maybe (k, a)
+
+-- | <i>O(log n)</i>. Find smallest key greater than the given one and
+--   return the corresponding (key, value) pair.
 lookupGT :: Ord k => k -> NEMap k a -> Maybe (k, a)
+
+-- | <i>O(log n)</i>. Find largest key smaller or equal to the given one
+--   and return the corresponding (key, value) pair.
 lookupLE :: Ord k => k -> NEMap k a -> Maybe (k, a)
+
+-- | <i>O(log n)</i>. Find smallest key greater or equal to the given one
+--   and return the corresponding (key, value) pair.
 lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 
 -- | Test whether the structure is empty. The default implementation is
@@ -344,19 +395,67 @@ size :: NEMap k a -> Int
 --   encountered, i.e. (<tt><a>union</a> == <tt>unionWith</tt>
 --   <a>const</a></tt>).
 union :: Ord k => NEMap k a -> NEMap k a -> NEMap k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Union with a combining function.
 unionWith :: Ord k => (a -> a -> a) -> NEMap k a -> NEMap k a -> NEMap k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Union with a combining function,
+--   given the matching key.
 unionWithKey :: Ord k => (k -> a -> a -> a) -> NEMap k a -> NEMap k a -> NEMap k a
+
+-- | The left-biased union of a list of maps.
 unions :: (Foldable1 f, Ord k) => f (NEMap k a) -> NEMap k a
+
+-- | The union of a list of maps, with a combining operation.
 unionsWith :: (Foldable1 f, Ord k) => (a -> a -> a) -> f (NEMap k a) -> NEMap k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Difference of two maps. Return
+--   elements of the first map not existing in the second map.
 difference :: Ord k => NEMap k a -> NEMap k b -> Map k a
+
+-- | Same as <a>difference</a>.
 (\\) :: Ord k => NEMap k a -> NEMap k b -> Map k a
+
+-- | <i>O(n+m)</i>. Difference with a combining function. When two equal
+--   keys are encountered, the combining function is applied to the values
+--   of these keys. If it returns <a>Nothing</a>, the element is discarded
+--   (proper set difference). If it returns (<tt><a>Just</a> y</tt>), the
+--   element is updated with a new value <tt>y</tt>.
 differenceWith :: Ord k => (a -> b -> Maybe a) -> NEMap k a -> NEMap k b -> Map k a
+
+-- | <i>O(n+m)</i>. Difference with a combining function. When two equal
+--   keys are encountered, the combining function is applied to the key and
+--   both values. If it returns <a>Nothing</a>, the element is discarded
+--   (proper set difference). If it returns (<tt><a>Just</a> y</tt>), the
+--   element is updated with a new value <tt>y</tt>.
 differenceWithKey :: Ord k => (k -> a -> b -> Maybe a) -> NEMap k a -> NEMap k b -> Map k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Intersection of two maps. Return
+--   data in the first map for the keys existing in both maps.
+--   (<tt><a>intersection</a> m1 m2 == <a>intersectionWith</a> <a>const</a>
+--   m1 m2</tt>).
 intersection :: Ord k => NEMap k a -> NEMap k b -> Map k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Intersection with a combining
+--   function.
 intersectionWith :: Ord k => (a -> b -> c) -> NEMap k a -> NEMap k b -> Map k c
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Intersection with a combining
+--   function.
 intersectionWithKey :: Ord k => (k -> a -> b -> c) -> NEMap k a -> NEMap k b -> Map k c
 map :: (a -> b) -> NEMap k a -> NEMap k b
+
+-- | <i>O(n)</i>. Map a function over all values in the map.
 mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
+
+-- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <tt>fromNonEmpty</tt>
+--   <a>$</a> <a>traverse1</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
+--   (<a>toList</a> m)</tt>
+--   
+--   That is, behaves exactly like a regular <a>traverse1</a> except that
+--   the traversing function also has access to the key associated with a
+--   value.
+traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 
 -- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <tt>fromNonEmpty</tt>
 --   <a>$</a> <a>traverse</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
@@ -374,13 +473,6 @@ mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
 --   <a>traverseWithKey</a> f = <a>unwrapApplicative</a> . <a>traverseWithKey1</a> (\k -&gt; WrapApplicative . f k)
 --   </pre>
 traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
-
--- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <tt>fromNonEmpty</tt>
---   <a>$</a> <a>traverse1</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
---   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
---   <a>traverse1</a> except that the traversing function also has access
---   to the key associated with a value.
-traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 traverseMaybeWithKey :: Apply t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
 mapAccum :: (a -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
 mapAccumWithKey :: (a -> k -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
@@ -398,7 +490,28 @@ foldr :: (a -> b -> b) -> b -> NEMap k a -> b
 --   left-associative binary operator, such that <tt><a>foldl</a> f z ==
 --   <a>foldl</a> f z . <a>elems</a></tt>.
 foldl :: (a -> b -> a) -> a -> NEMap k b -> a
+
+-- | <i>O(n)</i>. Fold the keys and values in the map using the given
+--   right-associative binary operator, such that <tt><a>foldrWithKey</a> f
+--   z == <a>foldr</a> (<a>uncurry</a> f) z . <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   keysList map = foldrWithKey (\k x ks -&gt; k:ks) [] map
+--   </pre>
 foldrWithKey :: (k -> a -> b -> b) -> b -> NEMap k a -> b
+
+-- | <i>O(n)</i>. Fold the keys and values in the map using the given
+--   left-associative binary operator, such that <tt><a>foldlWithKey</a> f
+--   z == <a>foldl</a> (\z' (kx, x) -&gt; f z' kx x) z .
+--   <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   keysList = reverse . foldlWithKey (\ks k x -&gt; k:ks) []
+--   </pre>
 foldlWithKey :: (a -> k -> b -> a) -> a -> NEMap k b -> a
 
 -- | <i>O(n)</i>. Fold the keys and values in the map using the given
@@ -438,22 +551,57 @@ foldl1 :: (a -> a -> a) -> NEMap k a -> a
 --   the operator is evaluated before using the result in the next
 --   application. This function is strict in the starting value.
 foldl1' :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldrWithKey</a>. Each application
+--   of the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldrWithKey' :: (k -> a -> b -> b) -> b -> NEMap k a -> b
+
+-- | <i>O(n)</i>. A strict version of <a>foldlWithKey</a>. Each application
+--   of the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldlWithKey' :: (a -> k -> b -> a) -> a -> NEMap k b -> a
 
 -- | <i>O(n)</i>. Return all elements of the map in the ascending order of
 --   their keys.
 elems :: NEMap k a -> NonEmpty a
+
+-- | <i>O(n)</i>. Return all keys of the map in ascending order.
 keys :: NEMap k a -> NonEmpty k
+
+-- | <i>O(n)</i>. An alias for <a>toAscList</a>. Return all key/value pairs
+--   in the map in ascending key order.
 assocs :: NEMap k a -> NonEmpty (k, a)
 
 -- | <i>O(n)</i>. Convert the map to a non-empty list of key/value pairs.
 toList :: NEMap k a -> NonEmpty (k, a)
+
+-- | <i>O(n)</i>. Convert the map to a list of key/value pairs where the
+--   keys are in ascending order.
 toAscList :: NEMap k a -> NonEmpty (k, a)
+
+-- | <i>O(n)</i>. Convert the map to a list of key/value pairs where the
+--   keys are in descending order.
 toDescList :: NEMap k a -> NonEmpty (k, a)
 filter :: (a -> Bool) -> NEMap k a -> Map k a
 filterWithKey :: (k -> a -> Bool) -> NEMap k a -> Map k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Restrict an <a>NEMap</a> to only
+--   those keys found in a <tt>Set</tt>.
+--   
+--   <pre>
+--   m `restrictKeys` s = <a>filterWithKey</a> (k _ -&gt; k `<a>member</a>` s) m
+--   m `restrictKeys` s = m `<tt>intersect</tt>` <tt>fromSet</tt> (const ()) s
+--   </pre>
 restrictKeys :: Ord k => NEMap k a -> Set k -> Map k a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Remove all keys in a <tt>Set</tt>
+--   from an <a>NEMap</a>.
+--   
+--   <pre>
+--   m `withoutKeys` s = <a>filterWithKey</a> (k _ -&gt; k `<a>notMember</a>` s) m
+--   m `withoutKeys` s = m `<a>difference</a>` <tt>fromSet</tt> (const ()) s
+--   </pre>
 withoutKeys :: Ord k => NEMap k a -> Set k -> Map k a
 partition :: (a -> Bool) -> NEMap k a -> (Map k a, Map k a)
 partitionWithKey :: (k -> a -> Bool) -> NEMap k a -> (Map k a, Map k a)
