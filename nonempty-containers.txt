@@ -911,8 +911,8 @@ alter :: Ord k => (Maybe a -> Maybe a) -> k -> NEMap k a -> Map k a
 --   the <a>Identity</a> type.
 --   
 --   Note: Unlike <tt>Data.Map.alterF</tt> for <a>Map</a>, <a>alterF</a> is
---   <i>not</i> a flipped version of the <tt>at</tt> combinator from
---   <a>At</a>.
+--   <i>not</i> a flipped version of the <a>at</a> combinator from
+--   <a>Control.Lens.At</a>.
 alterF :: (Ord k, Functor f) => (Maybe a -> f (Maybe a)) -> k -> NEMap k a -> f (Map k a)
 
 -- | <i>O(log n)</i>. Variant of <a>alter</a> that disallows deletion.
@@ -1514,11 +1514,11 @@ filter :: (a -> Bool) -> NEMap k a -> Map k a
 filterWithKey :: (k -> a -> Bool) -> NEMap k a -> Map k a
 
 -- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Restrict an <a>NEMap</a> to only
---   those keys found in a <tt>Set</tt>.
+--   those keys found in a <a>Set</a>.
 --   
 --   <pre>
 --   m `restrictKeys` s = <a>filterWithKey</a> (k _ -&gt; k `<a>member</a>` s) m
---   m `restrictKeys` s = m `<tt>intersect</tt>` <tt>fromSet</tt> (const ()) s
+--   m `restrictKeys` s = m `<a>intersection</a>` <tt>fromSet</tt> (const ()) s
 --   </pre>
 restrictKeys :: Ord k => NEMap k a -> Set k -> Map k a
 

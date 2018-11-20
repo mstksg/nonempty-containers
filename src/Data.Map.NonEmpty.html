@@ -1238,7 +1238,7 @@
 </span><a name="line-1238"></a><span class="hs-comment">-- private copy of the 'Identity' type.</span><span>
 </span><a name="line-1239"></a><span class="hs-comment">--</span><span>
 </span><a name="line-1240"></a><span class="hs-comment">-- Note: Unlike @Data.Map.alterF@ for 'Map', 'alterF' is /not/ a flipped</span><span>
-</span><a name="line-1241"></a><span class="hs-comment">-- version of the 'at' combinator from 'Control.Lens.At'.</span><span>
+</span><a name="line-1241"></a><span class="hs-comment">-- version of the 'Control.Lens.At.at' combinator from &quot;Control.Lens.At&quot;.</span><span>
 </span><a name="line-1242"></a><span class="hs-identifier">alterF</span><span>
 </span><a name="line-1243"></a><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Ord</span><span> </span><a href="#local-6989586621679098587"><span class="hs-identifier hs-type">k</span></a><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-type">Functor</span><span> </span><a href="#local-6989586621679098588"><span class="hs-identifier hs-type">f</span></a><span class="hs-special">)</span><span>
 </span><a name="line-1244"></a><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Maybe</span><span> </span><a href="#local-6989586621679098589"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679098588"><span class="hs-identifier hs-type">f</span></a><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Maybe</span><span> </span><a href="#local-6989586621679098589"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span class="hs-special">)</span><span>
@@ -1506,11 +1506,11 @@
 </span><a name="line-1506"></a><span class="hs-pragma">{-# INLINE</span><span> </span><span class="hs-pragma">filterWithKey</span><span> </span><span class="hs-pragma">#-}</span><span>
 </span><a name="line-1507"></a><span>
 </span><a name="line-1508"></a><span class="hs-comment">-- | /O(m*log(n\/m + 1)), m &lt;= n/. Restrict an 'NEMap' to only those keys</span><span>
-</span><a name="line-1509"></a><span class="hs-comment">-- found in a 'Set'.</span><span>
+</span><a name="line-1509"></a><span class="hs-comment">-- found in a 'Data.Set.Set'.</span><span>
 </span><a name="line-1510"></a><span class="hs-comment">--</span><span>
 </span><a name="line-1511"></a><span class="hs-comment">-- @</span><span>
 </span><a name="line-1512"></a><span class="hs-comment">-- m \`restrictKeys\` s = 'filterWithKey' (\k _ -&gt; k ``Set.member`` s) m</span><span>
-</span><a name="line-1513"></a><span class="hs-comment">-- m \`restrictKeys\` s = m ``intersect`` 'fromSet' (const ()) s</span><span>
+</span><a name="line-1513"></a><span class="hs-comment">-- m \`restrictKeys\` s = m ``intersection`` 'fromSet' (const ()) s</span><span>
 </span><a name="line-1514"></a><span class="hs-comment">-- @</span><span>
 </span><a name="line-1515"></a><span>
 </span><a name="line-1516"></a><span class="hs-comment">-- TODO: rewrite with NonEmpty set?</span><span>
