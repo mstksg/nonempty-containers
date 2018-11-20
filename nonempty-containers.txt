@@ -820,6 +820,23 @@ adjustWithKey :: Ord k => (k -> a -> a) -> k -> NEMap k a -> NEMap k a
 --   update f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
 --   </pre>
 update :: Ord k => (a -> Maybe a) -> k -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. The expression (<tt><a>updateWithKey</a> f k
+--   map</tt>) updates the value <tt>x</tt> at <tt>k</tt> (if it is in the
+--   map). If (<tt>f k x</tt>) is <a>Nothing</a>, the element is deleted.
+--   If it is (<tt><a>Just</a> y</tt>), the key <tt>k</tt> is bound to the
+--   new value <tt>y</tt>.
+--   
+--   Returns a potentially empty map (<a>Map</a>), because we can't know
+--   ahead of time if the function returns <a>Nothing</a> and deletes the
+--   final item in the <a>NEMap</a>.
+--   
+--   <pre>
+--   let f k x = if x == "a" then Just ((show k) ++ ":new a") else Nothing
+--   updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "5:new a")]
+--   updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a")]
+--   updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   </pre>
 updateWithKey :: Ord k => (k -> a -> Maybe a) -> k -> NEMap k a -> Map k a
 
 -- | <i>O(log n)</i>. The expression (<tt><a>updateWithKey</a> f k
