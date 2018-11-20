@@ -946,7 +946,8 @@ alter' :: Ord k => (Maybe a -> a) -> k -> NEMap k a -> NEMap k a
 --   See <a>alterF</a> for usage information and caveats.
 --   
 --   Note: Neither <a>alterF</a> nor <a>alterF'</a> can be considered
---   flipped versions of the <tt>at</tt> combinator from <a>At</a>.
+--   flipped versions of the <a>at</a> combinator from
+--   <a>Control.Lens.At</a>.
 alterF' :: (Ord k, Functor f) => (Maybe a -> f a) -> k -> NEMap k a -> f (NEMap k a)
 
 -- | <i>O(log n)</i>. Lookup the value at a key in the map.
