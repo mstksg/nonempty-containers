@@ -12,6 +12,40 @@
 @version 0.1.0.0
 
 module Data.Map.NonEmpty.Internal
+
+-- | A non-empty Map from keys <tt>k</tt> to values <tt>a</tt>. At least
+--   one key-value pair exists in an <tt><a>NEMap</a> k v</tt> at all
+--   times.
+--   
+--   Functions that <i>take</i> an <a>NEMap</a> can safely operate on it
+--   with the assumption that it has at least one key-value pair.
+--   
+--   Functions that <i>return</i> an <a>NEMap</a> provide an assurance that
+--   the result has at least one key-value pair.
+--   
+--   <a>Data.Map.NonEmpty</a> re-exports the API of <a>Data.Map</a>,
+--   faithfully reproducing asymptotics, typeclass constraints, and
+--   semantics. Functions that ensure that input and output maps are both
+--   non-empty (like <tt>insert</tt>) return <a>NEMap</a>, but functions
+--   that might potentially return an empty map (like <tt>delete</tt>)
+--   return a <a>Map</a> instead.
+--   
+--   You can directly construct an <a>NEMap</a> with the API from
+--   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
+--   normal <a>Map</a>, except you don't have access to <a>empty</a>. There
+--   are also a few ways to construct an <a>NEMap</a> from a <a>Map</a>:
+--   
+--   <ol>
+--   <li>The <a>nonEmptyMap</a> smart constructor will convert a
+--   <tt><a>Map</a> k a</tt> into a <tt><a>Maybe</a> (<a>NEMap</a> k
+--   a)</tt>, returning <a>Nothing</a> if the original <a>Map</a> was
+--   empty.</li>
+--   <li>You can use the <tt>insertMap</tt> family of functions to insert a
+--   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
+--   <a>toMap</a>.
 data NEMap k a
 NEMap :: !k -> a -> !Map k a -> NEMap k a
 
@@ -19,19 +53,127 @@ NEMap :: !k -> a -> !Map k a -> NEMap k a
 [nemK0] :: NEMap k a -> !k
 [nemV0] :: NEMap k a -> a
 [nemMap] :: NEMap k a -> !Map k a
+
+-- | <i>O(log n)</i>. Convert a non-empty map back into a normal
+--   possibly-empty map, for usage with functions that expect <a>Map</a>.
 toMap :: NEMap k a -> Map k a
+
+-- | <i>O(n)</i>. Convert the map to a non-empty list of key/value pairs.
+toList :: NEMap k a -> NonEmpty (k, a)
+
+-- | <i>O(1)</i>. A map with a single element.
+singleton :: k -> a -> NEMap k a
+
+-- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
+--   key/value pairs. See also <tt>fromAscList</tt>. If the list contains
+--   more than one value for the same key, the last value for the key is
+--   retained.
+fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
+
+-- | <i>O(log n)</i> Smart constructor for an <a>NEMap</a> from a
+--   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
+--   actually empty, and <tt><a>Just</a> n</tt> with an <a>NEMap</a>, if
+--   the <a>Map</a> was not empty.
+nonEmptyMap :: Map k a -> Maybe (NEMap k a)
+
+-- | <i>O(log n)</i>. Insert with a function, combining new value and old
+--   value. <tt><a>insertWith</a> f key value mp</tt> will insert the pair
+--   (key, value) into <tt>mp</tt> if key does not exist in the map. If the
+--   key does exist, the function will insert the pair <tt>(key, f
+--   new_value old_value)</tt>.
+insertWith :: Ord k => (a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
+
+-- | <i>O(n)</i>. Fold the values in the map using the given
+--   right-associative binary operator, such that <tt><a>foldr</a> f z ==
+--   <a>foldr</a> f z . <a>elems</a></tt>.
 foldr :: (a -> b -> b) -> b -> NEMap k a -> b
+
+-- | <i>O(n)</i>. A strict version of <a>foldr</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldr' :: (a -> b -> b) -> b -> NEMap k a -> b
+
+-- | <i>O(n)</i>. A version of <a>foldr</a> that uses the value at the
+--   maximal key in the map as the starting value.
+--   
+--   Note that, unlike <a>foldr1</a> for <a>Map</a>, this function is total
+--   if the input function is total.
 foldr1 :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldr1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldr1' :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(n)</i>. Fold the values in the map using the given
+--   left-associative binary operator, such that <tt><a>foldl</a> f z ==
+--   <a>foldl</a> f z . <a>elems</a></tt>.
 foldl :: (a -> b -> a) -> a -> NEMap k b -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldl</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NEMap k b -> a
+
+-- | <i>O(n)</i>. A version of <a>foldl</a> that uses the value at the
+--   minimal key in the map as the starting value.
+--   
+--   Note that, unlike <a>foldl1</a> for <a>Map</a>, this function is total
+--   if the input function is total.
 foldl1 :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldl1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldl1' :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The expression (<tt><a>union</a>
+--   t1 t2</tt>) takes the left-biased union of <tt>t1</tt> and
+--   <tt>t2</tt>. It prefers <tt>t1</tt> when duplicate keys are
+--   encountered, i.e. (<tt><a>union</a> == <tt>unionWith</tt>
+--   <a>const</a></tt>).
 union :: Ord k => NEMap k a -> NEMap k a -> NEMap k a
+
+-- | <i>O(n)</i>. Return all elements of the map in the ascending order of
+--   their keys.
 elems :: NEMap k a -> NonEmpty a
+
+-- | <i>O(1)</i>. The number of elements in the map.
 size :: NEMap k a -> Int
-traverseWithKey :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
+
+-- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <tt>fromNonEmpty</tt>
+--   <a>$</a> <a>traverse</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
+--   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
+--   <a>traverse</a> except that the traversing function also has access to
+--   the key associated with a value.
+--   
+--   <i>Use <a>traverseWithKey1</a></i> whenever possible (if your
+--   <a>Applicative</a> also has <a>Apply</a> instance). This version is
+--   provided only for types that do not have <a>Apply</a> instance, since
+--   <a>Apply</a> is not at the moment (and might not ever be) an official
+--   superclass of <a>Applicative</a>.
+--   
+--   <pre>
+--   <a>traverseWithKey</a> f = <a>unwrapApplicative</a> . <a>traverseWithKey1</a> (\k -&gt; WrapApplicative . f k)
+--   </pre>
+traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
+
+-- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <tt>fromNonEmpty</tt>
+--   <a>$</a> <a>traverse1</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
+--   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
+--   <a>traverse1</a> except that the traversing function also has access
+--   to the key associated with a value.
+traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
+
+-- | <i>O(n)</i>. Fold the keys and values in the map using the given
+--   semigroup, such that
+--   
+--   <pre>
+--   <a>foldMapWithKey</a> f = <a>fold1</a> . <tt>mapWithKey</tt> f
+--   </pre>
+--   
+--   This can be an asymptotically faster than <tt>foldrWithKey</tt> or
+--   <tt>foldlWithKey</tt> for some monoids.
 foldMapWithKey :: Semigroup m => (k -> a -> m) -> NEMap k a -> m
 
 -- | <i>O(log n)</i>. Insert new key and value into a map where keys are
@@ -58,9 +200,20 @@ insertMaxMap :: k -> a -> Map k a -> Map k a
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
+instance (Data.Data.Data k, Data.Data.Data a, GHC.Classes.Ord k) => Data.Data.Data (Data.Map.NonEmpty.Internal.NEMap k a)
 instance GHC.Base.Functor (Data.Map.NonEmpty.Internal.NEMap k)
 instance (GHC.Classes.Ord k, GHC.Classes.Ord a) => GHC.Classes.Ord (Data.Map.NonEmpty.Internal.NEMap k a)
 instance (GHC.Classes.Eq k, GHC.Classes.Eq a) => GHC.Classes.Eq (Data.Map.NonEmpty.Internal.NEMap k a)
+instance Data.Functor.Classes.Eq2 Data.Map.NonEmpty.Internal.NEMap
+instance GHC.Classes.Eq k => Data.Functor.Classes.Eq1 (Data.Map.NonEmpty.Internal.NEMap k)
+instance Data.Functor.Classes.Ord2 Data.Map.NonEmpty.Internal.NEMap
+instance GHC.Classes.Ord k => Data.Functor.Classes.Ord1 (Data.Map.NonEmpty.Internal.NEMap k)
+instance Data.Functor.Classes.Show2 Data.Map.NonEmpty.Internal.NEMap
+instance GHC.Show.Show k => Data.Functor.Classes.Show1 (Data.Map.NonEmpty.Internal.NEMap k)
+instance (GHC.Classes.Ord k, GHC.Read.Read k) => Data.Functor.Classes.Read1 (Data.Map.NonEmpty.Internal.NEMap k)
+instance (GHC.Classes.Ord k, GHC.Read.Read k, GHC.Read.Read e) => GHC.Read.Read (Data.Map.NonEmpty.Internal.NEMap k e)
+instance (GHC.Show.Show k, GHC.Show.Show a) => GHC.Show.Show (Data.Map.NonEmpty.Internal.NEMap k a)
+instance (Control.DeepSeq.NFData k, Control.DeepSeq.NFData a) => Control.DeepSeq.NFData (Data.Map.NonEmpty.Internal.NEMap k a)
 instance GHC.Classes.Ord k => GHC.Base.Semigroup (Data.Map.NonEmpty.Internal.NEMap k a)
 instance Data.Foldable.Foldable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
@@ -68,8 +221,50 @@ instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEM
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
 
 module Data.Map.NonEmpty
+
+-- | A non-empty Map from keys <tt>k</tt> to values <tt>a</tt>. At least
+--   one key-value pair exists in an <tt><a>NEMap</a> k v</tt> at all
+--   times.
+--   
+--   Functions that <i>take</i> an <a>NEMap</a> can safely operate on it
+--   with the assumption that it has at least one key-value pair.
+--   
+--   Functions that <i>return</i> an <a>NEMap</a> provide an assurance that
+--   the result has at least one key-value pair.
+--   
+--   <a>Data.Map.NonEmpty</a> re-exports the API of <a>Data.Map</a>,
+--   faithfully reproducing asymptotics, typeclass constraints, and
+--   semantics. Functions that ensure that input and output maps are both
+--   non-empty (like <tt>insert</tt>) return <a>NEMap</a>, but functions
+--   that might potentially return an empty map (like <tt>delete</tt>)
+--   return a <a>Map</a> instead.
+--   
+--   You can directly construct an <a>NEMap</a> with the API from
+--   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
+--   normal <a>Map</a>, except you don't have access to <a>empty</a>. There
+--   are also a few ways to construct an <a>NEMap</a> from a <a>Map</a>:
+--   
+--   <ol>
+--   <li>The <a>nonEmptyMap</a> smart constructor will convert a
+--   <tt><a>Map</a> k a</tt> into a <tt><a>Maybe</a> (<a>NEMap</a> k
+--   a)</tt>, returning <a>Nothing</a> if the original <a>Map</a> was
+--   empty.</li>
+--   <li>You can use the <tt>insertMap</tt> family of functions to insert a
+--   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
+--   <a>toMap</a>.
 data NEMap k a
+
+-- | <i>O(log n)</i> Smart constructor for an <a>NEMap</a> from a
+--   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
+--   actually empty, and <tt><a>Just</a> n</tt> with an <a>NEMap</a>, if
+--   the <a>Map</a> was not empty.
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
+
+-- | <i>O(log n)</i>. Convert a non-empty map back into a normal
+--   possibly-empty map, for usage with functions that expect <a>Map</a>.
 toMap :: NEMap k a -> Map k a
 insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
 insertMapWith :: Ord k => (a -> a -> a) -> k -> a -> Map k a -> NEMap k a
@@ -79,7 +274,14 @@ insertMapMax :: k -> a -> Map k a -> NEMap k a
 
 -- | The identity of <a>&lt;|&gt;</a>
 empty :: Alternative f => f a
+
+-- | <i>O(1)</i>. A map with a single element.
 singleton :: k -> a -> NEMap k a
+
+-- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
+--   key/value pairs. See also <tt>fromAscList</tt>. If the list contains
+--   more than one value for the same key, the last value for the key is
+--   retained.
 fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
 fromListWith :: Ord k => (a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
 fromListWithKey :: Ord k => (k -> a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
@@ -92,6 +294,12 @@ fromDescListWith :: Eq k => (a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
 fromDescListWithKey :: Eq k => (k -> a -> a -> a) -> NonEmpty (k, a) -> NEMap k a
 fromDistinctDescList :: NonEmpty (k, a) -> NEMap k a
 insert :: Ord k => k -> a -> NEMap k a -> NEMap k a
+
+-- | <i>O(log n)</i>. Insert with a function, combining new value and old
+--   value. <tt><a>insertWith</a> f key value mp</tt> will insert the pair
+--   (key, value) into <tt>mp</tt> if key does not exist in the map. If the
+--   key does exist, the function will insert the pair <tt>(key, f
+--   new_value old_value)</tt>.
 insertWith :: Ord k => (a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
 insertWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> NEMap k a -> NEMap k a
 insertLookupWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> NEMap k a -> (Maybe a, NEMap k a)
@@ -126,7 +334,15 @@ lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 --   optimized for structures that are similar to cons-lists, because there
 --   is no general way to do better.
 null :: Foldable t => t a -> Bool
+
+-- | <i>O(1)</i>. The number of elements in the map.
 size :: NEMap k a -> Int
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The expression (<tt><a>union</a>
+--   t1 t2</tt>) takes the left-biased union of <tt>t1</tt> and
+--   <tt>t2</tt>. It prefers <tt>t1</tt> when duplicate keys are
+--   encountered, i.e. (<tt><a>union</a> == <tt>unionWith</tt>
+--   <a>const</a></tt>).
 union :: Ord k => NEMap k a -> NEMap k a -> NEMap k a
 unionWith :: Ord k => (a -> a -> a) -> NEMap k a -> NEMap k a -> NEMap k a
 unionWithKey :: Ord k => (k -> a -> a -> a) -> NEMap k a -> NEMap k a -> NEMap k a
@@ -141,7 +357,30 @@ intersectionWith :: Ord k => (a -> b -> c) -> NEMap k a -> NEMap k b -> Map k c
 intersectionWithKey :: Ord k => (k -> a -> b -> c) -> NEMap k a -> NEMap k b -> Map k c
 map :: (a -> b) -> NEMap k a -> NEMap k b
 mapWithKey :: (k -> a -> b) -> NEMap k a -> NEMap k b
-traverseWithKey :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
+
+-- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <tt>fromNonEmpty</tt>
+--   <a>$</a> <a>traverse</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
+--   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
+--   <a>traverse</a> except that the traversing function also has access to
+--   the key associated with a value.
+--   
+--   <i>Use <a>traverseWithKey1</a></i> whenever possible (if your
+--   <a>Applicative</a> also has <a>Apply</a> instance). This version is
+--   provided only for types that do not have <a>Apply</a> instance, since
+--   <a>Apply</a> is not at the moment (and might not ever be) an official
+--   superclass of <a>Applicative</a>.
+--   
+--   <pre>
+--   <a>traverseWithKey</a> f = <a>unwrapApplicative</a> . <a>traverseWithKey1</a> (\k -&gt; WrapApplicative . f k)
+--   </pre>
+traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
+
+-- | <i>O(n)</i>. <tt><a>traverseWithKey1</a> f m == <tt>fromNonEmpty</tt>
+--   <a>$</a> <a>traverse1</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
+--   (<a>toList</a> m)</tt> That is, behaves exactly like a regular
+--   <a>traverse1</a> except that the traversing function also has access
+--   to the key associated with a value.
+traverseWithKey1 :: Apply t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b)
 traverseMaybeWithKey :: Apply t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
 mapAccum :: (a -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
 mapAccumWithKey :: (a -> k -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
@@ -149,22 +388,67 @@ mapAccumRWithKey :: (a -> k -> b -> (a, c)) -> a -> NEMap k b -> (a, NEMap k c)
 mapKeys :: Ord k2 => (k1 -> k2) -> NEMap k1 a -> NEMap k2 a
 mapKeysWith :: Ord k2 => (a -> a -> a) -> (k1 -> k2) -> NEMap k1 a -> NEMap k2 a
 mapKeysMonotonic :: (k1 -> k2) -> NEMap k1 a -> NEMap k2 a
+
+-- | <i>O(n)</i>. Fold the values in the map using the given
+--   right-associative binary operator, such that <tt><a>foldr</a> f z ==
+--   <a>foldr</a> f z . <a>elems</a></tt>.
 foldr :: (a -> b -> b) -> b -> NEMap k a -> b
+
+-- | <i>O(n)</i>. Fold the values in the map using the given
+--   left-associative binary operator, such that <tt><a>foldl</a> f z ==
+--   <a>foldl</a> f z . <a>elems</a></tt>.
 foldl :: (a -> b -> a) -> a -> NEMap k b -> a
 foldrWithKey :: (k -> a -> b -> b) -> b -> NEMap k a -> b
 foldlWithKey :: (a -> k -> b -> a) -> a -> NEMap k b -> a
+
+-- | <i>O(n)</i>. Fold the keys and values in the map using the given
+--   semigroup, such that
+--   
+--   <pre>
+--   <a>foldMapWithKey</a> f = <a>fold1</a> . <tt>mapWithKey</tt> f
+--   </pre>
+--   
+--   This can be an asymptotically faster than <tt>foldrWithKey</tt> or
+--   <tt>foldlWithKey</tt> for some monoids.
 foldMapWithKey :: Semigroup m => (k -> a -> m) -> NEMap k a -> m
+
+-- | <i>O(n)</i>. A strict version of <a>foldr</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldr' :: (a -> b -> b) -> b -> NEMap k a -> b
+
+-- | <i>O(n)</i>. A strict version of <a>foldr1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldr1' :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldl</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NEMap k b -> a
+
+-- | <i>O(n)</i>. A version of <a>foldl</a> that uses the value at the
+--   minimal key in the map as the starting value.
+--   
+--   Note that, unlike <a>foldl1</a> for <a>Map</a>, this function is total
+--   if the input function is total.
 foldl1 :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldl1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldl1' :: (a -> a -> a) -> NEMap k a -> a
 foldrWithKey' :: (k -> a -> b -> b) -> b -> NEMap k a -> b
 foldlWithKey' :: (a -> k -> b -> a) -> a -> NEMap k b -> a
+
+-- | <i>O(n)</i>. Return all elements of the map in the ascending order of
+--   their keys.
 elems :: NEMap k a -> NonEmpty a
 keys :: NEMap k a -> NonEmpty k
 assocs :: NEMap k a -> NonEmpty (k, a)
-toNonEmpty :: NEMap k a -> NonEmpty (k, a)
+
+-- | <i>O(n)</i>. Convert the map to a non-empty list of key/value pairs.
+toList :: NEMap k a -> NonEmpty (k, a)
 toAscList :: NEMap k a -> NonEmpty (k, a)
 toDescList :: NEMap k a -> NonEmpty (k, a)
 filter :: (a -> Bool) -> NEMap k a -> Map k a
