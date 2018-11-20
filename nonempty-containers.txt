@@ -62,8 +62,9 @@ module Data.Map.NonEmpty.Internal
 --   <a>NEMap</a>.</li>
 --   </ol>
 --   
---   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
---   <a>toMap</a> or <tt>IsNonEmpty</tt>.
+--   You can convert an <a>NEMap</a> into a (possibly empty) <a>Map</a>
+--   with <a>toMap</a> or <tt>IsNonEmpty</tt>, essentially "obscuring" the
+--   non-empty property from the type.
 data NEMap k a
 NEMap :: !k -> a -> !Map k a -> NEMap k a
 
@@ -417,8 +418,9 @@ module Data.Map.NonEmpty
 --   <a>NEMap</a>.</li>
 --   </ol>
 --   
---   You can convert an <a>NEMap</a> into a (non-empty) <a>Map</a> with
---   <a>toMap</a> or <tt>IsNonEmpty</tt>.
+--   You can convert an <a>NEMap</a> into a (possibly empty) <a>Map</a>
+--   with <a>toMap</a> or <tt>IsNonEmpty</tt>, essentially "obscuring" the
+--   non-empty property from the type.
 data NEMap k a
 
 -- | A Map from keys <tt>k</tt> to values <tt>a</tt>.
