@@ -34,6 +34,7 @@ dependencies:
 - containers
 - semigroupoids
 - deepseq
+- these
 
 library:
   source-dirs: src

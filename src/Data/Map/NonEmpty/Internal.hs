@@ -106,8 +106,12 @@ import qualified Data.Semigroup.Foldable    as F1
 --     was empty.
 -- 2.  You can use the 'insertMap' family of functions to insert a value
 --     into a 'Map' to create a guarunteed 'NEMap'.
+-- 3.  You can use the 'IsNonEmpty' and 'IsEmpty' patterns to "pattern
+--     match" on a 'Map' to reveal it as either containing a 'NonEmpty' or an
+--     empty map.
 --
--- You can convert an 'NEMap' into a (non-empty) 'Map' with 'toMap'.
+-- You can convert an 'NEMap' into a (non-empty) 'Map' with 'toMap' or
+-- 'IsNonEmpty'.
 data NEMap k a =
     NEMap { nemK0  :: !k   -- ^ invariant: must be smaller than smallest key in map
           , nemV0  :: a
@@ -300,6 +304,9 @@ size (NEMap _ _ m) = 1 + M.size m
 -- | /O(log n)/.
 -- Convert a non-empty map back into a normal possibly-empty map, for usage
 -- with functions that expect 'Map'.
+--
+-- Can be thought of as "obscuring" the non-emptiness of the map in its
+-- type.  See the 'IsNotEmpty' pattern.
 toMap :: NEMap k a -> Map k a
 toMap (NEMap k v m) = insertMinMap k v m
 {-# INLINE toMap #-}
@@ -330,6 +337,9 @@ traverseWithKey f (NEMap k v m0) = NEMap k <$> f k v <*> M.traverseWithKey f m0
 --
 -- That is, behaves exactly like a regular 'traverse1' except that the traversing
 -- function also has access to the key associated with a value.
+--
+-- Is more general than 'traverseWithKey', since works with all 'Apply',
+-- and not just 'Applicative'.
 
 -- TODO: benchmark against maxView-based methods
 traverseWithKey1
@@ -352,6 +362,9 @@ toList (NEMap k v m) = (k,v) :| M.toList m
 -- | /O(log n)/ Smart constructor for an 'NEMap' from a 'Map'.  Returns
 -- 'Nothing' if the 'Map' was originally actually empty, and @'Just' n@
 -- with an 'NEMap', if the 'Map' was not empty.
+--
+-- See 'IsNonEmpty' for a pattern synonym that lets you "match on" the
+-- possiblity of a 'Map' being an 'NEMap'.
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 nonEmptyMap m = uncurry (\(k, v) -> NEMap k v) <$> M.minViewWithKey m
 {-# INLINE nonEmptyMap #-}
