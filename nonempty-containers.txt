@@ -423,9 +423,6 @@ module Data.Map.NonEmpty
 --   non-empty property from the type.
 data NEMap k a
 
--- | A Map from keys <tt>k</tt> to values <tt>a</tt>.
-data Map k a
-
 -- | <i>O(1)</i> match, <i>O(log n)</i> usage of contents. The
 --   <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow you to treat a
 --   <a>Map</a> as if it were either a <tt><a>IsNonEmpty</a> n</tt> (where
@@ -1070,11 +1067,6 @@ lookupLE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 --   lookupGE 6 (fromList ((3,'a') :| [(5,'b')])) == Nothing
 --   </pre>
 lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
-
--- | Test whether the structure is empty. The default implementation is
---   optimized for structures that are similar to cons-lists, because there
---   is no general way to do better.
-null :: Foldable t => t a -> Bool
 
 -- | <i>O(1)</i>. The number of elements in the map.
 --   
