@@ -198,6 +198,43 @@ runTT = \case
       (x, y) <- forAll $ runGT gt
       runTT tt (f x) (g y)
 
+-- testBazaar'
+--     :: forall a b c d t u m. (Show c, Show d, Monad m)
+--     => Gen (c, d)
+--     -> (t -> u -> PropertyT m ())
+--     -> (a -> b -> PropertyT m ())
+--     -> Bazaar a c t
+--     -> Bazaar b d u
+--     -> PropertyT m ()
+-- testBazaar' gCD tRes0 tView = go tRes0
+--   where
+--     go  :: (t' -> u' -> PropertyT m ()) -> Bazaar a c t' -> Bazaar b d u' -> PropertyT m ()
+--     go tRes = \case
+--       Done xRes -> \case
+--         Done yRes ->
+--           tRes xRes yRes
+--         More _ _ ->
+--           failure
+--       More xView xNext -> \case
+--         Done _ ->
+--           failure
+--         More yView yNext -> do
+--           tView xView yView
+--           let tRes' f g = do
+--                 (xNew, yNew) <- forAll gCD
+--                 tRes (f xNew) (g yNew)
+--           go tRes' xNext yNext
+
+-- testBazaar2
+--     :: forall a b c d t u m. (Show c, Show d, Monad m)
+--     => GenType  c d
+--     -> TestType t u
+--     -> TestType a b
+--     -> Bazaar a c t
+--     -> Bazaar b d u
+--     -> PropertyT m ()
+-- testBazaar2 gCD tRes tView = testBazaar' (runGT gCD) (runTT tRes) (runTT tView)
+
 testBazaar
     :: forall a b c d t u m. (Show a, Show b, Show c, Show d, Monad m)
     => GenType  c d

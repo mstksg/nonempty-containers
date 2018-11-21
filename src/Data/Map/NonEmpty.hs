@@ -273,9 +273,8 @@ import qualified Data.Set                   as S
 --
 -- @
 -- myFunc :: 'Map' K X -> Y
--- myFunc m = case m of
---     'IsNonEmpty' n -> -- here, n is a 'IsNonEmpty', m is proven not empty.
---     'IsEmpty'      -> -- here, m is empty.
+-- myFunc ('IsNonEmpty' n) =  -- here, the user provided a non-empty map, and @n@ is the 'NEMap'
+-- myFunc 'IsEmpty'        =  -- here, the user provided an empty map.
 -- @
 --
 -- Matching on @'IsNonEmpty' n@ means that the original 'Map' was /not/
@@ -285,6 +284,9 @@ import qualified Data.Set                   as S
 -- contents requires a /O(log n)/ cost that is deferred until after the
 -- pattern is matched on (and is not incurred at all if the contents are
 -- never used).
+--
+-- A case statement handling both 'IsNonEmpty' and 'IsEmpty' provides
+-- complete coverage.
 --
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
 -- a 'NEMap' back into a 'Map', obscuring its non-emptiness (see 'toMap').
@@ -298,6 +300,12 @@ pattern IsNonEmpty n <- (nonEmptyMap->Just n)
 -- a 'NEMap') or an 'IsEmpty'.
 --
 -- Matching on 'IsEmpty' means that the original 'Map' was empty.
+--
+-- A case statement handling both 'IsNonEmpty' and 'IsEmpty' provides
+-- complete coverage.
+--
+-- This is a bidirectional pattern, so you can use 'IsEmpty' as an
+-- expression, and it will be interpreted as 'Data.Map.empty'.
 --
 -- See 'IsNonEmpty' for more information.
 pattern IsEmpty :: Map k a

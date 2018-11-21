@@ -62,19 +62,19 @@ module Data.Map.NonEmpty.Internal (
 import           Control.Applicative
 import           Control.DeepSeq
 import           Data.Coerce
-import           Data.Data                  (Data)
+import           Data.Data
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.Functor.Classes
 import           Data.List.NonEmpty         (NonEmpty(..))
-import           Data.Map                   (Map)
-import           Data.Maybe hiding          (mapMaybe)
+import           Data.Map.Internal          (Map(..))
+import           Data.Maybe
 import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1(fold1))
 import           Data.Semigroup.Traversable (Traversable1(..))
 import           Data.Typeable              (Typeable)
 import           GHC.Exts                   ( reallyUnsafePtrEquality#, isTrue# )
-import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map)
+import           Prelude hiding             (foldr1, foldl1, foldr, foldl, map)
 import           Text.Read
 import qualified Data.Foldable              as F
 import qualified Data.Map                   as M
@@ -121,7 +121,13 @@ data NEMap k a =
           , nemV0  :: a
           , nemMap :: !(Map k a)
           }
-  deriving (Eq, Ord, Data, Typeable)
+  deriving (Typeable)
+
+instance (Eq k,Eq a) => Eq (NEMap k a) where
+  t1 == t2  = (size t1 == size t2) && (toList t1 == toList t2)
+
+instance (Ord k, Ord a) => Ord (NEMap k a) where
+    compare m1 m2 = compare (toList m1) (toList m2)
 
 instance Eq2 NEMap where
     liftEq2 eqk eqv m n =
@@ -167,6 +173,25 @@ instance (Show k, Show a) => Show (NEMap k a) where
 
 instance (NFData k, NFData a) => NFData (NEMap k a) where
     rnf (NEMap k v a) = rnf k `seq` rnf v `seq` rnf a
+
+-- Data instance code from Data.Map.Internal
+--
+-- Copyright   :  (c) Daan Leijen 2002
+--                (c) Andriy Palamarchuk 2008
+instance (Data k, Data a, Ord k) => Data (NEMap k a) where
+    gfoldl f z m   = z fromList `f` toList m
+    toConstr _     = fromListConstr
+    gunfold k z c  = case constrIndex c of
+      1 -> k (z fromList)
+      _ -> error "gunfold"
+    dataTypeOf _   = mapDataType
+    dataCast2      = gcast2
+
+fromListConstr :: Constr
+fromListConstr = mkConstr mapDataType "fromList" [] Prefix
+
+mapDataType :: DataType
+mapDataType = mkDataType "Data.Map.NonEmpty.Internal.Map" [fromListConstr]
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
@@ -407,7 +432,7 @@ toList (NEMap k v m) = (k,v) :| M.toList m
 --
 -- > nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
-nonEmptyMap m = uncurry (\(k, v) -> NEMap k v) <$> M.minViewWithKey m
+nonEmptyMap = (fmap . uncurry . uncurry) NEMap . M.minViewWithKey
 {-# INLINE nonEmptyMap #-}
 
 -- | /O(n*log n)/. Build a non-empty map from a non-empty list of
@@ -555,8 +580,8 @@ insertMinMap :: k -> a -> Map k a -> Map k a
 insertMinMap kx0 = go kx0 kx0
   where
     go :: k -> k -> a -> Map k a -> Map k a
-    go orig !_  x M.Tip = M.singleton (lazy orig) x
-    go orig !kx x t@(M.Bin _ ky y l r)
+    go orig !_  x Tip = M.singleton (lazy orig) x
+    go orig !kx x t@(Bin _ ky y l r)
         | l' `ptrEq` l = t
         | otherwise    = M.balanceL ky y l' r
       where
@@ -575,8 +600,8 @@ insertMaxMap :: k -> a -> Map k a -> Map k a
 insertMaxMap kx0 = go kx0 kx0
   where
     go :: k -> k -> a -> Map k a -> Map k a
-    go orig !_  x M.Tip = M.singleton (lazy orig) x
-    go orig !kx x t@(M.Bin _ ky y l r)
+    go orig !_  x Tip = M.singleton (lazy orig) x
+    go orig !kx x t@(Bin _ ky y l r)
         | r' `ptrEq` r = t
         | otherwise    = M.balanceR ky y l r'
       where
