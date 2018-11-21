@@ -1384,6 +1384,20 @@ foldr :: (a -> b -> b) -> b -> NEMap k a -> b
 --   </pre>
 foldl :: (a -> b -> a) -> a -> NEMap k b -> a
 
+-- | <i>O(n)</i>. A version of <a>foldr</a> that uses the value at the
+--   maximal key in the map as the starting value.
+--   
+--   Note that, unlike <a>foldr1</a> for <a>Map</a>, this function is total
+--   if the input function is total.
+foldr1 :: (a -> a -> a) -> NEMap k a -> a
+
+-- | <i>O(n)</i>. A version of <a>foldl</a> that uses the value at the
+--   minimal key in the map as the starting value.
+--   
+--   Note that, unlike <a>foldl1</a> for <a>Map</a>, this function is total
+--   if the input function is total.
+foldl1 :: (a -> a -> a) -> NEMap k a -> a
+
 -- | <i>O(n)</i>. Fold the keys and values in the map using the given
 --   right-associative binary operator, such that <tt><a>foldrWithKey</a> f
 --   z == <a>foldr</a> (<a>uncurry</a> f) z . <a>toAscList</a></tt>.
@@ -1432,13 +1446,6 @@ foldr1' :: (a -> a -> a) -> NEMap k a -> a
 --   operator is evaluated before using the result in the next application.
 --   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NEMap k b -> a
-
--- | <i>O(n)</i>. A version of <a>foldl</a> that uses the value at the
---   minimal key in the map as the starting value.
---   
---   Note that, unlike <a>foldl1</a> for <a>Map</a>, this function is total
---   if the input function is total.
-foldl1 :: (a -> a -> a) -> NEMap k a -> a
 
 -- | <i>O(n)</i>. A strict version of <a>foldl1</a>. Each application of
 --   the operator is evaluated before using the result in the next
