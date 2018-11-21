@@ -216,11 +216,6 @@ foldr' :: (a -> b -> b) -> b -> NEMap k a -> b
 --   if the input function is total.
 foldr1 :: (a -> a -> a) -> NEMap k a -> a
 
--- | <i>O(n)</i>. A strict version of <a>foldr1</a>. Each application of
---   the operator is evaluated before using the result in the next
---   application. This function is strict in the starting value.
-foldr1' :: (a -> a -> a) -> NEMap k a -> a
-
 -- | <i>O(n)</i>. Fold the values in the map using the given
 --   left-associative binary operator, such that <tt><a>foldl</a> f z ==
 --   <a>foldl</a> f z . <a>elems</a></tt>.
@@ -246,11 +241,6 @@ foldl' :: (a -> b -> a) -> a -> NEMap k b -> a
 --   Note that, unlike <a>foldl1</a> for <a>Map</a>, this function is total
 --   if the input function is total.
 foldl1 :: (a -> a -> a) -> NEMap k a -> a
-
--- | <i>O(n)</i>. A strict version of <a>foldl1</a>. Each application of
---   the operator is evaluated before using the result in the next
---   application. This function is strict in the starting value.
-foldl1' :: (a -> a -> a) -> NEMap k a -> a
 
 -- | <i>O(n)</i>. <tt><a>traverseWithKey</a> f m == <a>fromList</a>
 --   <a>$</a> <a>traverse</a> ((k, v) -&gt; (,) k <a>$</a> f k v)
@@ -316,9 +306,8 @@ insertMaxMap :: k -> a -> Map k a -> Map k a
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
-instance (Data.Data.Data k, Data.Data.Data a, GHC.Classes.Ord k) => Data.Data.Data (Data.Map.NonEmpty.Internal.NEMap k a)
-instance (GHC.Classes.Ord k, GHC.Classes.Ord a) => GHC.Classes.Ord (Data.Map.NonEmpty.Internal.NEMap k a)
 instance (GHC.Classes.Eq k, GHC.Classes.Eq a) => GHC.Classes.Eq (Data.Map.NonEmpty.Internal.NEMap k a)
+instance (GHC.Classes.Ord k, GHC.Classes.Ord a) => GHC.Classes.Ord (Data.Map.NonEmpty.Internal.NEMap k a)
 instance Data.Functor.Classes.Eq2 Data.Map.NonEmpty.Internal.NEMap
 instance GHC.Classes.Eq k => Data.Functor.Classes.Eq1 (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Functor.Classes.Ord2 Data.Map.NonEmpty.Internal.NEMap
@@ -329,6 +318,7 @@ instance (GHC.Classes.Ord k, GHC.Read.Read k) => Data.Functor.Classes.Read1 (Dat
 instance (GHC.Classes.Ord k, GHC.Read.Read k, GHC.Read.Read e) => GHC.Read.Read (Data.Map.NonEmpty.Internal.NEMap k e)
 instance (GHC.Show.Show k, GHC.Show.Show a) => GHC.Show.Show (Data.Map.NonEmpty.Internal.NEMap k a)
 instance (Control.DeepSeq.NFData k, Control.DeepSeq.NFData a) => Control.DeepSeq.NFData (Data.Map.NonEmpty.Internal.NEMap k a)
+instance (Data.Data.Data k, Data.Data.Data a, GHC.Classes.Ord k) => Data.Data.Data (Data.Map.NonEmpty.Internal.NEMap k a)
 instance GHC.Classes.Ord k => GHC.Base.Semigroup (Data.Map.NonEmpty.Internal.NEMap k a)
 instance GHC.Base.Functor (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Foldable.Foldable (Data.Map.NonEmpty.Internal.NEMap k)
@@ -432,9 +422,8 @@ data NEMap k a
 --   
 --   <pre>
 --   myFunc :: <a>Map</a> K X -&gt; Y
---   myFunc m = case m of
---       <a>IsNonEmpty</a> n -&gt; -- here, n is a <a>IsNonEmpty</a>, m is proven not empty.
---       <a>IsEmpty</a>      -&gt; -- here, m is empty.
+--   myFunc (<a>IsNonEmpty</a> n) =  -- here, the user provided a non-empty map, and <tt>n</tt> is the <a>NEMap</a>
+--   myFunc <a>IsEmpty</a>        =  -- here, the user provided an empty map.
 --   </pre>
 --   
 --   Matching on <tt><a>IsNonEmpty</a> n</tt> means that the original
@@ -445,6 +434,9 @@ data NEMap k a
 --   contents requires a <i>O(log n)</i> cost that is deferred until after
 --   the pattern is matched on (and is not incurred at all if the contents
 --   are never used).
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
 --   
 --   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
 --   convert a <a>NEMap</a> back into a <a>Map</a>, obscuring its
@@ -457,6 +449,12 @@ pattern IsNonEmpty :: NEMap k a -> Map k a
 --   
 --   Matching on <a>IsEmpty</a> means that the original <a>Map</a> was
 --   empty.
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsEmpty</a> as an
+--   expression, and it will be interpreted as <a>empty</a>.
 --   
 --   See <a>IsNonEmpty</a> for more information.
 pattern IsEmpty :: Map k a
@@ -2112,3 +2110,41 @@ maxView :: NEMap k a -> (a, Map k a)
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
+
+module Data.Set.NonEmpty.Internal
+data NESet a
+NESet :: !a -> !Set a -> NESet a
+
+-- | invariant: must be smaller than smallest value in set
+[nesV0] :: NESet a -> !a
+[nesSet] :: NESet a -> !Set a
+nonEmptySet :: Set a -> Maybe (NESet a)
+toSet :: NESet a -> Set a
+
+-- | <i>O(1)</i>. Create a singleton set.
+singleton :: a -> NESet a
+
+-- | <i>O(n*log n)</i>. Create a set from a list of elements. If the list
+--   contains the same value twice, the last value is retained.
+fromList :: Ord a => NonEmpty a -> NESet a
+toList :: NESet a -> NonEmpty a
+size :: NESet a -> Int
+union :: Ord a => NESet a -> NESet a -> NESet a
+unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+
+-- | <i>O(n)</i>. Test if the internal set structure is valid.
+valid :: Ord a => NESet a -> Bool
+insertMinSet :: a -> Set a -> Set a
+insertMaxSet :: a -> Set a -> Set a
+instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Set.NonEmpty.Internal.NESet a)
+instance GHC.Classes.Ord a => GHC.Classes.Ord (Data.Set.NonEmpty.Internal.NESet a)
+instance GHC.Show.Show a => GHC.Show.Show (Data.Set.NonEmpty.Internal.NESet a)
+instance (GHC.Read.Read a, GHC.Classes.Ord a) => GHC.Read.Read (Data.Set.NonEmpty.Internal.NESet a)
+instance Data.Functor.Classes.Eq1 Data.Set.NonEmpty.Internal.NESet
+instance Data.Functor.Classes.Ord1 Data.Set.NonEmpty.Internal.NESet
+instance Data.Functor.Classes.Show1 Data.Set.NonEmpty.Internal.NESet
+instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Set.NonEmpty.Internal.NESet a)
+instance (Data.Data.Data a, GHC.Classes.Ord a) => Data.Data.Data (Data.Set.NonEmpty.Internal.NESet a)
+instance GHC.Classes.Ord a => GHC.Base.Semigroup (Data.Set.NonEmpty.Internal.NESet a)
+instance Data.Foldable.Foldable Data.Set.NonEmpty.Internal.NESet
+instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESet
