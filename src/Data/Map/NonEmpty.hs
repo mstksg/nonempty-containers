@@ -53,7 +53,8 @@ module Data.Map.NonEmpty (
   -- * Non-Empty Map type
     NEMap
   -- ** Conversions between empty and non-empty maps
-  , Map(IsNonEmpty, IsEmpty)
+  , pattern IsNonEmpty
+  , pattern IsEmpty
   , nonEmptyMap
   , toMap
   , withNEMap
@@ -116,7 +117,6 @@ module Data.Map.NonEmpty (
   , lookupGE
 
   -- ** Size
-  , null
   , size
 
   -- * Combine
@@ -1067,9 +1067,9 @@ fromDistinctDescList ((k, v) :| xs) = insertMapMax k v
 -- > delete 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
 -- > delete 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.Singleton [(3, "b"), (5, "a")]
 delete :: Ord k => k -> NEMap k a -> Map k a
-delete k n@(NEMap k0 _ m)
+delete k (NEMap k0 v m)
     | k == k0   = m
-    | otherwise = toMap n
+    | otherwise = insertMinMap k0 v . M.delete k $ m
 {-# INLINE delete #-}
 
 -- | /O(log n)/. Update a value at a specific key with the result of the
@@ -1172,7 +1172,7 @@ updateLookupWithKey
     -> (Maybe a, Map k a)
 updateLookupWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> (Nothing, toMap n)
-    EQ -> (Just v , maybe m (flip (insertMinMap k) m) . f k $ v)
+    EQ -> (f k v  , maybe m (flip (insertMinMap k) m) . f k $ v)
     GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
 {-# INLINE updateLookupWithKey #-}
 
@@ -1282,9 +1282,9 @@ alter'
     -> NEMap k a
     -> NEMap k a
 alter' f k n@(NEMap k0 v m) = case compare k k0 of
-    LT -> NEMap k (f Nothing) . toMap      $ n
-    EQ -> NEMap k (f (Just v))             $ m
-    GT -> NEMap k v . M.alter (Just . f) k $ m
+    LT -> NEMap k  (f Nothing) . toMap      $ n
+    EQ -> NEMap k  (f (Just v))             $ m
+    GT -> NEMap k0 v . M.alter (Just . f) k $ m
 {-# INLINE alter' #-}
 
 -- | /O(log n)/. Variant of 'alterF' that disallows deletion.  Allows us to
