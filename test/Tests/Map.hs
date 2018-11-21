@@ -10,8 +10,10 @@
 module Tests.Map (mapTests) where
 
 import           Control.Applicative
+import           Control.Monad
 import           Control.Monad.Freer
 import           Control.Monad.Freer.TH
+import           Data.Bifunctor
 import           Data.Foldable
 import           Data.Functor.Identity
 import           Data.Kind
@@ -32,37 +34,80 @@ import qualified Data.Vec.Lazy              as V
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
--- TODO: test functions
+-- data ListType = LTAsc | LTDistinctAsc | LTDesc | LTDistinctDesc
+
+data SortType :: Type -> Type where
+    STAsc          :: Ord a => SortType a
+    STDesc         :: Ord a => SortType a
+    STDistinctAsc  :: Ord a => SortType (a, b)
+    STDistinctDesc :: Ord a => SortType (a, b)
+
+data GenType :: Type -> Type -> Type where
+    GTNEMap  :: GenType (M.Map Int T.Text) (NEM.NEMap Int T.Text)
+    GTKey    :: GenType Int                Int
+    GTVal    :: GenType T.Text             T.Text
+    GTMaybe  :: GenType a                  b
+             -> GenType (Maybe a)          (Maybe b)
+    (:&:)    :: GenType a                  b
+             -> GenType c                  d
+             -> GenType (a, c)             (b, d)
+    GTNEList :: GenType a                  b
+             -> GenType [a]                (NonEmpty b)
+    GTSorted :: SortType a
+             -> GenType [a]                (NonEmpty a)
+             -> GenType [a]                (NonEmpty a)
+    -- Maybe (SortType a)
+
 data TestType :: Type -> Type -> Type where
     TTNEMap :: TestType (M.Map Int T.Text) (NEM.NEMap Int T.Text)
     TTMap   :: TestType (M.Map Int T.Text) (M.Map     Int T.Text)
     TTKey   :: TestType Int                Int
     TTVal   :: TestType T.Text             T.Text
-    TTBool  :: TestType Bool               Bool
     TTOther :: (Eq a, Show a)
             => TestType a                  a
     TTMaybe :: (Eq a, Eq b, Show a, Show b)
             => TestType a                  b
             -> TestType (Maybe a)          (Maybe b)
-    -- TTOther :: (Eq r, Show r) => TestType r                  r
-    TTAnd   :: (Eq a, Eq b, Eq c, Eq d, Show a, Show b, Show c, Show d)
+    (:*:)   :: (Eq a, Eq b, Eq c, Eq d, Show a, Show b, Show c, Show d)
             => TestType a                  b
             -> TestType c                  d
             -> TestType (a, c)             (b, d)
+    (:->)   :: (Show a, Show b)
+            => GenType  a                  b
+            -> TestType c                  d
+            -> TestType (a -> c)           (b -> d)
 
-data Tester :: Type -> Type where
-    GenKey   :: Tester Int
-    GenVal   :: Tester T.Text
-    GenKeyVals :: Tester (NonEmpty (Int, T.Text))
-    TestFunc :: N.SNatI n
-             => TestType a b
-             -> (V.Vec n (M.Map     Int T.Text) -> a)
-             -> (V.Vec n (NEM.NEMap Int T.Text) -> b)
-             -> Tester ()
+infixr 2 :&:
+infixr 1 :->
+infixr 2 :*:
 
-makeEffect ''Tester
+runSorter
+    :: SortType a
+    -> [a]
+    -> [a]
+runSorter = \case
+    STAsc          -> S.toAscList  . S.fromList
+    STDesc         -> S.toDescList . S.fromList
+    STDistinctAsc  -> M.toAscList  . M.fromList
+    STDistinctDesc -> M.toDescList . M.fromList
 
-runTT :: MonadTest m => TestType a b -> a -> b -> m ()
+runGT :: GenType a b -> Gen (a, b)
+runGT = \case
+    GTNEMap    -> (\n -> (NEM.IsNonEmpty n, n)) <$> neMapGen
+    GTKey      -> join (,) <$> keyGen
+    GTVal      -> join (,) <$> valGen
+    GTMaybe g  -> maybe (Nothing, Nothing) (bimap Just Just) <$>
+        Gen.maybe (runGT g)
+    g1 :&: g2  -> do
+      (x1, y1) <- runGT g1
+      (x2, y2) <- runGT g2
+      pure ((x1,x2), (y1,y2))
+    GTNEList g -> first toList . NE.unzip <$> do
+        Gen.nonEmpty mapSize (runGT g)
+    GTSorted s g -> bimap (runSorter s) (fromJust . NE.nonEmpty . runSorter s . toList) <$>
+                      runGT g
+
+runTT :: Monad m => TestType a b -> a -> b -> PropertyT m ()
 runTT = \case
     TTNEMap -> \x y -> do
       assert $ NEM.valid y
@@ -70,45 +115,62 @@ runTT = \case
     TTMap   -> (===)
     TTKey   -> (===)
     TTVal   -> (===)
-    TTBool  -> (===)
     TTOther -> (===)
     TTMaybe tt -> \x y -> do
       isJust y === isJust y
       traverse_ (uncurry (runTT tt)) $ liftA2 (,) x y
-    TTAnd t1 t2 -> \(x1, x2) (y1, y2) -> do
+    t1 :*: t2 -> \(x1, x2) (y1, y2) -> do
       runTT t1 x1 y1
       runTT t2 x2 y2
+    gt :-> tt -> \f g -> do
+      (x, y) <- forAll $ runGT gt
+      runTT tt (f x) (g y)
 
-testerProp :: Eff '[Tester, PropertyT IO] () -> Property
-testerProp = property . runM . interpretM go
-  where
-    go :: Tester x -> PropertyT IO x
-    go = \case
-      GenKey -> forAll keyGen
-      GenVal -> forAll valGen
-      GenKeyVals -> forAll $
-          Gen.nonEmpty mapSize $ (,) <$> keyGen <*> valGen
-      TestFunc tt f g -> do
-        ns <- sequenceA $ pure (forAll neMapGen)
-        let x = f (NEM.IsNonEmpty <$> ns)
-            y = g ns
-        runTT tt x y
+ttProp :: TestType a b -> a -> b -> Property
+ttProp tt x = property . runTT tt x
 
-testFunc0
-    :: Member Tester effs
-    => TestType a b
-    -> a
-    -> b
-    -> Eff effs ()
-testFunc0 tt f g = testFunc @'N.Z tt (const f) (const g)
+-- data Tester :: Type -> Type where
+--     GenKey   :: Tester Int
+--     GenVal   :: Tester T.Text
+--     GenKeyVals :: Tester (NonEmpty (Int, T.Text))
+--     TestFunc :: N.SNatI n
+--              => TestType a b
+--              -> (V.Vec n (M.Map     Int T.Text) -> a)
+--              -> (V.Vec n (NEM.NEMap Int T.Text) -> b)
+--              -> Tester ()
 
-testFunc1
-    :: Member Tester effs
-    => TestType a b
-    -> (M.Map     Int T.Text -> a)
-    -> (NEM.NEMap Int T.Text -> b)
-    -> Eff effs ()
-testFunc1 tt f g = testFunc @('N.S 'N.Z) tt (f . V.head) (g . V.head)
+-- makeEffect ''Tester
+
+-- runTT :: MonadTest m => TestType a b -> a -> b -> m ()
+-- runTT = \case
+--     TTNEMap -> \x y -> do
+--       assert $ NEM.valid y
+--       x === NEM.IsNonEmpty y
+--     TTMap   -> (===)
+--     TTKey   -> (===)
+--     TTVal   -> (===)
+--     TTOther -> (===)
+--     TTMaybe tt -> \x y -> do
+--       isJust y === isJust y
+--       traverse_ (uncurry (runTT tt)) $ liftA2 (,) x y
+--     TTAnd t1 t2 -> \(x1, x2) (y1, y2) -> do
+--       runTT t1 x1 y1
+--       runTT t2 x2 y2
+
+-- testerProp :: Eff '[Tester, PropertyT IO] () -> Property
+-- testerProp = property . runM . interpretM go
+--   where
+--     go :: Tester x -> PropertyT IO x
+--     go = \case
+--       GenKey -> forAll keyGen
+--       GenVal -> forAll valGen
+--       GenKeyVals -> forAll $
+--           Gen.nonEmpty mapSize $ (,) <$> keyGen <*> valGen
+--       TestFunc tt f g -> do
+--         ns <- sequenceA $ pure (forAll neMapGen)
+--         let x = f (NEM.IsNonEmpty <$> ns)
+--             y = g ns
+--         runTT tt x y
 
 combiner :: Int -> T.Text -> T.Text -> T.Text
 combiner n v u
@@ -171,219 +233,186 @@ prop_toMapIso2 = property $ do
     tripping m0 (maybe M.empty NEM.toMap)
                 (Identity . NEM.nonEmptyMap)
 
--- mapMapMatch
---     :: (Ord k, Show k, Eq a, Show a)
---     => PropertyT IO (M.Map k a, NEM.NEMap k a)
---     -> Property
--- mapMapMatch g = property $ do
---     (m, n) <- g
---     assert $ NEM.valid n
---     m === IsNonEmpty n
-
--- mapMapMatch'
---     :: (Ord k, Show k, Eq a, Show a)
---     => PropertyT IO (M.Map k a, M.Map k a)
---     -> Property
--- mapMapMatch' g = property $ do
---     (m, n) <- g
---     m === n
-
 prop_insertMapWithKey :: Property
-prop_insertMapWithKey = property $ do
-    m <- forAll mapGen
-    k <- forAll keyGen
-    v <- forAll valGen
-    let m0 = M.insertWithKey      combiner k v m
-        m1 = NEM.insertMapWithKey combiner k v m
-    assert $ NEM.valid m1
-    m0 === NEM.IsNonEmpty m1
-
+prop_insertMapWithKey = ttProp (GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
+    (M.insertWithKey   combiner)
+    (NEM.insertWithKey combiner)
 
 prop_singleton :: Property
-prop_singleton = testerProp $ do
-    k <- genKey
-    v <- genVal
-    testFunc0 TTNEMap
-        (M.singleton   k v)
-        (NEM.singleton k v)
+prop_singleton = ttProp (GTKey :-> GTVal :-> TTNEMap)
+    M.singleton
+    NEM.singleton
 
 prop_fromAscListWithKey :: Property
-prop_fromAscListWithKey = testerProp $ do
-    kvs <- send @(PropertyT IO)
-         . forAll . Gen.just . fmap (NE.nonEmpty . S.toAscList) $        -- TODO: use nonempty set
-                Gen.set mapSize $ (,) <$> keyGen <*> valGen
-    testFunc0 TTNEMap
-        (M.fromAscListWithKey   combiner (toList kvs))
-        (NEM.fromAscListWithKey combiner kvs)
+prop_fromAscListWithKey = ttProp (GTSorted STAsc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+    (M.fromAscListWithKey   combiner)
+    (NEM.fromAscListWithKey combiner)
 
 prop_fromDescListWithKey :: Property
-prop_fromDescListWithKey = testerProp $ do
-    kvs <- send @(PropertyT IO)
-         . forAll . Gen.just . fmap (NE.nonEmpty . S.toDescList) $        -- TODO: use nonempty set
-                Gen.set mapSize $ (,) <$> keyGen <*> valGen
-    testFunc0 TTNEMap
-        (M.fromDescListWithKey   combiner (toList kvs))
-        (NEM.fromDescListWithKey combiner kvs)
+prop_fromDescListWithKey = ttProp (GTSorted STDesc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+    (M.fromDescListWithKey   combiner)
+    (NEM.fromDescListWithKey combiner)
 
 prop_fromDistinctAscList :: Property
-prop_fromDistinctAscList = testerProp $ do
-    testFunc1 TTNEMap
-        (M.fromDistinctAscList   . M.toAscList  )
-        (NEM.fromDistinctAscList . NEM.toAscList)
+prop_fromDistinctAscList = ttProp (GTSorted STDistinctAsc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+    M.fromDistinctAscList
+    NEM.fromDistinctAscList
 
 prop_fromDistinctDescList :: Property
-prop_fromDistinctDescList = testerProp $ do
-    testFunc1 TTNEMap
-        (M.fromDistinctDescList   . M.toDescList  )
-        (NEM.fromDistinctDescList . NEM.toDescList)
+prop_fromDistinctDescList = ttProp (GTSorted STDistinctDesc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+    M.fromDistinctDescList
+    NEM.fromDistinctDescList
 
 prop_fromListWithKey :: Property
-prop_fromListWithKey = testerProp $ do
-    kvs <- genKeyVals
-    testFunc0 TTNEMap
-        (M.fromListWithKey   combiner (toList kvs))
-        (NEM.fromListWithKey combiner kvs         )
+prop_fromListWithKey = ttProp (GTNEList (GTKey :&: GTVal) :-> TTNEMap)
+    (M.fromListWithKey   combiner)
+    (NEM.fromListWithKey combiner)
 
 prop_insert :: Property
-prop_insert = testerProp $ do
-    k <- genKey
-    v <- genVal
-    testFunc1 TTNEMap
-        (M.insert   k v)
-        (NEM.insert k v)
+prop_insert = ttProp (GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
+    M.insert
+    NEM.insert
 
 prop_insertWithKey :: Property
-prop_insertWithKey = testerProp $ do
-    k <- genKey
-    v <- genVal
-    testFunc1 TTNEMap
-        (M.insertWithKey   combiner k v)
-        (NEM.insertWithKey combiner k v)
+prop_insertWithKey = ttProp (GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
+    (M.insertWithKey   combiner)
+    (NEM.insertWithKey combiner)
 
 prop_delete :: Property
-prop_delete = testerProp $ do
-    k <- genKey
-    testFunc1 TTMap
-        (M.delete   k)
-        (NEM.delete k)
+prop_delete = ttProp (GTKey :-> GTNEMap :-> TTMap)
+    M.delete
+    NEM.delete
 
 prop_adjustWithKey :: Property
-prop_adjustWithKey = testerProp $ do
-    k <- genKey
-    let f i | even i    = T.reverse
-            | otherwise = T.intersperse '_'
-    testFunc1 TTNEMap
-        (M.adjustWithKey   f k)
-        (NEM.adjustWithKey f k)
+prop_adjustWithKey = ttProp (GTKey :-> GTNEMap :-> TTNEMap)
+    (M.adjustWithKey   f)
+    (NEM.adjustWithKey f)
+  where
+    f i | even i    = T.reverse
+        | otherwise = T.intersperse '_'
 
 prop_updateWithKey :: Property
-prop_updateWithKey = testerProp $ do
-    k <- genKey
-    let f i | even i    = Just . T.reverse
-            | otherwise = const Nothing
-    testFunc1 TTMap
-        (M.updateWithKey   f k)
-        (NEM.updateWithKey f k)
+prop_updateWithKey = ttProp (GTKey :-> GTNEMap :-> TTMap)
+    (M.updateWithKey   f)
+    (NEM.updateWithKey f)
+  where
+    f i | even i    = Just . T.reverse
+        | otherwise = const Nothing
 
 prop_updateLookupWithKey :: Property
-prop_updateLookupWithKey = testerProp $ do
-    k <- genKey
-    let f i | even i    = Just . T.reverse
-            | otherwise = const Nothing
-    testFunc1 (TTMaybe TTVal `TTAnd` TTMap)
-        (M.updateLookupWithKey   f k)
-        (NEM.updateLookupWithKey f k)
+prop_updateLookupWithKey = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTVal :*: TTMap)
+    (M.updateLookupWithKey   f)
+    (NEM.updateLookupWithKey f)
+  where
+    f i | even i    = Just . T.reverse
+        | otherwise = const Nothing
 
 prop_alter :: Property
-prop_alter = testerProp $ do
-    k <- genKey
-    v <- genVal
-    let f t | even (T.length t) = Just $ T.reverse t
-            | otherwise         = Nothing
-    testFunc1 TTMap
-        (M.alter   (f . fromMaybe v) k)
-        (NEM.alter (f . fromMaybe v) k)
+prop_alter = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTMap)
+     (\v -> M.alter   (f . fromMaybe v))
+     (\v -> NEM.alter (f . fromMaybe v))
+  where
+    f t | even (T.length t) = Just $ T.reverse t
+        | otherwise         = Nothing
 
 prop_alter' :: Property
-prop_alter' = testerProp $ do
-    k <- genKey
-    v <- genVal
-    let f t | even (T.length t) = T.reverse t
-            | otherwise         = T.intersperse '_' t
-    testFunc1 TTNEMap
-        (M.alter    (Just . f . fromMaybe v) k)
-        (NEM.alter' (       f . fromMaybe v) k)
+prop_alter' = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTNEMap)
+    (\v -> M.alter    (Just . f . fromMaybe v))
+    (\v -> NEM.alter' (       f . fromMaybe v))
+  where
+    f t | even (T.length t) = T.reverse t
+        | otherwise         = T.intersperse '_' t
 
--- --   , alterF
--- --   , alterF'
+--   , alterF
+--   , alterF'
 
 prop_lookup :: Property
-prop_lookup = testerProp $ do
-    k <- genKey
-    testFunc1 (TTMaybe TTVal)
-        (M.lookup   k)
-        (NEM.lookup k)
+prop_lookup = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTVal)
+    M.lookup
+    NEM.lookup
 
 prop_findWithDefault :: Property
-prop_findWithDefault = testerProp $ do
-    k <- genKey
-    v <- genVal
-    testFunc1 TTVal
-        (M.findWithDefault   v k)
-        (NEM.findWithDefault v k)
+prop_findWithDefault = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTVal)
+    M.findWithDefault
+    NEM.findWithDefault
 
 prop_member :: Property
-prop_member = testerProp $ do
-    k <- genKey
-    testFunc1 TTBool
-        (M.member   k)
-        (NEM.member k)
+prop_member = ttProp (GTKey :-> GTNEMap :-> TTOther)
+    M.member
+    NEM.member
 
 prop_notMember :: Property
-prop_notMember = testerProp $ do
-    k <- genKey
-    testFunc1 TTBool
-        (M.notMember   k)
-        (NEM.notMember k)
+prop_notMember = ttProp (GTKey :-> GTNEMap :-> TTOther)
+    M.notMember
+    NEM.notMember
 
 prop_lookupLT :: Property
-prop_lookupLT = testerProp $ do
-    k <- genKey
-    testFunc1 (TTMaybe (TTKey `TTAnd` TTVal))
-        (M.lookupLT   k)
-        (NEM.lookupLT k)
+prop_lookupLT = ttProp (GTKey :-> GTNEMap :-> TTMaybe (TTKey :*: TTVal))
+    M.lookupLT
+    NEM.lookupLT
 
 prop_lookupGT :: Property
-prop_lookupGT = testerProp $ do
-    k <- genKey
-    testFunc1 (TTMaybe (TTKey `TTAnd` TTVal))
-        (M.lookupGT   k)
-        (NEM.lookupGT k)
+prop_lookupGT = ttProp (GTKey :-> GTNEMap :-> TTMaybe (TTKey :*: TTVal))
+    M.lookupGT
+    NEM.lookupGT
 
 prop_lookupLE :: Property
-prop_lookupLE = testerProp $ do
-    k <- genKey
-    testFunc1 (TTMaybe (TTKey `TTAnd` TTVal))
-        (M.lookupLE   k)
-        (NEM.lookupLE k)
+prop_lookupLE = ttProp (GTKey :-> GTNEMap :-> TTMaybe (TTKey :*: TTVal))
+    M.lookupLE
+    NEM.lookupLE
 
 prop_lookupGE :: Property
-prop_lookupGE = testerProp $ do
-    k <- genKey
-    testFunc1 (TTMaybe (TTKey `TTAnd` TTVal))
-        (M.lookupGE   k)
-        (NEM.lookupGE k)
+prop_lookupGE = ttProp (GTKey :-> GTNEMap :-> TTMaybe (TTKey :*: TTVal))
+    M.lookupGE
+    NEM.lookupGE
 
-  -- , size
+prop_size :: Property
+prop_size = ttProp (GTNEMap :-> TTOther)
+    M.size
+    NEM.size
 
-  -- -- * Combine
+prop_union :: Property
+prop_union = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
+    M.union
+    NEM.union
 
-  -- -- ** Union
-  -- , union
-  -- , unionWith
-  -- , unionWithKey
-  -- , unions
-  -- , unionsWith
+prop_unionWith :: Property
+prop_unionWith = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
+    (M.unionWith (<>))
+    (NEM.unionWith (<>))
+
+prop_unionWithKey :: Property
+prop_unionWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
+    (M.unionWithKey combiner)
+    (NEM.unionWithKey combiner)
+
+prop_unions :: Property
+prop_unions = ttProp (GTNEList GTNEMap :-> TTNEMap)
+    M.unions
+    NEM.unions
+
+prop_unionsWith :: Property
+prop_unionsWith = ttProp (GTNEList GTNEMap :-> TTNEMap)
+    (M.unionsWith (<>))
+    (NEM.unionsWith (<>))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 keyGen :: MonadGen m => m Int
 keyGen = Gen.int  (Range.linear (-500) 500)
