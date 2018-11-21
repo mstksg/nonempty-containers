@@ -160,6 +160,8 @@ module Data.Map.NonEmpty (
   -- * Folds
   , foldr
   , foldl
+  , foldr1
+  , foldl1
   , foldrWithKey
   , foldlWithKey
   , foldMapWithKey
@@ -168,7 +170,6 @@ module Data.Map.NonEmpty (
   , foldr'
   , foldr1'
   , foldl'
-  , foldl1
   , foldl1'
   , foldrWithKey'
   , foldlWithKey'
