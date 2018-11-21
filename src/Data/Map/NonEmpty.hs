@@ -482,7 +482,7 @@ unionWith
     -> NEMap k a
 unionWith f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     LT -> NEMap k1 v1        . M.unionWith f m1 . toMap $ n2
-    EQ -> NEMap k1 (f v1 v2) . M.unionWith f m1 . toMap $ n2
+    EQ -> NEMap k1 (f v1 v2) . M.unionWith f m1         $ m2
     GT -> NEMap k2 v2        . M.unionWith f (toMap n1) $ m2
 {-# INLINE unionWith #-}
 
@@ -499,7 +499,7 @@ unionWithKey
     -> NEMap k a
 unionWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     LT -> NEMap k1 v1           . M.unionWithKey f m1 . toMap $ n2
-    EQ -> NEMap k1 (f k1 v1 v2) . M.unionWithKey f m1 . toMap $ n2
+    EQ -> NEMap k1 (f k1 v1 v2) . M.unionWithKey f m1         $ m2
     GT -> NEMap k2 v2           . M.unionWithKey f (toMap n1) $ m2
 {-# INLINE unionWithKey #-}
 

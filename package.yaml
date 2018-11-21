@@ -63,6 +63,3 @@ tests:
     - nonempty-containers
     - hedgehog
     - text
-    - freer-simple
-    - vec
-    - fin

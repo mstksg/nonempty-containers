@@ -297,7 +297,7 @@ union
     -> NEMap k a
 union n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
     LT -> NEMap k1 v1 . M.union m1 . toMap $ n2
-    EQ -> NEMap k1 v1 . M.union m1 . toMap $ n2
+    EQ -> NEMap k1 v1 . M.union m1         $ m2
     GT -> NEMap k2 v2 . M.union (toMap n1) $ m2
 {-# INLINE union #-}
 

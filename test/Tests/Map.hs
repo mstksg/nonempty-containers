@@ -11,8 +11,6 @@ module Tests.Map (mapTests) where
 
 import           Control.Applicative
 import           Control.Monad
-import           Control.Monad.Freer
-import           Control.Monad.Freer.TH
 import           Data.Bifunctor
 import           Data.Foldable
 import           Data.Functor.Identity
@@ -21,7 +19,6 @@ import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Map                   (Map)
 import           Data.Map.NonEmpty          (NEMap)
 import           Data.Maybe
-import           Data.Vec.Lazy              (Vec(..))
 import           Hedgehog
 import qualified Data.List.NonEmpty         as NE
 import qualified Data.Map                   as M
@@ -29,12 +26,8 @@ import qualified Data.Map.NonEmpty          as NEM
 import qualified Data.Map.NonEmpty.Internal as NEM
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
-import qualified Data.Type.Nat              as N
-import qualified Data.Vec.Lazy              as V
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
-
--- data ListType = LTAsc | LTDistinctAsc | LTDesc | LTDistinctDesc
 
 data SortType :: Type -> Type where
     STAsc          :: Ord a => SortType a
@@ -46,12 +39,15 @@ data GenType :: Type -> Type -> Type where
     GTNEMap  :: GenType (M.Map Int T.Text) (NEM.NEMap Int T.Text)
     GTKey    :: GenType Int                Int
     GTVal    :: GenType T.Text             T.Text
+    GTOther  :: Gen a
+             -> GenType a                  a
     GTMaybe  :: GenType a                  b
              -> GenType (Maybe a)          (Maybe b)
     (:&:)    :: GenType a                  b
              -> GenType c                  d
              -> GenType (a, c)             (b, d)
-    GTNEList :: GenType a                  b
+    GTNEList :: Maybe (Range Int)
+             -> GenType a                  b
              -> GenType [a]                (NonEmpty b)
     GTSorted :: SortType a
              -> GenType [a]                (NonEmpty a)
@@ -96,20 +92,22 @@ runGT = \case
     GTNEMap    -> (\n -> (NEM.IsNonEmpty n, n)) <$> neMapGen
     GTKey      -> join (,) <$> keyGen
     GTVal      -> join (,) <$> valGen
+    GTOther g  -> join (,) <$> g
     GTMaybe g  -> maybe (Nothing, Nothing) (bimap Just Just) <$>
         Gen.maybe (runGT g)
     g1 :&: g2  -> do
       (x1, y1) <- runGT g1
       (x2, y2) <- runGT g2
       pure ((x1,x2), (y1,y2))
-    GTNEList g -> first toList . NE.unzip <$> do
-        Gen.nonEmpty mapSize (runGT g)
+    GTNEList r g -> first toList . NE.unzip <$> do
+        Gen.nonEmpty (fromMaybe mapSize r) (runGT g)
     GTSorted s g -> bimap (runSorter s) (fromJust . NE.nonEmpty . runSorter s . toList) <$>
                       runGT g
 
 runTT :: Monad m => TestType a b -> a -> b -> PropertyT m ()
 runTT = \case
     TTNEMap -> \x y -> do
+      annotate $ show y
       assert $ NEM.valid y
       x === NEM.IsNonEmpty y
     TTMap   -> (===)
@@ -176,6 +174,16 @@ combiner :: Int -> T.Text -> T.Text -> T.Text
 combiner n v u
     | even n    = v <> u
     | otherwise = u <> v
+  
+adjuster :: Int -> T.Text -> T.Text
+adjuster i
+    | even i    = T.reverse
+    | otherwise = T.intersperse '_'
+
+mapper :: T.Text -> T.Text
+mapper t
+    | even (T.length t) = T.reverse t
+    | otherwise         = T.intersperse '_' t
 
 prop_valid :: Property
 prop_valid = property $
@@ -244,27 +252,27 @@ prop_singleton = ttProp (GTKey :-> GTVal :-> TTNEMap)
     NEM.singleton
 
 prop_fromAscListWithKey :: Property
-prop_fromAscListWithKey = ttProp (GTSorted STAsc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+prop_fromAscListWithKey = ttProp (GTSorted STAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
     (M.fromAscListWithKey   combiner)
     (NEM.fromAscListWithKey combiner)
 
 prop_fromDescListWithKey :: Property
-prop_fromDescListWithKey = ttProp (GTSorted STDesc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+prop_fromDescListWithKey = ttProp (GTSorted STDesc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
     (M.fromDescListWithKey   combiner)
     (NEM.fromDescListWithKey combiner)
 
 prop_fromDistinctAscList :: Property
-prop_fromDistinctAscList = ttProp (GTSorted STDistinctAsc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+prop_fromDistinctAscList = ttProp (GTSorted STDistinctAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
     M.fromDistinctAscList
     NEM.fromDistinctAscList
 
 prop_fromDistinctDescList :: Property
-prop_fromDistinctDescList = ttProp (GTSorted STDistinctDesc (GTNEList (GTKey :&: GTVal)) :-> TTNEMap)
+prop_fromDistinctDescList = ttProp (GTSorted STDistinctDesc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
     M.fromDistinctDescList
     NEM.fromDistinctDescList
 
 prop_fromListWithKey :: Property
-prop_fromListWithKey = ttProp (GTNEList (GTKey :&: GTVal) :-> TTNEMap)
+prop_fromListWithKey = ttProp (GTNEList Nothing (GTKey :&: GTVal) :-> TTNEMap)
     (M.fromListWithKey   combiner)
     (NEM.fromListWithKey combiner)
 
@@ -285,11 +293,8 @@ prop_delete = ttProp (GTKey :-> GTNEMap :-> TTMap)
 
 prop_adjustWithKey :: Property
 prop_adjustWithKey = ttProp (GTKey :-> GTNEMap :-> TTNEMap)
-    (M.adjustWithKey   f)
-    (NEM.adjustWithKey f)
-  where
-    f i | even i    = T.reverse
-        | otherwise = T.intersperse '_'
+    (M.adjustWithKey   adjuster)
+    (NEM.adjustWithKey adjuster)
 
 prop_updateWithKey :: Property
 prop_updateWithKey = ttProp (GTKey :-> GTNEMap :-> TTMap)
@@ -317,11 +322,8 @@ prop_alter = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTMap)
 
 prop_alter' :: Property
 prop_alter' = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTNEMap)
-    (\v -> M.alter    (Just . f . fromMaybe v))
-    (\v -> NEM.alter' (       f . fromMaybe v))
-  where
-    f t | even (T.length t) = T.reverse t
-        | otherwise         = T.intersperse '_' t
+    (\v -> M.alter    (Just . mapper . fromMaybe v))
+    (\v -> NEM.alter' (       mapper . fromMaybe v))
 
 --   , alterF
 --   , alterF'
@@ -387,14 +389,92 @@ prop_unionWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
     (NEM.unionWithKey combiner)
 
 prop_unions :: Property
-prop_unions = ttProp (GTNEList GTNEMap :-> TTNEMap)
+prop_unions = ttProp (GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
     M.unions
     NEM.unions
 
 prop_unionsWith :: Property
-prop_unionsWith = ttProp (GTNEList GTNEMap :-> TTNEMap)
+prop_unionsWith = ttProp (GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
     (M.unionsWith (<>))
     (NEM.unionsWith (<>))
+
+prop_difference :: Property
+prop_difference = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
+    M.difference
+    NEM.difference
+
+prop_differenceWithKey :: Property
+prop_differenceWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
+    (M.differenceWithKey f)
+    (NEM.differenceWithKey f)
+  where
+    f n v u
+      | even n    = Just (v <> u)
+      | otherwise = Nothing
+
+prop_intersection :: Property
+prop_intersection = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
+    M.intersection
+    NEM.intersection
+
+prop_intersectionWithKey :: Property
+prop_intersectionWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
+    (M.intersectionWithKey combiner)
+    (NEM.intersectionWithKey combiner)
+
+prop_map :: Property
+prop_map = ttProp (GTNEMap :-> TTNEMap)
+    (M.map   mapper)
+    (NEM.map mapper)
+
+prop_mapWithKey :: Property
+prop_mapWithKey = ttProp (GTNEMap :-> TTNEMap)
+    (M.mapWithKey   adjuster)
+    (NEM.mapWithKey adjuster)
+
+  -- , traverseWithKey1
+  -- , traverseWithKey
+  -- , traverseMaybeWithKey
+  -- , traverseMaybeWithKey1
+
+prop_mapAccumWithKey :: Property
+prop_mapAccumWithKey = ttProp (GTOther (Gen.bool) :-> GTNEMap :-> TTOther :*: TTNEMap)
+    (M.mapAccumWithKey   f)
+    (NEM.mapAccumWithKey f)
+  where
+    f b i t
+      | b /= (i `mod` 3 == 0) = (b    , T.reverse t        )
+      | otherwise             = (not b, T.intersperse '_' t)
+
+prop_mapAccumRWithKey :: Property
+prop_mapAccumRWithKey = ttProp (GTOther (Gen.bool) :-> GTNEMap :-> TTOther :*: TTNEMap)
+    (M.mapAccumRWithKey   f)
+    (NEM.mapAccumRWithKey f)
+  where
+    f b i t
+      | b /= (i `mod` 3 == 0) = (b    , T.reverse t        )
+      | otherwise             = (not b, T.intersperse '_' t)
+
+prop_mapKeys :: Property
+prop_mapKeys = ttProp (GTNEMap :-> TTNEMap)
+    (M.mapKeys   f)
+    (NEM.mapKeys f)
+  where
+    f = (`mod` 25)
+  
+prop_mapKeysWith :: Property
+prop_mapKeysWith = ttProp (GTNEMap :-> TTNEMap)
+    (M.mapKeysWith   (<>) f)
+    (NEM.mapKeysWith (<>) f)
+  where
+    f = (`mod` 25)
+  
+prop_mapMonotonic :: Property
+prop_mapMonotonic = ttProp (GTNEMap :-> TTNEMap)
+    (M.mapKeysMonotonic   (* 2))
+    (NEM.mapKeysMonotonic (* 2))
+  
+
 
 
 
