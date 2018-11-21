@@ -438,9 +438,11 @@ mapEitherWithKey (\_ a -&gt; Right a) (fromList ((5,&quot;a&quot;) :| [(3,&quot;
  containing up to two <code><a href="Data-Map-NonEmpty.html#t:NEMap" title="Data.Map.NonEmpty">NEMap</a></code>s based on splitting the map into maps
  containing items before and after the given key <code>k</code>.  It will never
  return a map that contains <code>k</code> itself.</p><ul><li><code><a href="../base-4.12.0.0/GHC-Maybe.html#v:Nothing" title="GHC.Maybe">Nothing</a></code> means that <code>k</code> was the only key in the the original map,
-     and so there are no items before or after it.</li><li><code><code><a href="../base-4.12.0.0/GHC-Maybe.html#v:Just" title="GHC.Maybe">Just</a></code> (<code><a href="../these-0.7.5/Data-These.html#v:This" title="Data.These">This</a></code> n1)</code> means <code>k</code> was larger than all items in the map,
-     and <code>n1</code> is the entire original map.</li><li><code><code><a href="../base-4.12.0.0/GHC-Maybe.html#v:Just" title="GHC.Maybe">Just</a></code> (<code><a href="../these-0.7.5/Data-These.html#v:That" title="Data.These">That</a></code> n2)</code> means <code>k</code> was smaller than all items in the
-     map, and <code>n2</code> is the entire original map.</li><li><code><code><a href="../base-4.12.0.0/GHC-Maybe.html#v:Just" title="GHC.Maybe">Just</a></code> (<code><a href="../these-0.7.5/Data-These.html#t:These" title="Data.These">These</a></code> n1 n2)</code> gives <code>n1</code> (the map of all keys from the
+     and so there are no items before or after it.</li><li><code><code><a href="../base-4.12.0.0/GHC-Maybe.html#v:Just" title="GHC.Maybe">Just</a></code> (<code><a href="../these-0.7.5/Data-These.html#v:This" title="Data.These">This</a></code> n1)</code> means <code>k</code> was larger than or equal to all items
+     in the map, and <code>n1</code> is the entire original map (minus <code>k</code>, if it was
+     present)</li><li><code><code><a href="../base-4.12.0.0/GHC-Maybe.html#v:Just" title="GHC.Maybe">Just</a></code> (<code><a href="../these-0.7.5/Data-These.html#v:That" title="Data.These">That</a></code> n2)</code> means <code>k</code> was smaller than or equal to all
+     items in the map, and <code>n2</code> is the entire original map (minus <code>k</code>, if
+     it was present)</li><li><code><code><a href="../base-4.12.0.0/GHC-Maybe.html#v:Just" title="GHC.Maybe">Just</a></code> (<code><a href="../these-0.7.5/Data-These.html#t:These" title="Data.These">These</a></code> n1 n2)</code> gives <code>n1</code> (the map of all keys from the
      original map less than <code>k</code>) and <code>n2</code> (the map of all keys from the
      original map greater than <code>k</code>)</li></ul><pre>split 2 (fromList ((5,&quot;a&quot;) :| [(3,&quot;b&quot;)])) == Just (That  (fromList ((3,&quot;b&quot;) :| [(5,&quot;a&quot;)]))  )
 split 3 (fromList ((5,&quot;a&quot;) :| [(3,&quot;b&quot;)])) == Just (That  (singleton 5 &quot;a&quot;)                  )

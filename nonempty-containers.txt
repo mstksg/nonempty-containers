@@ -1733,11 +1733,11 @@ mapEitherWithKey :: (k -> a -> Either b c) -> NEMap k a -> These (NEMap k b) (NE
 --   <li><a>Nothing</a> means that <tt>k</tt> was the only key in the the
 --   original map, and so there are no items before or after it.</li>
 --   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>k</tt> was larger
---   than all items in the map, and <tt>n1</tt> is the entire original
---   map.</li>
+--   than or equal to all items in the map, and <tt>n1</tt> is the entire
+--   original map (minus <tt>k</tt>, if it was present)</li>
 --   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>k</tt> was smaller
---   than all items in the map, and <tt>n2</tt> is the entire original
---   map.</li>
+--   than or equal to all items in the map, and <tt>n2</tt> is the entire
+--   original map (minus <tt>k</tt>, if it was present)</li>
 --   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
 --   map of all keys from the original map less than <tt>k</tt>) and
 --   <tt>n2</tt> (the map of all keys from the original map greater than
