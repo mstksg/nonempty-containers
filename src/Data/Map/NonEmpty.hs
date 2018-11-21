@@ -149,8 +149,8 @@ module Data.Map.NonEmpty (
   , mapWithKey
   , traverseWithKey1
   , traverseWithKey
-  , traverseMaybeWithKey
   , traverseMaybeWithKey1
+  , traverseMaybeWithKey
   , mapAccum
   , mapAccumWithKey
   , mapAccumRWithKey
@@ -1254,6 +1254,9 @@ alter f k n@(NEMap k0 v m) = case compare k k0 of
 --
 -- Note: Unlike @Data.Map.alterF@ for 'Map', 'alterF' is /not/ a flipped
 -- version of the 'Control.Lens.At.at' combinator from "Control.Lens.At".
+-- However, it match the shape expected from most functions expecting
+-- lenses, getters, and setters, so can be thought of as a "psuedo-lens",
+-- with virtually the same practical applications as a legitimate lens.
 alterF
     :: (Ord k, Functor f)
     => (Maybe a -> f (Maybe a))
@@ -1299,7 +1302,10 @@ alter' f k n@(NEMap k0 v m) = case compare k k0 of
 -- See 'alterF' for usage information and caveats.
 --
 -- Note: Neither 'alterF' nor 'alterF'' can be considered flipped versions
--- of the 'Control.Lens.At.at' combinator from "Control.Lens.At".
+-- of the 'Control.Lens.At.at' combinator from "Control.Lens.At".  However,
+-- this can match the shape expected from most functions expecting lenses,
+-- getters, and setters, so can be thought of as a "psuedo-lens", with
+-- virtually the same practical applications as a legitimate lens.
 alterF'
     :: (Ord k, Functor f)
     => (Maybe a -> f a)

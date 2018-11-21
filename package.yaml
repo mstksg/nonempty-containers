@@ -32,13 +32,13 @@ ghc-options:
 dependencies:
 - base >= 4.7 && < 5
 - containers
-- deepseq
 - these
+- semigroupoids
 
 library:
   source-dirs: src
   dependencies:
-  - semigroupoids
+  - deepseq
 
 # executables:
 #   nonempty-containers-exe:

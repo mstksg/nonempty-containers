@@ -1,7 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes        #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE RankNTypes      #-}
+{-# LANGUAGE RecordWildCards #-}
 
 import           Data.Bifunctor
 import           Control.Monad
@@ -22,7 +20,7 @@ main = do
     hSetBuffering stdout LineBuffering
     hSetBuffering stderr LineBuffering
 
-    results <- checkParallel (tryGroup 1000 mapTests)
+    results <- checkParallel (tryGroup 100 mapTests)
 
     unless results exitFailure
 

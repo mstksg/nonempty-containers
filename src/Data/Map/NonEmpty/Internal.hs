@@ -499,10 +499,6 @@ instance Foldable (NEMap k) where
     elem x (NEMap _ v m) = F.elem x m
                         || x == v
     {-# INLINE elem #-}
-    minimum (NEMap _ v _) = v
-    {-# INLINE minimum #-}
-    maximum (NEMap _ v m) = maybe v snd . M.lookupMax $ m
-    {-# INLINE maximum #-}
     toList  = F.toList . elems
     {-# INLINE toList #-}
 

@@ -1,174 +1,25 @@
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE KindSignatures    #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeApplications  #-}
-{-# LANGUAGE TypeInType        #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TupleSections   #-}
 
 module Tests.Map (mapTests) where
 
-import           Control.Applicative
-import           Control.Monad
-import           Data.Bifunctor
 import           Data.Foldable
 import           Data.Function
 import           Data.Functor.Identity
-import           Data.Kind
-import           Data.List.NonEmpty         (NonEmpty(..))
-import           Data.Map                   (Map)
-import           Data.Map.NonEmpty          (NEMap)
 import           Data.Maybe
-import           Data.These
+import           Data.Semigroup.Foldable
+import           Data.Semigroup.Traversable
 import           Hedgehog
-import qualified Data.List.NonEmpty         as NE
+import           Tests.Map.Util
 import qualified Data.Map                   as M
 import qualified Data.Map.NonEmpty          as NEM
 import qualified Data.Map.NonEmpty.Internal as NEM
-import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
-data SortType :: Type -> Type where
-    STAsc          :: Ord a => SortType a
-    STDesc         :: Ord a => SortType a
-    STDistinctAsc  :: Ord a => SortType (a, b)
-    STDistinctDesc :: Ord a => SortType (a, b)
-
-data GenType :: Type -> Type -> Type where
-    GTNEMap  :: GenType (M.Map Integer T.Text) (NEM.NEMap Integer T.Text)
-    GTKey    :: GenType Integer                Integer
-    GTVal    :: GenType T.Text                 T.Text
-    GTOther  :: Gen a
-             -> GenType a                      a
-    GTMaybe  :: GenType a                      b
-             -> GenType (Maybe a)              (Maybe b)
-    (:&:)    :: GenType a                      b
-             -> GenType c                      d
-             -> GenType (a, c)                 (b, d)
-    GTNEList :: Maybe (Range Int)
-             -> GenType a                      b
-             -> GenType [a]                    (NonEmpty b)
-    GTSet    :: (Ord a, Ord b)
-             => GenType a                      b
-             -> GenType (S.Set a)              (S.Set b)
-    GTSorted :: SortType a
-             -> GenType [a]                    (NonEmpty a)
-             -> GenType [a]                    (NonEmpty a)
-
-data TestType :: Type -> Type -> Type where
-    TTNEMap  :: (Eq a, Show a)
-             => TestType (M.Map Integer a) (NEM.NEMap Integer a)
-    TTMap    :: (Eq a, Show a)
-             => TestType (M.Map Integer a) (M.Map     Integer a)
-    TTKey    :: TestType Integer           Integer
-    TTVal    :: TestType T.Text            T.Text
-    TTOther  :: (Eq a, Show a)
-             => TestType a                 a
-    TTThese  :: (Eq a, Show a, Monoid a, Eq c, Show c, Monoid c)
-             => TestType a                 b
-             -> TestType c                 d
-             -> TestType (a, c)            (These b d)
-    TTMThese :: (Eq a, Show a, Monoid a, Eq c, Show c, Monoid c)
-             => TestType a                 b
-             -> TestType c                 d
-             -> TestType (a, c)            (Maybe (These b d))
-    TTMaybe  :: TestType a                 b
-             -> TestType (Maybe a)         (Maybe b)
-    TTNEList :: TestType a                 b
-             -> TestType [a]               (NonEmpty b)
-    (:*:)    :: (Eq a, Eq b, Eq c, Eq d, Show a, Show b, Show c, Show d)
-             => TestType a                 b
-             -> TestType c                 d
-             -> TestType (a, c)            (b, d)
-    (:->)    :: (Show a, Show b)
-             => GenType  a                 b
-             -> TestType c                 d
-             -> TestType (a -> c)          (b -> d)
-
-infixr 2 :&:
-infixr 1 :->
-infixr 2 :*:
-
-runSorter
-    :: SortType a
-    -> [a]
-    -> [a]
-runSorter = \case
-    STAsc          -> S.toAscList  . S.fromList
-    STDesc         -> S.toDescList . S.fromList
-    STDistinctAsc  -> M.toAscList  . M.fromList
-    STDistinctDesc -> M.toDescList . M.fromList
-
-runGT :: GenType a b -> Gen (a, b)
-runGT = \case
-    GTNEMap    -> (\n -> (NEM.IsNonEmpty n, n)) <$> neMapGen
-    GTKey      -> join (,) <$> keyGen
-    GTVal      -> join (,) <$> valGen
-    GTOther g  -> join (,) <$> g
-    GTMaybe g  -> maybe (Nothing, Nothing) (bimap Just Just) <$>
-        Gen.maybe (runGT g)
-    g1 :&: g2  -> do
-      (x1, y1) <- runGT g1
-      (x2, y2) <- runGT g2
-      pure ((x1,x2), (y1,y2))
-    GTNEList r g -> first toList . NE.unzip <$>
-        Gen.nonEmpty (fromMaybe mapSize r) (runGT g)
-    GTSet g -> bimap S.fromList S.fromList . unzip <$>
-        Gen.list mapSize (runGT g)
-    GTSorted s g -> bimap (runSorter s) (fromJust . NE.nonEmpty . runSorter s . toList) <$>
-                      runGT g
-
-runTT :: Monad m => TestType a b -> a -> b -> PropertyT m ()
-runTT = \case
-    TTNEMap -> \x y -> do
-      annotate $ show y
-      assert $ NEM.valid y
-      x === NEM.IsNonEmpty y
-    TTMap   -> (===)
-    TTKey   -> (===)
-    TTVal   -> (===)
-    TTOther -> (===)
-    TTThese t1 t2 -> \(x1, x2) -> \case
-      This y1 -> do
-        runTT t1 x1 y1
-        x2 === mempty
-      That y2 -> do
-        x1 === mempty
-        runTT t2 x2 y2
-      These y1 y2 -> do
-        runTT t1 x1 y1
-        runTT t2 x2 y2
-    TTMThese t1 t2 -> \(x1, x2) -> \case
-      Nothing -> do
-        x1 === mempty
-        x2 === mempty
-      Just (This y1) -> do
-        runTT t1 x1 y1
-        x2 === mempty
-      Just (That y2) -> do
-        x1 === mempty
-        runTT t2 x2 y2
-      Just (These y1 y2) -> do
-        runTT t1 x1 y1
-        runTT t2 x2 y2
-    TTMaybe tt -> \x y -> do
-      isJust y === isJust y
-      traverse_ (uncurry (runTT tt)) $ liftA2 (,) x y
-    TTNEList tt -> \xs ys -> do
-      length xs === length ys
-      zipWithM_ (runTT tt) xs (toList ys)
-    t1 :*: t2 -> \(x1, x2) (y1, y2) -> do
-      runTT t1 x1 y1
-      runTT t2 x2 y2
-    gt :-> tt -> \f g -> do
-      (x, y) <- forAll $ runGT gt
-      runTT tt (f x) (g y)
-
-ttProp :: TestType a b -> a -> b -> Property
-ttProp tt x = property . runTT tt x
+mapTests :: Group
+mapTests = $$(discover)
 
 
 
@@ -342,8 +193,15 @@ prop_alter' = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTNEMap)
     (\v -> M.alter    (Just . mapper . fromMaybe v))
     (\v -> NEM.alter' (       mapper . fromMaybe v))
 
---   , alterF
---   , alterF'
+prop_alterF :: Property
+prop_alterF = ttProp (GTKey :-> GTNEMap :-> TTCtx (GTMaybe GTVal :-> TTMap) (TTMaybe TTVal))
+    (M.alterF   (Context id))
+    (NEM.alterF (Context id))
+
+prop_alterF' :: Property
+prop_alterF' = ttProp (GTKey :-> GTNEMap :-> TTCtx (GTVal :-> TTNEMap) (TTMaybe TTVal))
+    (M.alterF    (Context Just))
+    (NEM.alterF' (Context id))
 
 prop_lookup :: Property
 prop_lookup = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTVal)
@@ -449,10 +307,35 @@ prop_mapWithKey = ttProp (GTNEMap :-> TTNEMap)
     (M.mapWithKey   adjuster)
     (NEM.mapWithKey adjuster)
 
-  -- , traverseWithKey1
-  -- , traverseWithKey
-  -- , traverseMaybeWithKey
-  -- , traverseMaybeWithKey1
+prop_traverseWithKey1 :: Property
+prop_traverseWithKey1 = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
+    (M.traverseWithKey    (\k -> (`More` Done (k,))))
+    (NEM.traverseWithKey1 (\k -> (`More` Done (k,))))
+
+prop_traverseWithKey :: Property
+prop_traverseWithKey = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
+    (M.traverseWithKey   (\k -> (`More` Done (k,))))
+    (NEM.traverseWithKey (\k -> (`More` Done (k,))))
+
+prop_traverseMaybeWithKey1 :: Property
+prop_traverseMaybeWithKey1 = ttProp (GTNEMap :-> TTBazaar (GTMaybe GTVal) TTMap TTVal)
+    (M.traverseMaybeWithKey    (\k -> (`More` Done (fmap (k,)))))
+    (NEM.traverseMaybeWithKey1 (\k -> (`More` Done (fmap (k,)))))
+
+prop_traverseMaybeWithKey :: Property
+prop_traverseMaybeWithKey = ttProp (GTNEMap :-> TTBazaar (GTMaybe GTVal) TTMap TTVal)
+    (M.traverseMaybeWithKey   (\k -> (`More` Done (fmap (k,)))))
+    (NEM.traverseMaybeWithKey (\k -> (`More` Done (fmap (k,)))))
+
+prop_sequence1 :: Property
+prop_sequence1 = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
+    (sequenceA . fmap (`More` Done id))
+    (sequence1 . fmap (`More` Done id))
+
+prop_sequenceA :: Property
+prop_sequenceA = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
+    (sequenceA . fmap (`More` Done id))
+    (sequenceA . fmap (`More` Done id))
 
 prop_mapAccumWithKey :: Property
 prop_mapAccumWithKey = ttProp  ( GTOther (Gen.double (Range.linearFrac (-1) 1))
@@ -825,29 +708,28 @@ prop_maxView = ttProp (GTNEMap :-> TTMaybe (TTVal :*: TTMap))
     M.maxView
     (Just . NEM.maxView)
 
+prop_elem :: Property
+prop_elem = ttProp (GTVal :-> GTNEMap :-> TTOther)
+    elem
+    elem
 
+prop_fold1 :: Property
+prop_fold1 = ttProp (GTNEMap :-> TTVal)
+    fold
+    fold1
 
+prop_fold :: Property
+prop_fold = ttProp (GTNEMap :-> TTVal)
+    fold
+    fold
 
+prop_foldMap1 :: Property
+prop_foldMap1 = ttProp (GTNEMap :-> TTOther)
+    (foldMap  (:[]))
+    (foldMap1 (:[]))
 
--- ---------------------
--- Generators
--- ---------------------
-
-keyGen :: MonadGen m => m Integer
-keyGen = Gen.integral (Range.linear 0 50)
-
-valGen :: MonadGen m => m T.Text
-valGen = Gen.text (Range.linear 0 5) Gen.alphaNum
-
-mapSize :: Range Int
-mapSize = Range.exponential 4 8
-
-mapGen :: MonadGen m => m (Map Integer T.Text)
-mapGen = Gen.map mapSize $ (,) <$> keyGen <*> valGen
-
-neMapGen :: MonadGen m => m (NEMap Integer T.Text)
-neMapGen = Gen.just $ NEM.nonEmptyMap <$> mapGen
-
-mapTests :: Group
-mapTests = $$(discover)
+prop_foldMap :: Property
+prop_foldMap = ttProp (GTNEMap :-> TTOther)
+    (foldMap (:[]))
+    (foldMap (:[]))
 
