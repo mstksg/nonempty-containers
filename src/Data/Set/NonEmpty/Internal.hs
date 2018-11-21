@@ -20,6 +20,7 @@ module Data.Set.NonEmpty.Internal (
 
 import           Control.DeepSeq
 import           Data.Data
+import           Data.Function
 import           Data.Functor.Classes
 import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup
@@ -30,10 +31,8 @@ import           GHC.Exts                ( reallyUnsafePtrEquality#, isTrue# )
 import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
 import           Text.Read
 import qualified Data.Foldable           as F
-import qualified Data.List.NonEmpty      as NE
 import qualified Data.Semigroup.Foldable as F1
 import qualified Data.Set                as S
-import qualified Data.Set.Internal       as S
 
 data NESet a =
     NESet { nesV0  :: !a   -- ^ invariant: must be smaller than smallest value in set
@@ -42,10 +41,15 @@ data NESet a =
   deriving (Typeable)
 
 instance Eq a => Eq (NESet a) where
-  t1 == t2  = (size t1 == size t2) && (toList t1 == toList t2)
+    t1 == t2  = S.size (nesSet t1) == S.size (nesSet t2)
+             && toList t1 == toList t2
 
 instance Ord a => Ord (NESet a) where
-    compare s1 s2 = compare (toList s1) (toList s2)
+    compare = compare `on` toList
+    (<)     = (<) `on` toList
+    (>)     = (>) `on` toList
+    (<=)    = (<=) `on` toList
+    (>=)    = (>=) `on` toList
 
 instance Show a => Show (NESet a) where
   showsPrec p xs = showParen (p > 10) $
@@ -194,7 +198,7 @@ instance Ord a => Semigroup (NESet a) where
     sconcat = unions
     {-# INLINE sconcat #-}
 
--- | Traverses elements in order ascending keys
+-- | Traverses elements in ascending order
 --
 -- 'foldr1', 'foldl1', 'minimum', 'maximum' are all total.
 instance Foldable NESet where
@@ -221,6 +225,10 @@ instance Foldable NESet where
     elem x (NESet x0 s) = F.elem x s
                        || x == x0
     {-# INLINE elem #-}
+    minimum (NESet x _) = x
+    {-# INLINE minimum #-}
+    maximum (NESet x s) = maybe x fst . S.maxView $ s
+    {-# INLINE maximum #-}
     toList  = F.toList . toList
     {-# INLINE toList #-}
 

@@ -121,11 +121,16 @@ data NEMap k a =
           }
   deriving (Typeable)
 
-instance (Eq k,Eq a) => Eq (NEMap k a) where
-  t1 == t2  = (size t1 == size t2) && (toList t1 == toList t2)
+instance (Eq k, Eq a) => Eq (NEMap k a) where
+    t1 == t2 = M.size (nemMap t1) == M.size (nemMap t2)
+            && toList t1 == toList t2
 
 instance (Ord k, Ord a) => Ord (NEMap k a) where
-    compare m1 m2 = compare (toList m1) (toList m2)
+    compare = compare `on` toList
+    (<)     = (<) `on` toList
+    (>)     = (>) `on` toList
+    (<=)    = (<=) `on` toList
+    (>=)    = (>=) `on` toList
 
 instance Eq2 NEMap where
     liftEq2 eqk eqv m n =
@@ -473,7 +478,7 @@ instance Functor (NEMap k) where
     x <$ NEMap k _ m = NEMap k x (x <$ m)
     {-# INLINE (<$) #-}
 
--- | Traverses elements in order ascending keys
+-- | Traverses elements in order of ascending keys
 --
 -- 'foldr1', 'foldl1', 'minimum', 'maximum' are all total.
 instance Foldable (NEMap k) where
@@ -503,14 +508,14 @@ instance Foldable (NEMap k) where
     toList  = F.toList . elems
     {-# INLINE toList #-}
 
--- | Traverses elements in order ascending keys
+-- | Traverses elements in order of ascending keys
 instance Traversable (NEMap k) where
     traverse f (NEMap k v m) = NEMap k <$> f v <*> traverse f m
     {-# INLINE traverse #-}
     sequenceA (NEMap k v m)  = NEMap k <$> v <*> sequenceA m
     {-# INLINE sequenceA #-}
 
--- | Traverses elements in order ascending keys
+-- | Traverses elements in order of ascending keys
 instance Foldable1 (NEMap k) where
     fold1 (NEMap _ v m) = maybe v (v <>)
                         . getOption
@@ -522,7 +527,7 @@ instance Foldable1 (NEMap k) where
     toNonEmpty = elems
     {-# INLINE toNonEmpty #-}
 
--- | Traverses elements in order ascending keys
+-- | Traverses elements in order of ascending keys
 instance Traversable1 (NEMap k) where
     traverse1 f = traverseWithKey1 (const f)
     {-# INLINE traverse1 #-}
