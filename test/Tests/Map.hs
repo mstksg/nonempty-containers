@@ -170,48 +170,8 @@ runTT = \case
 ttProp :: TestType a b -> a -> b -> Property
 ttProp tt x = property . runTT tt x
 
--- data Tester :: Type -> Type where
---     GenKey   :: Tester Int
---     GenVal   :: Tester T.Text
---     GenKeyVals :: Tester (NonEmpty (Int, T.Text))
---     TestFunc :: N.SNatI n
---              => TestType a b
---              -> (V.Vec n (M.Map     Int T.Text) -> a)
---              -> (V.Vec n (NEM.NEMap Int T.Text) -> b)
---              -> Tester ()
 
--- makeEffect ''Tester
 
--- runTT :: MonadTest m => TestType a b -> a -> b -> m ()
--- runTT = \case
---     TTNEMap -> \x y -> do
---       assert $ NEM.valid y
---       x === NEM.IsNonEmpty y
---     TTMap   -> (===)
---     TTKey   -> (===)
---     TTVal   -> (===)
---     TTOther -> (===)
---     TTMaybe tt -> \x y -> do
---       isJust y === isJust y
---       traverse_ (uncurry (runTT tt)) $ liftA2 (,) x y
---     TTAnd t1 t2 -> \(x1, x2) (y1, y2) -> do
---       runTT t1 x1 y1
---       runTT t2 x2 y2
-
--- testerProp :: Eff '[Tester, PropertyT IO] () -> Property
--- testerProp = property . runM . interpretM go
---   where
---     go :: Tester x -> PropertyT IO x
---     go = \case
---       GenKey -> forAll keyGen
---       GenVal -> forAll valGen
---       GenKeyVals -> forAll $
---           Gen.nonEmpty mapSize $ (,) <$> keyGen <*> valGen
---       TestFunc tt f g -> do
---         ns <- sequenceA $ pure (forAll neMapGen)
---         let x = f (NEM.IsNonEmpty <$> ns)
---             y = g ns
---         runTT tt x y
 
 combiner :: Integer -> T.Text -> T.Text -> T.Text
 combiner n v u
@@ -233,6 +193,10 @@ mapper :: T.Text -> T.Text
 mapper t
     | even (T.length t) = T.reverse t
     | otherwise         = T.intersperse '_' t
+
+
+
+
 
 prop_valid :: Property
 prop_valid = property $
@@ -299,6 +263,16 @@ prop_singleton :: Property
 prop_singleton = ttProp (GTKey :-> GTVal :-> TTNEMap)
     M.singleton
     NEM.singleton
+
+prop_fromAscList :: Property
+prop_fromAscList = ttProp (GTSorted STAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
+    M.fromAscList
+    NEM.fromAscList
+
+prop_fromDescList :: Property
+prop_fromDescList = ttProp (GTSorted STDesc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
+    M.fromDescList
+    NEM.fromDescList
 
 prop_fromAscListWithKey :: Property
 prop_fromAscListWithKey = ttProp (GTSorted STAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
@@ -846,6 +820,10 @@ prop_minView = ttProp (GTNEMap :-> TTMaybe (TTVal :*: TTMap))
     M.minView
     (Just . NEM.minView)
 
+prop_maxView :: Property
+prop_maxView = ttProp (GTNEMap :-> TTMaybe (TTVal :*: TTMap))
+    M.maxView
+    (Just . NEM.maxView)
 
 
 
@@ -856,13 +834,13 @@ prop_minView = ttProp (GTNEMap :-> TTMaybe (TTVal :*: TTMap))
 -- ---------------------
 
 keyGen :: MonadGen m => m Integer
-keyGen = Gen.integral (Range.linear (-500) 500)
+keyGen = Gen.integral (Range.linear 0 50)
 
 valGen :: MonadGen m => m T.Text
-valGen = Gen.text (Range.singleton 5) Gen.alphaNum
+valGen = Gen.text (Range.linear 0 5) Gen.alphaNum
 
 mapSize :: Range Int
-mapSize = Range.exponential 4 256
+mapSize = Range.exponential 4 8
 
 mapGen :: MonadGen m => m (Map Integer T.Text)
 mapGen = Gen.map mapSize $ (,) <$> keyGen <*> valGen

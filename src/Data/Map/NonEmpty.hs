@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns    #-}
+{-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TupleSections   #-}
 {-# LANGUAGE ViewPatterns    #-}
@@ -1796,10 +1797,12 @@ mapEitherWithKey f (NEMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
 --
 -- *   'Nothing' means that @k@ was the only key in the the original map,
 --     and so there are no items before or after it.
--- *   @'Just' ('This' n1)@ means @k@ was larger than all items in the map,
---     and @n1@ is the entire original map.
--- *   @'Just' ('That' n2)@ means @k@ was smaller than all items in the
---     map, and @n2@ is the entire original map.
+-- *   @'Just' ('This' n1)@ means @k@ was larger than or equal to all items
+--     in the map, and @n1@ is the entire original map (minus @k@, if it was
+--     present)
+-- *   @'Just' ('That' n2)@ means @k@ was smaller than or equal to all
+--     items in the map, and @n2@ is the entire original map (minus @k@, if
+--     it was present)
 -- *   @'Just' ('These' n1 n2)@ gives @n1@ (the map of all keys from the
 --     original map less than @k@) and @n2@ (the map of all keys from the
 --     original map greater than @k@)
@@ -1820,7 +1823,7 @@ split k n@(NEMap k0 v m0) = case compare k k0 of
     EQ -> That <$> nonEmptyMap m0
     GT -> case (nonEmptyMap m1, nonEmptyMap m2) of
       (Nothing, Nothing) -> Just $ This  (singleton k0 v)
-      (Just _ , Nothing) -> Just $ This  n
+      (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v m1)
       (Nothing, Just n2) -> Just $ These (singleton k0 v)       n2
       (Just _ , Just n2) -> Just $ These (insertMapMin k0 v m1) n2
   where
@@ -1846,7 +1849,7 @@ splitLookup k n@(NEMap k0 v0 m0) = case compare k k0 of
     EQ -> (Just v0, That <$> nonEmptyMap m0)
     GT -> (v      ,) $ case (nonEmptyMap m1, nonEmptyMap m2) of
       (Nothing, Nothing) -> Just $ This  (singleton k0 v0)
-      (Just _ , Nothing) -> Just $ This  n
+      (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v0 m1)
       (Nothing, Just n2) -> Just $ These (singleton k0 v0)       n2
       (Just _ , Just n2) -> Just $ These (insertMapMin k0 v0 m1) n2
   where
@@ -2279,31 +2282,36 @@ deleteFindMax (NEMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v)
                             $ m
 {-# INLINE deleteFindMax #-}
 
+-- ---------------------------
 -- Combining functions
+-- ---------------------------
+--
+-- Code comes from "Data.Map.Internal" from containers, modified slightly
+-- to work with NonEmpty
+--
+-- Copyright   :  (c) Daan Leijen 2002
+--                (c) Andriy Palamarchuk 2008
 
 combineEq :: Eq a => NonEmpty (a, b) -> NonEmpty (a, b)
-combineEq (x :| xs) = case NE.nonEmpty xs of
-    Nothing -> x :| []
-    Just ys -> go x ys
+combineEq = \case
+    x :| []       -> x :| []
+    x :| xx@(_:_) -> go x xx
   where
-    go z@(kz,_) (y@(ky,_) :| ys)
-      | ky == kz  = case NE.nonEmpty ys of
-          Nothing -> y :| []
-          Just zs -> go y zs
-      | otherwise = case NE.nonEmpty ys of
-          Nothing -> z :| [y]
-          Just zs -> z :| F.toList (go y zs)
+    go z [] = z :| []
+    go z@(kz,_) (x@(kx,xx):xs')
+      | kx==kz    = go (kx,xx) xs'
+      | otherwise = z NE.<| go x xs'
 
-combineEqWith :: Eq a => (a -> b -> b -> b) -> NonEmpty (a, b) -> NonEmpty (a, b)
-combineEqWith f (x :| xs) = case NE.nonEmpty xs of
-    Nothing -> x :| []
-    Just ys -> go x ys
+combineEqWith
+    :: Eq a
+    => (a -> b -> b -> b)
+    -> NonEmpty (a, b)
+    -> NonEmpty (a, b)
+combineEqWith f = \case
+    x :| []       -> x :| []
+    x :| xx@(_:_) -> go x xx
   where
-    go z@(kz,zz) (y@(ky,yy) :| ys)
-      | ky == kz  = case NE.nonEmpty ys of
-          Nothing -> y :| []
-          Just zs -> let yy' = f ky yy zz
-                     in  go (ky, yy') zs
-      | otherwise = case NE.nonEmpty ys of
-          Nothing -> z :| [y]
-          Just zs -> z :| F.toList (go y zs)
+    go z [] = z :| []
+    go z@(kz,zz) (x@(kx,xx):xs')
+      | kx==kz    = let yy = f kx xx zz in go (kx,yy) xs'
+      | otherwise = z NE.<| go x xs'
