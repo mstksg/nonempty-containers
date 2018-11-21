@@ -926,7 +926,10 @@ alter :: Ord k => (Maybe a -> Maybe a) -> k -> NEMap k a -> Map k a
 --   
 --   Note: Unlike <tt>Data.Map.alterF</tt> for <a>Map</a>, <a>alterF</a> is
 --   <i>not</i> a flipped version of the <a>at</a> combinator from
---   <a>Control.Lens.At</a>.
+--   <a>Control.Lens.At</a>. However, it match the shape expected from most
+--   functions expecting lenses, getters, and setters, so can be thought of
+--   as a "psuedo-lens", with virtually the same practical applications as
+--   a legitimate lens.
 alterF :: (Ord k, Functor f) => (Maybe a -> f (Maybe a)) -> k -> NEMap k a -> f (Map k a)
 
 -- | <i>O(log n)</i>. Variant of <a>alter</a> that disallows deletion.
@@ -944,7 +947,10 @@ alter' :: Ord k => (Maybe a -> a) -> k -> NEMap k a -> NEMap k a
 --   
 --   Note: Neither <a>alterF</a> nor <a>alterF'</a> can be considered
 --   flipped versions of the <a>at</a> combinator from
---   <a>Control.Lens.At</a>.
+--   <a>Control.Lens.At</a>. However, this can match the shape expected
+--   from most functions expecting lenses, getters, and setters, so can be
+--   thought of as a "psuedo-lens", with virtually the same practical
+--   applications as a legitimate lens.
 alterF' :: (Ord k, Functor f) => (Maybe a -> f a) -> k -> NEMap k a -> f (NEMap k a)
 
 -- | <i>O(log n)</i>. Lookup the value at a key in the map.
@@ -1255,21 +1261,21 @@ traverseWithKey :: Applicative t => (k -> a -> t b) -> NEMap k a -> t (NEMap k b
 --   Returns a potentially empty map (<a>Map</a>), our function might
 --   return <a>Nothing</a> on every item in the <a>NEMap</a>.
 --   
---   <i>Use <a>traverseMaybeWithKey1</a></i> whenever possible (if your
---   <a>Applicative</a> also has <a>Apply</a> instance). This version is
---   provided only for types that do not have <a>Apply</a> instance, since
---   <a>Apply</a> is not at the moment (and might not ever be) an official
---   superclass of <a>Applicative</a>.
-traverseMaybeWithKey :: Applicative t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
+--   Is more general than <a>traverseWithKey</a>, since works with all
+--   <a>Apply</a>, and not just <a>Applicative</a>.
+traverseMaybeWithKey1 :: Apply t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
 
 -- | <i>O(n)</i>. Traverse keys/values and collect the <a>Just</a> results.
 --   
 --   Returns a potentially empty map (<a>Map</a>), our function might
 --   return <a>Nothing</a> on every item in the <a>NEMap</a>.
 --   
---   Is more general than <a>traverseWithKey</a>, since works with all
---   <a>Apply</a>, and not just <a>Applicative</a>.
-traverseMaybeWithKey1 :: Apply t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
+--   <i>Use <a>traverseMaybeWithKey1</a></i> whenever possible (if your
+--   <a>Applicative</a> also has <a>Apply</a> instance). This version is
+--   provided only for types that do not have <a>Apply</a> instance, since
+--   <a>Apply</a> is not at the moment (and might not ever be) an official
+--   superclass of <a>Applicative</a>.
+traverseMaybeWithKey :: Applicative t => (k -> a -> t (Maybe b)) -> NEMap k a -> t (Map k b)
 
 -- | <i>O(n)</i>. The function <a>mapAccum</a> threads an accumulating
 --   argument through the map in ascending order of keys.
