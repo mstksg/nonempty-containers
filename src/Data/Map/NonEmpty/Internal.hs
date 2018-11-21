@@ -43,11 +43,9 @@ module Data.Map.NonEmpty.Internal (
   , foldr
   , foldr'
   , foldr1
-  , foldr1'
   , foldl
   , foldl'
   , foldl1
-  , foldl1'
   -- * Traversals
   , traverseWithKey
   , traverseWithKey1
@@ -224,15 +222,6 @@ foldr1 f (NEMap _ v m) = maybe v (f v . uncurry (M.foldr f))
                        $ m
 {-# INLINE foldr1 #-}
 
--- | /O(n)/. A strict version of 'foldr1'. Each application of the operator
--- is evaluated before using the result in the next application. This
--- function is strict in the starting value.
-foldr1' :: (a -> a -> a) -> NEMap k a -> a
-foldr1' f (NEMap _ v m) = case M.maxView m of
-    Nothing      -> v
-    Just (y, m') -> let !z = M.foldr' f y m' in v `f` z
-{-# INLINE foldr1' #-}
-
 -- | /O(n)/. Fold the values in the map using the given left-associative
 -- binary operator, such that @'foldl' f z == 'Prelude.foldl' f z . 'elems'@.
 --
@@ -262,13 +251,6 @@ foldl1 :: (a -> a -> a) -> NEMap k a -> a
 foldl1 f (NEMap _ v m) = M.foldl f v m
 {-# INLINE foldl1 #-}
 
--- | /O(n)/. A strict version of 'foldl1'. Each application of the operator
--- is evaluated before using the result in the next application. This
--- function is strict in the starting value.
-foldl1' :: (a -> a -> a) -> NEMap k a -> a
-foldl1' f (NEMap _ v m) = M.foldl' f v m
-{-# INLINE foldl1' #-}
-
 -- | /O(n)/. Fold the keys and values in the map using the given semigroup,
 -- such that
 --
@@ -289,12 +271,6 @@ foldMapWithKey f (NEMap k0 v m) = maybe (f k0 v) (f k0 v <>)
                                 . M.foldMapWithKey (\k -> Option . Just . f k)
                                 $ m
 {-# INLINE foldMapWithKey #-}
-
--- | /O(n)/. Fold the values in the map using the given semigroup,
--- in ascending order.
-foldMap1 :: Semigroup m => (a -> m) -> NEMap k a -> m
-foldMap1 f = foldMapWithKey (const f)
-{-# INLINE foldMap1 #-}
 
 -- | /O(n)/. Map a function over all values in the map.
 --
@@ -541,7 +517,7 @@ instance Foldable1 (NEMap k) where
                         . F.foldMap (Option . Just)
                         $ m
     {-# INLINE fold1 #-}
-    foldMap1   = foldMap1
+    foldMap1 f = foldMapWithKey (const f)
     {-# INLINE foldMap1 #-}
     toNonEmpty = elems
     {-# INLINE toNonEmpty #-}

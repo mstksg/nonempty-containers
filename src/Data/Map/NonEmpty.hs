@@ -664,6 +664,21 @@ intersectionWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 
     GT -> M.intersectionWithKey f (toMap n1) m2
 {-# INLINE intersectionWithKey #-}
 
+-- | /O(n)/. A strict version of 'foldr1'. Each application of the operator
+-- is evaluated before using the result in the next application. This
+-- function is strict in the starting value.
+foldr1' :: (a -> a -> a) -> NEMap k a -> a
+foldr1' f (NEMap _ v m) = case M.maxView m of
+    Nothing      -> v
+    Just (y, m') -> let !z = M.foldr' f y m' in v `f` z
+{-# INLINE foldr1' #-}
+
+-- | /O(n)/. A strict version of 'foldl1'. Each application of the operator
+-- is evaluated before using the result in the next application. This
+-- function is strict in the starting value.
+foldl1' :: (a -> a -> a) -> NEMap k a -> a
+foldl1' f (NEMap _ v m) = M.foldl' f v m
+{-# INLINE foldl1' #-}
 
 -- | /O(n)/. Fold the keys and values in the map using the given right-associative
 -- binary operator, such that

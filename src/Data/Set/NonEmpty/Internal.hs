@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE MagicHash          #-}
+{-# LANGUAGE ViewPatterns       #-}
 
 module Data.Set.NonEmpty.Internal (
     NESet(..)
@@ -11,6 +12,7 @@ module Data.Set.NonEmpty.Internal (
   , toList
   , size
   , union
+  , unions
   , valid
   , insertMinSet
   , insertMaxSet
@@ -19,14 +21,19 @@ module Data.Set.NonEmpty.Internal (
 import           Control.DeepSeq
 import           Data.Data
 import           Data.Functor.Classes
-import           Data.List.NonEmpty   (NonEmpty(..))
-import           Data.Set.Internal    (Set(..))
-import           Data.Typeable        (Typeable)
-import           GHC.Exts             ( reallyUnsafePtrEquality#, isTrue# )
+import           Data.List.NonEmpty      (NonEmpty(..))
+import           Data.Semigroup
+import           Data.Semigroup.Foldable (Foldable1)
+import           Data.Set.Internal       (Set(..))
+import           Data.Typeable           (Typeable)
+import           GHC.Exts                ( reallyUnsafePtrEquality#, isTrue# )
+import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
 import           Text.Read
-import qualified Data.List.NonEmpty   as NE
-import qualified Data.Set             as S
-import qualified Data.Set.Internal    as S
+import qualified Data.Foldable           as F
+import qualified Data.List.NonEmpty      as NE
+import qualified Data.Semigroup.Foldable as F1
+import qualified Data.Set                as S
+import qualified Data.Set.Internal       as S
 
 data NESet a =
     NESet { nesV0  :: !a   -- ^ invariant: must be smaller than smallest value in set
@@ -122,6 +129,46 @@ size :: NESet a -> Int
 size (NESet _ s) = 1 + S.size s
 {-# INLINE size #-}
 
+foldr :: (a -> b -> b) -> b -> NESet a -> b
+foldr f z (NESet x s) = x `f` S.foldr f z s
+{-# INLINE foldr #-}
+
+foldr' :: (a -> b -> b) -> b -> NESet a -> b
+foldr' f z (NESet x s) = x `f` y
+  where
+    !y = S.foldr' f z s
+{-# INLINE foldr' #-}
+
+foldr1 :: (a -> a -> a) -> NESet a -> a
+foldr1 f (NESet x s) = maybe x (f x . uncurry (S.foldr f))
+                     . S.maxView
+                     $ s
+{-# INLINE foldr1 #-}
+
+foldl :: (a -> b -> a) -> a -> NESet b -> a
+foldl f z (NESet x s) = S.foldl f (f z x) s
+{-# INLINE foldl #-}
+
+foldl' :: (a -> b -> a) -> a -> NESet b -> a
+foldl' f z (NESet x s) = S.foldl' f y s
+  where
+    !y = f z x
+{-# INLINE foldl' #-}
+
+foldl1 :: (a -> a -> a) -> NESet a -> a
+foldl1 f (NESet x s) = S.foldl f x s
+{-# INLINE foldl1 #-}
+
+-- foldr1' :: (a -> a -> a) -> NESet a -> a
+-- foldr1' f (NESet x s) = case S.maxView s of
+--     Nothing      -> x
+--     Just (y, s') -> let !z = S.foldr' f y s' in x `f` z
+-- {-# INLINE foldr1' #-}
+
+-- foldl1' :: (a -> a -> a) -> NESet a -> a
+-- foldl1' f (NESet x s) = S.foldl' f x s
+-- {-# INLINE foldl1' #-}
+
 union
     :: Ord a
     => NESet a
@@ -133,10 +180,67 @@ union n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
     GT -> NESet x2 . S.union (toSet n1) $ s2
 {-# INLINE union #-}
 
+unions
+    :: (Foldable1 f, Ord a)
+    => f (NESet a)
+    -> NESet a
+unions (F1.toNonEmpty->(s :| ss)) = F.foldl' union s ss
+{-# INLINE unions #-}
+
 -- | Left-biased union
 instance Ord a => Semigroup (NESet a) where
     (<>) = union
     {-# INLINE (<>) #-}
+    sconcat = unions
+    {-# INLINE sconcat #-}
+
+-- | Traverses elements in order ascending keys
+--
+-- 'foldr1', 'foldl1', 'minimum', 'maximum' are all total.
+instance Foldable NESet where
+    fold      (NESet x s) = x <> F.fold s
+    {-# INLINE fold #-}
+    foldMap f (NESet x s) = f x <> foldMap f s
+    {-# INLINE foldMap #-}
+    foldr   = foldr
+    {-# INLINE foldr #-}
+    foldr'  = foldr'
+    {-# INLINE foldr' #-}
+    foldr1  = foldr1
+    {-# INLINE foldr1 #-}
+    foldl   = foldl
+    {-# INLINE foldl #-}
+    foldl'  = foldl'
+    {-# INLINE foldl' #-}
+    foldl1  = foldl1
+    {-# INLINE foldl1 #-}
+    null _  = False
+    {-# INLINE null #-}
+    length  = size
+    {-# INLINE length #-}
+    elem x (NESet x0 s) = F.elem x s
+                       || x == x0
+    {-# INLINE elem #-}
+    toList  = F.toList . toList
+    {-# INLINE toList #-}
+
+-- | Traverses elements in ascending order
+instance Foldable1 NESet where
+    fold1 (NESet x s) = maybe x (x <>)
+                      . getOption
+                      . F.foldMap (Option . Just)
+                      $ s
+    {-# INLINE fold1 #-}
+    -- TODO: benchmark against maxView-based method
+    foldMap1 f (NESet x s) = maybe (f x) (f x <>)
+                           . getOption
+                           . F.foldMap (Option . Just . f)
+                           $ s
+    {-# INLINE foldMap1 #-}
+    toNonEmpty = toList
+    {-# INLINE toNonEmpty #-}
+
+
 
 
 
