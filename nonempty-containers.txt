@@ -2135,6 +2135,10 @@ toList :: NESet a -> NonEmpty a
 size :: NESet a -> Int
 union :: Ord a => NESet a -> NESet a -> NESet a
 unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+foldr :: (a -> b -> b) -> b -> NESet a -> b
+foldl :: (a -> b -> a) -> a -> NESet b -> a
+foldr' :: (a -> b -> b) -> b -> NESet a -> b
+foldl' :: (a -> b -> a) -> a -> NESet b -> a
 
 -- | <i>O(n)</i>. Test if the internal set structure is valid.
 valid :: Ord a => NESet a -> Bool
@@ -2152,3 +2156,46 @@ instance (Data.Data.Data a, GHC.Classes.Ord a) => Data.Data.Data (Data.Set.NonEm
 instance GHC.Classes.Ord a => GHC.Base.Semigroup (Data.Set.NonEmpty.Internal.NESet a)
 instance Data.Foldable.Foldable Data.Set.NonEmpty.Internal.NESet
 instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESet
+
+module Data.Set.NonEmpty
+data NESet a
+
+-- | <i>O(1)</i>. Create a singleton set.
+singleton :: a -> NESet a
+
+-- | <i>O(n*log n)</i>. Create a set from a list of elements.
+fromList :: Ord a => NonEmpty a -> NESet a
+
+-- | <i>O(log n)</i>. Insert an element in a set. If the set already
+--   contains an element equal to the given value, it is replaced with the
+--   new value.
+insert :: Ord a => a -> NESet a -> NESet a
+size :: NESet a -> Int
+union :: Ord a => NESet a -> NESet a -> NESet a
+unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+foldr :: (a -> b -> b) -> b -> NESet a -> b
+foldl :: (a -> b -> a) -> a -> NESet b -> a
+
+-- | A variant of <a>foldr</a> that has no base case, and thus may only be
+--   applied to non-empty structures.
+--   
+--   <pre>
+--   <a>foldr1</a> f = <a>foldr1</a> f . <a>toList</a>
+--   </pre>
+foldr1 :: Foldable t => (a -> a -> a) -> t a -> a
+
+-- | A variant of <a>foldl</a> that has no base case, and thus may only be
+--   applied to non-empty structures.
+--   
+--   <pre>
+--   <a>foldl1</a> f = <a>foldl1</a> f . <a>toList</a>
+--   </pre>
+foldl1 :: Foldable t => (a -> a -> a) -> t a -> a
+foldr' :: (a -> b -> b) -> b -> NESet a -> b
+foldl' :: (a -> b -> a) -> a -> NESet b -> a
+foldr1' :: (a -> a -> a) -> NESet a -> a
+foldl1' :: (a -> a -> a) -> NESet a -> a
+toList :: NESet a -> NonEmpty a
+
+-- | <i>O(n)</i>. Test if the internal set structure is valid.
+valid :: Ord a => NESet a -> Bool

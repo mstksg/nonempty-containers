@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BangPatterns #-}</span><span>
+</span><a name="line-2"></a><span>
+</span><a name="line-3"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Data.Set.NonEmpty</span><span> </span><span class="hs-special">(</span><span>
+</span><a name="line-4"></a><span>  </span><span class="hs-comment">-- * Set type</span><span>
+</span><a name="line-5"></a><span>    </span><a href="Data.Set.NonEmpty.Internal.html#NESet"><span class="hs-identifier hs-type">NESet</span></a><span>
+</span><a name="line-6"></a><span>  </span><span class="hs-comment">-- * Construction</span><span>
+</span><a name="line-7"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">singleton</span></a><span>
+</span><a name="line-8"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#fromList"><span class="hs-identifier hs-var">fromList</span></a><span>
+</span><a name="line-9"></a><span>  </span><span class="hs-comment">-- , fromAscList</span><span>
+</span><a name="line-10"></a><span>  </span><span class="hs-comment">-- , fromDescList</span><span>
+</span><a name="line-11"></a><span>  </span><span class="hs-comment">-- , fromDistinctAscList</span><span>
+</span><a name="line-12"></a><span>  </span><span class="hs-comment">-- , fromDistinctDescList</span><span>
+</span><a name="line-13"></a><span>  </span><span class="hs-comment">-- , powerSet</span><span>
+</span><a name="line-14"></a><span>
+</span><a name="line-15"></a><span>  </span><span class="hs-comment">-- -- * Insertion</span><span>
+</span><a name="line-16"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#insert"><span class="hs-identifier hs-var">insert</span></a><span>
+</span><a name="line-17"></a><span>
+</span><a name="line-18"></a><span>  </span><span class="hs-comment">-- -- * Deletion</span><span>
+</span><a name="line-19"></a><span>  </span><span class="hs-comment">-- , delete</span><span>
+</span><a name="line-20"></a><span>
+</span><a name="line-21"></a><span>  </span><span class="hs-comment">-- -- * Query</span><span>
+</span><a name="line-22"></a><span>  </span><span class="hs-comment">-- , member</span><span>
+</span><a name="line-23"></a><span>  </span><span class="hs-comment">-- , notMember</span><span>
+</span><a name="line-24"></a><span>  </span><span class="hs-comment">-- , lookupLT</span><span>
+</span><a name="line-25"></a><span>  </span><span class="hs-comment">-- , lookupGT</span><span>
+</span><a name="line-26"></a><span>  </span><span class="hs-comment">-- , lookupLE</span><span>
+</span><a name="line-27"></a><span>  </span><span class="hs-comment">-- , lookupGE</span><span>
+</span><a name="line-28"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#size"><span class="hs-identifier hs-var">size</span></a><span>
+</span><a name="line-29"></a><span>  </span><span class="hs-comment">-- , isSubsetOf</span><span>
+</span><a name="line-30"></a><span>  </span><span class="hs-comment">-- , isProperSubsetOf</span><span>
+</span><a name="line-31"></a><span>  </span><span class="hs-comment">-- , disjoint</span><span>
+</span><a name="line-32"></a><span>
+</span><a name="line-33"></a><span>  </span><span class="hs-comment">-- -- * Combine</span><span>
+</span><a name="line-34"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#union"><span class="hs-identifier hs-var">union</span></a><span>
+</span><a name="line-35"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#unions"><span class="hs-identifier hs-var">unions</span></a><span>
+</span><a name="line-36"></a><span>  </span><span class="hs-comment">-- , difference</span><span>
+</span><a name="line-37"></a><span>  </span><span class="hs-comment">-- , (\\)</span><span>
+</span><a name="line-38"></a><span>  </span><span class="hs-comment">-- , intersection</span><span>
+</span><a name="line-39"></a><span>  </span><span class="hs-comment">-- , cartesianProduct</span><span>
+</span><a name="line-40"></a><span>  </span><span class="hs-comment">-- , disjointUnion</span><span>
+</span><a name="line-41"></a><span>
+</span><a name="line-42"></a><span>  </span><span class="hs-comment">-- -- * Filter</span><span>
+</span><a name="line-43"></a><span>  </span><span class="hs-comment">-- , filter</span><span>
+</span><a name="line-44"></a><span>  </span><span class="hs-comment">-- , takeWhileAntitone</span><span>
+</span><a name="line-45"></a><span>  </span><span class="hs-comment">-- , dropWhileAntitone</span><span>
+</span><a name="line-46"></a><span>  </span><span class="hs-comment">-- , spanAntitone</span><span>
+</span><a name="line-47"></a><span>  </span><span class="hs-comment">-- , partition</span><span>
+</span><a name="line-48"></a><span>  </span><span class="hs-comment">-- , split</span><span>
+</span><a name="line-49"></a><span>  </span><span class="hs-comment">-- , splitMember</span><span>
+</span><a name="line-50"></a><span>  </span><span class="hs-comment">-- , splitRoot</span><span>
+</span><a name="line-51"></a><span>
+</span><a name="line-52"></a><span>  </span><span class="hs-comment">-- -- * Indexed</span><span>
+</span><a name="line-53"></a><span>  </span><span class="hs-comment">-- , lookupIndex</span><span>
+</span><a name="line-54"></a><span>  </span><span class="hs-comment">-- , findIndex</span><span>
+</span><a name="line-55"></a><span>  </span><span class="hs-comment">-- , elemAt</span><span>
+</span><a name="line-56"></a><span>  </span><span class="hs-comment">-- , deleteAt</span><span>
+</span><a name="line-57"></a><span>  </span><span class="hs-comment">-- , take</span><span>
+</span><a name="line-58"></a><span>  </span><span class="hs-comment">-- , drop</span><span>
+</span><a name="line-59"></a><span>  </span><span class="hs-comment">-- , splitAt</span><span>
+</span><a name="line-60"></a><span>
+</span><a name="line-61"></a><span>  </span><span class="hs-comment">-- -- * Map</span><span>
+</span><a name="line-62"></a><span>  </span><span class="hs-comment">-- , map</span><span>
+</span><a name="line-63"></a><span>  </span><span class="hs-comment">-- , mapMonotonic</span><span>
+</span><a name="line-64"></a><span>
+</span><a name="line-65"></a><span>  </span><span class="hs-comment">-- * Folds</span><span>
+</span><a name="line-66"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#foldr"><span class="hs-identifier hs-var">foldr</span></a><span>
+</span><a name="line-67"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#foldl"><span class="hs-identifier hs-var">foldl</span></a><span>
+</span><a name="line-68"></a><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-var">foldr1</span><span>
+</span><a name="line-69"></a><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-var">foldl1</span><span>
+</span><a name="line-70"></a><span>  </span><span class="hs-comment">-- ** Strict folds</span><span>
+</span><a name="line-71"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#foldr%27"><span class="hs-identifier hs-var">foldr'</span></a><span>
+</span><a name="line-72"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#foldl%27"><span class="hs-identifier hs-var">foldl'</span></a><span>
+</span><a name="line-73"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.html#foldr1%27"><span class="hs-identifier hs-var">foldr1'</span></a><span>
+</span><a name="line-74"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.html#foldl1%27"><span class="hs-identifier hs-var">foldl1'</span></a><span>
+</span><a name="line-75"></a><span>
+</span><a name="line-76"></a><span>  </span><span class="hs-comment">-- -- * Min\/Max</span><span>
+</span><a name="line-77"></a><span>  </span><span class="hs-comment">-- , lookupMin</span><span>
+</span><a name="line-78"></a><span>  </span><span class="hs-comment">-- , lookupMax</span><span>
+</span><a name="line-79"></a><span>  </span><span class="hs-comment">-- , findMin</span><span>
+</span><a name="line-80"></a><span>  </span><span class="hs-comment">-- , findMax</span><span>
+</span><a name="line-81"></a><span>  </span><span class="hs-comment">-- , deleteMin</span><span>
+</span><a name="line-82"></a><span>  </span><span class="hs-comment">-- , deleteMax</span><span>
+</span><a name="line-83"></a><span>  </span><span class="hs-comment">-- , deleteFindMin</span><span>
+</span><a name="line-84"></a><span>  </span><span class="hs-comment">-- , deleteFindMax</span><span>
+</span><a name="line-85"></a><span>  </span><span class="hs-comment">-- , maxView</span><span>
+</span><a name="line-86"></a><span>  </span><span class="hs-comment">-- , minView</span><span>
+</span><a name="line-87"></a><span>
+</span><a name="line-88"></a><span>  </span><span class="hs-comment">-- -- * Conversion</span><span>
+</span><a name="line-89"></a><span>
+</span><a name="line-90"></a><span>  </span><span class="hs-comment">-- -- ** List</span><span>
+</span><a name="line-91"></a><span>  </span><span class="hs-comment">-- , elems</span><span>
+</span><a name="line-92"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#toList"><span class="hs-identifier hs-var">toList</span></a><span>
+</span><a name="line-93"></a><span>  </span><span class="hs-comment">-- , toAscList</span><span>
+</span><a name="line-94"></a><span>  </span><span class="hs-comment">-- , toDescList</span><span>
+</span><a name="line-95"></a><span>
+</span><a name="line-96"></a><span>  </span><span class="hs-comment">-- * Debugging</span><span>
+</span><a name="line-97"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#valid"><span class="hs-identifier hs-var">valid</span></a><span>
+</span><a name="line-98"></a><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-99"></a><span>
+</span><a name="line-100"></a><span class="hs-keyword">import</span><span>           </span><a href="Data.Set.NonEmpty.Internal.html"><span class="hs-identifier">Data.Set.NonEmpty.Internal</span></a><span>
+</span><a name="line-101"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Prelude</span><span> </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">foldr</span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-var">foldl</span><span class="hs-special">)</span><span>
+</span><a name="line-102"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data.Set</span><span>                   </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">S</span><span>
+</span><a name="line-103"></a><span>
+</span><a name="line-104"></a><span class="hs-identifier">foldr1'</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><a href="#local-6989586621679110467"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679110467"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679110467"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#NESet"><span class="hs-identifier hs-type">NESet</span></a><span> </span><a href="#local-6989586621679110467"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679110467"><span class="hs-identifier hs-type">a</span></a><span>
+</span><a name="line-105"></a><a name="foldr1%27"><a href="Data.Set.NonEmpty.html#foldr1%27"><span class="hs-identifier">foldr1'</span></a></a><span> </span><a name="local-6989586621679110468"><a href="#local-6989586621679110468"><span class="hs-identifier">f</span></a></a><span> </span><span class="hs-special">(</span><a href="Data.Set.NonEmpty.Internal.html#NESet"><span class="hs-identifier hs-var">NESet</span></a><span> </span><a name="local-6989586621679110469"><a href="#local-6989586621679110469"><span class="hs-identifier">x</span></a></a><span> </span><a name="local-6989586621679110470"><a href="#local-6989586621679110470"><span class="hs-identifier">s</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="hs-identifier hs-var">S.maxView</span><span> </span><a href="#local-6989586621679110470"><span class="hs-identifier hs-var">s</span></a><span> </span><span class="hs-keyword">of</span><span>
+</span><a name="line-106"></a><span>    </span><span class="hs-identifier hs-var">Nothing</span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679110469"><span class="hs-identifier hs-var">x</span></a><span>
+</span><a name="line-107"></a><span>    </span><span class="hs-identifier hs-var">Just</span><span> </span><span class="hs-special">(</span><a name="local-6989586621679110471"><a href="#local-6989586621679110471"><span class="hs-identifier">y</span></a></a><span class="hs-special">,</span><span> </span><a name="local-6989586621679110472"><a href="#local-6989586621679110472"><span class="hs-identifier">s'</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">let</span><span> </span><span class="hs-glyph">!</span><a name="local-6989586621679110473"><a href="#local-6989586621679110473"><span class="hs-identifier">z</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">S.foldr'</span><span> </span><a href="#local-6989586621679110468"><span class="hs-identifier hs-var">f</span></a><span> </span><a href="#local-6989586621679110471"><span class="hs-identifier hs-var">y</span></a><span> </span><a href="#local-6989586621679110472"><span class="hs-identifier hs-var">s'</span></a><span> </span><span class="hs-keyword">in</span><span> </span><a href="#local-6989586621679110469"><span class="hs-identifier hs-var">x</span></a><span> </span><span class="hs-special">`</span><a href="#local-6989586621679110468"><span class="hs-identifier hs-var">f</span></a><span class="hs-special">`</span><span> </span><a href="#local-6989586621679110473"><span class="hs-identifier hs-var">z</span></a><span>
+</span><a name="line-108"></a><span class="hs-pragma">{-# INLINE</span><span> </span><span class="hs-pragma">foldr1'</span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><a name="line-109"></a><span>
+</span><a name="line-110"></a><span class="hs-identifier">foldl1'</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><a href="#local-6989586621679110466"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679110466"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679110466"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Data.Set.NonEmpty.Internal.html#NESet"><span class="hs-identifier hs-type">NESet</span></a><span> </span><a href="#local-6989586621679110466"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679110466"><span class="hs-identifier hs-type">a</span></a><span>
+</span><a name="line-111"></a><a name="foldl1%27"><a href="Data.Set.NonEmpty.html#foldl1%27"><span class="hs-identifier">foldl1'</span></a></a><span> </span><a name="local-6989586621679110474"><a href="#local-6989586621679110474"><span class="hs-identifier">f</span></a></a><span> </span><span class="hs-special">(</span><a href="Data.Set.NonEmpty.Internal.html#NESet"><span class="hs-identifier hs-var">NESet</span></a><span> </span><a name="local-6989586621679110475"><a href="#local-6989586621679110475"><span class="hs-identifier">x</span></a></a><span> </span><a name="local-6989586621679110476"><a href="#local-6989586621679110476"><span class="hs-identifier">s</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">S.foldl'</span><span> </span><a href="#local-6989586621679110474"><span class="hs-identifier hs-var">f</span></a><span> </span><a href="#local-6989586621679110475"><span class="hs-identifier hs-var">x</span></a><span> </span><a href="#local-6989586621679110476"><span class="hs-identifier hs-var">s</span></a><span>
+</span><a name="line-112"></a><span class="hs-pragma">{-# INLINE</span><span> </span><span class="hs-pragma">foldl1'</span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><a name="line-113"></a></pre></body></html>
