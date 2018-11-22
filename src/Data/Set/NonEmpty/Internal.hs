@@ -14,6 +14,10 @@ module Data.Set.NonEmpty.Internal (
   , size
   , union
   , unions
+  , foldr
+  , foldl
+  , foldr'
+  , foldl'
   , valid
   , insertMinSet
   , insertMaxSet
@@ -173,16 +177,6 @@ foldl' f z (NESet x s) = S.foldl' f y s
 foldl1 :: (a -> a -> a) -> NESet a -> a
 foldl1 f (NESet x s) = S.foldl f x s
 {-# INLINE foldl1 #-}
-
--- foldr1' :: (a -> a -> a) -> NESet a -> a
--- foldr1' f (NESet x s) = case S.maxView s of
---     Nothing      -> x
---     Just (y, s') -> let !z = S.foldr' f y s' in x `f` z
--- {-# INLINE foldr1' #-}
-
--- foldl1' :: (a -> a -> a) -> NESet a -> a
--- foldl1' f (NESet x s) = S.foldl' f x s
--- {-# INLINE foldl1' #-}
 
 union
     :: Ord a
