@@ -2124,8 +2124,12 @@ toSet :: NESet a -> Set a
 -- | <i>O(1)</i>. Create a singleton set.
 singleton :: a -> NESet a
 
--- | <i>O(n*log n)</i>. Create a set from a list of elements. If the list
---   contains the same value twice, the last value is retained.
+-- | <i>O(log n)</i>. Insert an element in a set. If the set already
+--   contains an element equal to the given value, it is replaced with the
+--   new value.
+insert :: Ord a => a -> NESet a -> NESet a
+
+-- | <i>O(n*log n)</i>. Create a set from a list of elements.
 fromList :: Ord a => NonEmpty a -> NESet a
 toList :: NESet a -> NonEmpty a
 size :: NESet a -> Int
