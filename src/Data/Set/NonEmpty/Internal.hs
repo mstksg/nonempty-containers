@@ -8,6 +8,7 @@ module Data.Set.NonEmpty.Internal (
   , nonEmptySet
   , toSet
   , singleton
+  , insert
   , fromList
   , toList
   , size
@@ -52,16 +53,16 @@ instance Ord a => Ord (NESet a) where
     (>=)    = (>=) `on` toList
 
 instance Show a => Show (NESet a) where
-  showsPrec p xs = showParen (p > 10) $
-    showString "fromList " . shows (toList xs)
+    showsPrec p xs = showParen (p > 10) $
+      showString "fromList " . shows (toList xs)
 
 instance (Read a, Ord a) => Read (NESet a) where
-  readPrec = parens $ prec 10 $ do
-    Ident "fromList" <- lexP
-    xs <- readPrec
-    return (fromList xs)
+    readPrec = parens $ prec 10 $ do
+      Ident "fromList" <- lexP
+      xs <- readPrec
+      return (fromList xs)
 
-  readListPrec = readListPrecDefault
+    readListPrec = readListPrecDefault
 
 instance Eq1 NESet where
     liftEq eq m n =
@@ -113,14 +114,24 @@ singleton :: a -> NESet a
 singleton x = NESet x S.empty
 {-# INLINE singleton #-}
 
--- | /O(n*log n)/. Create a set from a list of elements.
--- If the list contains the same value twice, the last value is retained.
+-- | /O(log n)/. Insert an element in a set.
+-- If the set already contains an element equal to the given value,
+-- it is replaced with the new value.
+insert :: Ord a => a -> NESet a -> NESet a
+insert x n@(NESet x0 s) = case compare x x0 of
+    LT -> NESet x  $ toSet n
+    EQ -> NESet x  s
+    GT -> NESet x0 $ S.insert x s
+{-# INLINE insert #-}
 
+-- | /O(n*log n)/. Create a set from a list of elements.
+
+-- TODO: Not undefined behavior (can keep first item)
 -- TODO: write manually and optimize to be equivalent to
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'S.fromList'.
 fromList :: Ord a => NonEmpty a -> NESet a
-fromList (x :| s) = maybe (singleton x) (<> singleton x)
+fromList (x :| s) = maybe (singleton x) (insert x)
                   . nonEmptySet
                   $ S.fromList s
 {-# INLINE fromList #-}
