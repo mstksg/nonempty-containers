@@ -831,10 +831,10 @@ insertMapWithKey f k v = withNEMap (singleton k v) (insertWithKey f k v)
 -- keys in the original map must all be /strictly greater than/ the new
 -- key.  /The precondition is not checked./
 --
--- > insertMap 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((2,"c") :| [(3,"b"), (5,"a")])
--- > valid (insertMap 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == True
--- > valid (insertMap 7 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
--- > valid (insertMap 3 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
+-- > insertMapMin 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((2,"c") :| [(3,"b"), (5,"a")])
+-- > valid (insertMapMin 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == True
+-- > valid (insertMapMin 7 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
+-- > valid (insertMapMin 3 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
 insertMapMin
     :: k
     -> a
@@ -1419,8 +1419,8 @@ mapAccumWithKey
     -> (a, NEMap k c)
 mapAccumWithKey f z0 (NEMap k v m) = (z2, NEMap k v' m')
   where
-    (z1, v') = f z0 k v
-    (z2, m') = M.mapAccumWithKey f z1 m
+    ~(z1, v') = f z0 k v
+    ~(z2, m') = M.mapAccumWithKey f z1 m
 {-# INLINE mapAccumWithKey #-}
 
 -- | /O(n)/. The function 'mapAccumRWithKey' threads an accumulating
@@ -1432,9 +1432,11 @@ mapAccumRWithKey
     -> (a, NEMap k c)
 mapAccumRWithKey f z0 (NEMap k v m) = (z2, NEMap k v' m')
   where
-    (z1, m') = M.mapAccumRWithKey f z0 m
-    (z2, v') = f z1 k v
+    ~(z1, m') = M.mapAccumRWithKey f z0 m
+    ~(z2, v') = f z1 k v
 {-# INLINE mapAccumRWithKey #-}
+
+-- TODO: what other lazy tuples can we do
 
 -- | /O(n*log n)/.
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.
