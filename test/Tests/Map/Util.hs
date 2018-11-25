@@ -2,10 +2,12 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Tests.Map.Util (
-    SortType(..)
+    K(..), KeyType, overKX
+  , SortType(..)
   , GenType(..)
   , TestType(..)
   , ttProp
@@ -17,22 +19,46 @@ module Tests.Map.Util (
 import           Control.Applicative
 import           Control.Monad
 import           Data.Bifunctor
-import           Data.Functor.Apply
 import           Data.Foldable
+import           Data.Function
+import           Data.Functor.Apply
 import           Data.Kind
-import           Data.List.NonEmpty            (NonEmpty(..))
-import           Data.Map                      (Map)
-import           Data.Map.NonEmpty             (NEMap)
+import           Data.List.NonEmpty  (NonEmpty(..))
+import           Data.Map            (Map)
+import           Data.Map.NonEmpty   (NEMap)
 import           Data.Maybe
 import           Data.These
 import           Hedgehog
-import qualified Data.List.NonEmpty            as NE
-import qualified Data.Map                      as M
-import qualified Data.Map.NonEmpty             as NEM
-import qualified Data.Set                      as S
-import qualified Data.Text                     as T
-import qualified Hedgehog.Gen                  as Gen
-import qualified Hedgehog.Range                as Range
+import qualified Data.List.NonEmpty  as NE
+import qualified Data.Map            as M
+import qualified Data.Map.NonEmpty   as NEM
+import qualified Data.Set            as S
+import qualified Data.Text           as T
+import qualified Hedgehog.Gen        as Gen
+import qualified Hedgehog.Range      as Range
+
+data K a b = K { getKX :: !a, getKY :: !b }
+    deriving (Show)
+
+instance Eq a => Eq (K a b) where
+    (==) = (==) `on` getKX
+
+instance Ord a => Ord (K a b) where
+    compare = compare `on` getKX
+
+type KeyType = K Int T.Text
+
+overKX :: (a -> c) -> K a b -> K c b
+overKX f (K x y) = K (f x) y
+
+instance (Num a, Monoid b) => Num (K a b) where
+    K x1 y1 + K x2 y2 = K (x1 + x2) (y1 <> y2)
+    K x1 y1 - K x2 y2 = K (x1 - x2) (y1 <> y2)
+    K x1 y1 * K x2 y2 = K (x1 * x2) (y1 <> y2)
+    negate (K x y)    = K (negate x) y
+    abs    (K x y)    = K (abs x)    y
+    signum (K x y)    = K (signum x) y
+    fromInteger n     = K (fromInteger n) mempty
 
 data Context a b t = Context (b -> t) a
     deriving Functor
@@ -57,8 +83,8 @@ data SortType :: Type -> Type where
     STDistinctDesc :: Ord a => SortType (a, b)
 
 data GenType :: Type -> Type -> Type where
-    GTNEMap  :: GenType (M.Map Integer T.Text) (NEM.NEMap Integer T.Text)
-    GTKey    :: GenType Integer                Integer
+    GTNEMap  :: GenType (M.Map KeyType T.Text) (NEM.NEMap KeyType T.Text)
+    GTKey    :: GenType KeyType                KeyType
     GTVal    :: GenType T.Text                 T.Text
     GTOther  :: Gen a
              -> GenType a                      a
@@ -79,10 +105,10 @@ data GenType :: Type -> Type -> Type where
 
 data TestType :: Type -> Type -> Type where
     TTNEMap  :: (Eq a, Show a)
-             => TestType (M.Map Integer a) (NEM.NEMap Integer a)
+             => TestType (M.Map KeyType a) (NEM.NEMap KeyType a)
     TTMap    :: (Eq a, Show a)
-             => TestType (M.Map Integer a) (M.Map     Integer a)
-    TTKey    :: TestType Integer           Integer
+             => TestType (M.Map KeyType a) (M.Map     KeyType a)
+    TTKey    :: TestType KeyType           KeyType
     TTVal    :: TestType T.Text            T.Text
     TTOther  :: (Eq a, Show a)
              => TestType a                 a
@@ -278,8 +304,9 @@ ttProp tt x = property . runTT tt x
 -- Generators
 -- ---------------------
 
-keyGen :: MonadGen m => m Integer
-keyGen = Gen.integral (Range.linear (-100) 100)
+keyGen :: MonadGen m => m KeyType
+keyGen = K <$> Gen.int  (Range.linear (-100) 100)
+           <*> Gen.text (Range.linear 0 5) Gen.alphaNum
 
 valGen :: MonadGen m => m T.Text
 valGen = Gen.text (Range.linear 0 5) Gen.alphaNum
@@ -287,8 +314,8 @@ valGen = Gen.text (Range.linear 0 5) Gen.alphaNum
 mapSize :: Range Int
 mapSize = Range.exponential 4 8
 
-mapGen :: MonadGen m => m (Map Integer T.Text)
+mapGen :: MonadGen m => m (Map KeyType T.Text)
 mapGen = Gen.map mapSize $ (,) <$> keyGen <*> valGen
 
-neMapGen :: MonadGen m => m (NEMap Integer T.Text)
+neMapGen :: MonadGen m => m (NEMap KeyType T.Text)
 neMapGen = Gen.just $ NEM.nonEmptyMap <$> mapGen
