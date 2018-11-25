@@ -51,6 +51,15 @@ type KeyType = K Int T.Text
 overKX :: (a -> c) -> K a b -> K c b
 overKX f (K x y) = K (f x) y
 
+instance (Num a, Monoid b) => Num (K a b) where
+    K x1 y1 + K x2 y2 = K (x1 + x2) (y1 <> y2)
+    K x1 y1 - K x2 y2 = K (x1 - x2) (y1 <> y2)
+    K x1 y1 * K x2 y2 = K (x1 * x2) (y1 <> y2)
+    negate (K x y)    = K (negate x) y
+    abs    (K x y)    = K (abs x)    y
+    signum (K x y)    = K (signum x) y
+    fromInteger n     = K (fromInteger n) mempty
+
 data Context a b t = Context (b -> t) a
     deriving Functor
 
@@ -297,7 +306,7 @@ ttProp tt x = property . runTT tt x
 
 keyGen :: MonadGen m => m KeyType
 keyGen = K <$> Gen.int  (Range.linear (-100) 100)
-           <*> pure "abc"
+           <*> Gen.text (Range.linear 0 5) Gen.alphaNum
 
 valGen :: MonadGen m => m T.Text
 valGen = Gen.text (Range.linear 0 5) Gen.alphaNum

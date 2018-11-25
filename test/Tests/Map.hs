@@ -63,7 +63,7 @@ prop_valid_insertMinMap :: Property
 prop_valid_insertMinMap = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe dummyKey (overKX (subtract 1) . fst) $ M.lookupMin m
+        let k = maybe dummyKey (subtract 1 . fst) $ M.lookupMin m
         v <- valGen
         pure $ NEM.insertMinMap k v m
     assert $ M.valid n
@@ -72,7 +72,7 @@ prop_valid_insertMaxMap :: Property
 prop_valid_insertMaxMap = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe dummyKey (overKX (+ 1) . fst) $ M.lookupMax m
+        let k = maybe dummyKey ((+ 1) . fst) $ M.lookupMax m
         v <- valGen
         pure $ NEM.insertMaxMap k v m
     assert $ M.valid n
@@ -81,7 +81,7 @@ prop_valid_insertMapMin :: Property
 prop_valid_insertMapMin = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe dummyKey (overKX (subtract 1) . fst) $ M.lookupMin m
+        let k = maybe dummyKey (subtract 1 . fst) $ M.lookupMin m
         v <- valGen
         pure $ NEM.insertMapMin k v m
     assert $ NEM.valid n
@@ -90,7 +90,7 @@ prop_valid_insertMapMax :: Property
 prop_valid_insertMapMax = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe dummyKey (overKX (+ 1) . fst) $ M.lookupMax m
+        let k = maybe dummyKey ((+ 1) . fst) $ M.lookupMax m
         v <- valGen
         pure $ NEM.insertMapMax k v m
     assert $ NEM.valid n
@@ -379,8 +379,8 @@ prop_mapKeysWith = ttProp (GTNEMap :-> TTNEMap)
   
 prop_mapMonotonic :: Property
 prop_mapMonotonic = ttProp (GTNEMap :-> TTNEMap)
-    (M.mapKeysMonotonic   (overKX (* 2)))
-    (NEM.mapKeysMonotonic (overKX (* 2)))
+    (M.mapKeysMonotonic   (* 2))
+    (NEM.mapKeysMonotonic (* 2))
 
 prop_foldr :: Property
 prop_foldr = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
