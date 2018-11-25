@@ -37,8 +37,12 @@ import qualified Data.Text           as T
 import qualified Hedgehog.Gen        as Gen
 import qualified Hedgehog.Range      as Range
 
+-- | test for stability
 data K a b = K { getKX :: !a, getKY :: !b }
     deriving (Show)
+
+withK :: (a -> b -> c) -> K a b -> c
+withK f (K x y) = f x y
 
 instance Eq a => Eq (K a b) where
     (==) = (==) `on` getKX
@@ -179,9 +183,12 @@ runTT = \case
     TTNEMap -> \x y -> do
       annotate $ show y
       assert $ NEM.valid y
-      x === NEM.IsNonEmpty y
-    TTMap   -> (===)
-    TTKey   -> (===)
+      unK x === unK (NEM.IsNonEmpty y)
+    TTMap   -> \x y ->
+      unK x === unK y
+    TTKey   -> \(K x1 y1) (K x2 y2) -> do
+      x1 === x2
+      y1 === y2
     TTVal   -> (===)
     TTOther -> (===)
     TTThese t1 t2 -> \(x1, x2) -> \case
@@ -223,6 +230,9 @@ runTT = \case
     gt :-> tt -> \f g -> do
       (x, y) <- forAll $ runGT gt
       runTT tt (f x) (g y)
+  where
+    unK :: (Ord k, Ord j) => Map (K k j) c -> M.Map (k, j) c
+    unK = M.mapKeys (withK (,))
 
 -- testBazaar'
 --     :: forall a b c d t u m. (Show c, Show d, Monad m)

@@ -464,7 +464,7 @@ lookupGT k (NEMap k0 v m) = case compare k k0 of
 lookupLE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupLE k (NEMap k0 v m) = case compare k k0 of
     LT -> Nothing
-    EQ -> Just (k, v)
+    EQ -> Just (k0, v)
     GT -> M.lookupLE k m <|> Just (k0, v)
 {-# INLINE lookupLE #-}
 
@@ -477,7 +477,7 @@ lookupLE k (NEMap k0 v m) = case compare k k0 of
 lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 lookupGE k (NEMap k0 v m) = case compare k k0 of
     LT -> Just (k0, v)
-    EQ -> Just (k , v)
+    EQ -> Just (k0, v)
     GT -> M.lookupGE k m
 {-# INLINE lookupGE #-}
 
@@ -1172,8 +1172,8 @@ updateWithKey
     -> Map k a
 updateWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> toMap n
-    EQ -> maybe m (flip (insertMinMap k) m) . f k $ v
-    GT -> insertMinMap k0 v . M.updateWithKey f k $ m
+    EQ -> maybe m (flip (insertMinMap k0) m) . f k $ v
+    GT -> insertMinMap k0 v . M.updateWithKey f k  $ m
 {-# INLINE updateWithKey #-}
 
 -- | /O(log n)/. The expression (@'updateWithKey' f k map@) updates the
@@ -1197,7 +1197,7 @@ updateLookupWithKey
     -> (Maybe a, Map k a)
 updateLookupWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> (Nothing, toMap n)
-    EQ -> (f k v  , maybe m (flip (insertMinMap k) m) . f k $ v)
+    EQ -> (f k0 v  , maybe m (flip (insertMinMap k0) m) . f k0 $ v)
     GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
 {-# INLINE updateLookupWithKey #-}
 
@@ -1227,8 +1227,8 @@ alter
     -> NEMap k a
     -> Map k a
 alter f k n@(NEMap k0 v m) = case compare k k0 of
-    LT -> ($ toMap n) . maybe id (insertMinMap k) $ f Nothing
-    EQ -> ($ m      ) . maybe id (insertMinMap k) $ f (Just v)
+    LT -> ($ toMap n) . maybe id (insertMinMap k ) $ f Nothing
+    EQ -> ($ m      ) . maybe id (insertMinMap k0) $ f (Just v)
     GT -> insertMinMap k0 v . M.alter f k $ m
 {-# INLINE alter #-}
 
@@ -1287,8 +1287,8 @@ alterF
     -> NEMap k a
     -> f (Map k a)
 alterF f k n@(NEMap k0 v m) = case compare k k0 of
-    LT -> ($ toMap n) . maybe id (insertMinMap k) <$> f Nothing
-    EQ -> ($ m      ) . maybe id (insertMinMap k) <$> f (Just v)
+    LT -> ($ toMap n) . maybe id (insertMinMap k ) <$> f Nothing
+    EQ -> ($ m      ) . maybe id (insertMinMap k0) <$> f (Just v)
     GT -> insertMinMap k0 v <$> M.alterF f k m
 {-# INLINABLE [2] alterF #-}
 
@@ -1311,7 +1311,7 @@ alter'
     -> NEMap k a
 alter' f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> NEMap k  (f Nothing) . toMap      $ n
-    EQ -> NEMap k  (f (Just v))             $ m
+    EQ -> NEMap k0 (f (Just v))             $ m
     GT -> NEMap k0 v . M.alter (Just . f) k $ m
 {-# INLINE alter' #-}
 
@@ -1336,8 +1336,8 @@ alterF'
     -> NEMap k a
     -> f (NEMap k a)
 alterF' f k n@(NEMap k0 v m) = case compare k k0 of
-    LT -> flip (NEMap k) (toMap n) <$> f Nothing
-    EQ -> flip (NEMap k) m         <$> f (Just v)
+    LT -> flip (NEMap k ) (toMap n) <$> f Nothing
+    EQ -> flip (NEMap k0) m          <$> f (Just v)
     GT -> NEMap k0 v <$> M.alterF (fmap Just . f) k m
 {-# INLINABLE [2] alterF' #-}
 
@@ -1455,7 +1455,7 @@ mapKeys
     => (k1 -> k2)
     -> NEMap k1 a
     -> NEMap k2 a
-mapKeys f (NEMap k0 v0 m) = fromList
+mapKeys f (NEMap k0 v0 m) = fromListWith const
                           . ((f k0, v0) :|)
                           . M.foldrWithKey (\k v kvs -> (f k, v) : kvs) []
                           $ m

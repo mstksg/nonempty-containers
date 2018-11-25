@@ -23,10 +23,6 @@
 --
 -- Authors importing this module are expected to track development
 -- closely.
-
-
--- TODO: Check if insert functions all replace keys with new keys, which
--- they do in actual map for some reason.
 module Data.Map.NonEmpty.Internal (
   -- * Non-Empty Map type
     NEMap(..)
