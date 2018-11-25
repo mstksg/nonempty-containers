@@ -279,7 +279,7 @@ ttProp tt x = property . runTT tt x
 -- ---------------------
 
 keyGen :: MonadGen m => m Integer
-keyGen = Gen.integral (Range.linear 0 250)
+keyGen = Gen.integral (Range.linear (-100) 100)
 
 valGen :: MonadGen m => m T.Text
 valGen = Gen.text (Range.linear 0 5) Gen.alphaNum
