@@ -1,5 +1,6 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TupleSections   #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TupleSections     #-}
 
 module Tests.Map (mapTests) where
 
@@ -22,21 +23,22 @@ mapTests :: Group
 mapTests = $$(discover)
 
 
+dummyKey :: KeyType
+dummyKey = K 0 "hello"
 
-
-combiner :: Integer -> T.Text -> T.Text -> T.Text
-combiner n v u
+combiner :: KeyType -> T.Text -> T.Text -> T.Text
+combiner (K n _) v u
     | even (T.length v) = T.reverse v <> u
     | even n            = v <> u
     | otherwise         = u <> v
   
-adjuster :: Integer -> T.Text -> T.Text
-adjuster i
+adjuster :: KeyType -> T.Text -> T.Text
+adjuster (K i _)
     | even i    = T.reverse
     | otherwise = T.intersperse '_'
 
-updater :: Integer -> T.Text -> Maybe T.Text
-updater i
+updater :: KeyType -> T.Text -> Maybe T.Text
+updater (K i _)
     | even i    = Just . T.reverse
     | otherwise = const Nothing
 
@@ -61,7 +63,7 @@ prop_valid_insertMinMap :: Property
 prop_valid_insertMinMap = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe 0 (subtract 1 . fst) $ M.lookupMin m
+        let k = maybe dummyKey (overKX (subtract 1) . fst) $ M.lookupMin m
         v <- valGen
         pure $ NEM.insertMinMap k v m
     assert $ M.valid n
@@ -70,7 +72,7 @@ prop_valid_insertMaxMap :: Property
 prop_valid_insertMaxMap = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe 0 ((+ 1) . fst) $ M.lookupMax m
+        let k = maybe dummyKey (overKX (+ 1) . fst) $ M.lookupMax m
         v <- valGen
         pure $ NEM.insertMaxMap k v m
     assert $ M.valid n
@@ -79,7 +81,7 @@ prop_valid_insertMapMin :: Property
 prop_valid_insertMapMin = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe 0 (subtract 1 . fst) $ M.lookupMin m
+        let k = maybe dummyKey (overKX (subtract 1) . fst) $ M.lookupMin m
         v <- valGen
         pure $ NEM.insertMapMin k v m
     assert $ NEM.valid n
@@ -88,7 +90,7 @@ prop_valid_insertMapMax :: Property
 prop_valid_insertMapMax = property $ do
     n  <- forAll $ do
         m <- mapGen
-        let k = maybe 0 ((+ 1) . fst) $ M.lookupMax m
+        let k = maybe dummyKey (overKX (+ 1) . fst) $ M.lookupMax m
         v <- valGen
         pure $ NEM.insertMapMax k v m
     assert $ NEM.valid n
@@ -255,8 +257,8 @@ prop_union = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
 
 prop_unionWith :: Property
 prop_unionWith = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
-    (M.unionWith (combiner 0))
-    (NEM.unionWith (combiner 0))
+    (M.unionWith (combiner dummyKey))
+    (NEM.unionWith (combiner dummyKey))
 
 prop_unionWithKey :: Property
 prop_unionWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
@@ -270,8 +272,8 @@ prop_unions = ttProp (GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
 
 prop_unionsWith :: Property
 prop_unionsWith = ttProp (GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
-    (M.unionsWith (combiner 0))
-    (NEM.unionsWith (combiner 0))
+    (M.unionsWith (combiner dummyKey))
+    (NEM.unionsWith (combiner dummyKey))
 
 prop_difference :: Property
 prop_difference = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
@@ -283,7 +285,7 @@ prop_differenceWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
     (M.differenceWithKey f)
     (NEM.differenceWithKey f)
   where
-    f n v u
+    f (K n _) v u
       | even n    = Just (v <> u)
       | otherwise = Nothing
 
@@ -345,7 +347,7 @@ prop_mapAccumWithKey = ttProp  ( GTOther (Gen.double (Range.linearFrac (-1) 1))
     (M.mapAccumWithKey   f)
     (NEM.mapAccumWithKey f)
   where
-    f d i t
+    f d (K i _) t
       | even i    = (sin d, t <> T.pack (show t))
       | otherwise = (d + 2, T.reverse t         )
 
@@ -357,7 +359,7 @@ prop_mapAccumRWithKey = ttProp  ( GTOther (Gen.double (Range.linearFrac (-1) 1))
     (M.mapAccumRWithKey   f)
     (NEM.mapAccumRWithKey f)
   where
-    f d i t
+    f d (K i _) t
       | even i    = (sin d, t <> T.pack (show t))
       | otherwise = (d + 2, T.reverse t         )
 
@@ -366,19 +368,19 @@ prop_mapKeys = ttProp (GTNEMap :-> TTNEMap)
     (M.mapKeys   f)
     (NEM.mapKeys f)
   where
-    f = (`mod` 25)
+    f = overKX (`mod` 25)
   
 prop_mapKeysWith :: Property
 prop_mapKeysWith = ttProp (GTNEMap :-> TTNEMap)
-    (M.mapKeysWith   (combiner 0) f)
-    (NEM.mapKeysWith (combiner 0) f)
+    (M.mapKeysWith   (combiner dummyKey) f)
+    (NEM.mapKeysWith (combiner dummyKey) f)
   where
-    f = (`mod` 25)
+    f = overKX (`mod` 25)
   
 prop_mapMonotonic :: Property
 prop_mapMonotonic = ttProp (GTNEMap :-> TTNEMap)
-    (M.mapKeysMonotonic   (* 2))
-    (NEM.mapKeysMonotonic (* 2))
+    (M.mapKeysMonotonic   (overKX (* 2)))
+    (NEM.mapKeysMonotonic (overKX (* 2)))
 
 prop_foldr :: Property
 prop_foldr = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
@@ -408,15 +410,15 @@ prop_foldr1 :: Property
 prop_foldr1 = ttProp ( GTNEMap
                    :-> TTOther
                      )
-    (foldr1     (combiner 0))
-    (NEM.foldr1 (combiner 0))
+    (foldr1     (combiner dummyKey))
+    (NEM.foldr1 (combiner dummyKey))
   
 prop_foldl1 :: Property
 prop_foldl1 = ttProp ( GTNEMap
                    :-> TTOther
                      )
-    (foldl1     (combiner 0))
-    (NEM.foldl1 (combiner 0))
+    (foldl1     (combiner dummyKey))
+    (NEM.foldl1 (combiner dummyKey))
   
 prop_foldrWithKey :: Property
 prop_foldrWithKey = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
@@ -426,7 +428,7 @@ prop_foldrWithKey = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
     (M.foldrWithKey   f)
     (NEM.foldrWithKey f)
   where
-    f i t d
+    f (K i _) t d
       | even i            = cos d
       | even (T.length t) = sin d
       | otherwise         = d + 2
@@ -439,7 +441,7 @@ prop_foldlWithKey = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
     (M.foldlWithKey   f)
     (NEM.foldlWithKey f)
   where
-    f d i t
+    f d (K i _) t
       | even i            = cos d
       | even (T.length t) = sin d
       | otherwise         = d + 2
@@ -477,15 +479,15 @@ prop_foldr1' :: Property
 prop_foldr1' = ttProp ( GTNEMap
                     :-> TTOther
                       )
-    (foldr1      (combiner 0))
-    (NEM.foldr1' (combiner 0))
+    (foldr1      (combiner dummyKey))
+    (NEM.foldr1' (combiner dummyKey))
   
 prop_foldl1' :: Property
 prop_foldl1' = ttProp ( GTNEMap
                     :-> TTOther
                       )
-    (foldl1      (combiner 0))
-    (NEM.foldl1' (combiner 0))
+    (foldl1      (combiner dummyKey))
+    (NEM.foldl1' (combiner dummyKey))
   
 prop_foldrWithKey' :: Property
 prop_foldrWithKey' = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
@@ -495,7 +497,7 @@ prop_foldrWithKey' = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
     (M.foldrWithKey'   f)
     (NEM.foldrWithKey' f)
   where
-    f i t d
+    f (K i _) t d
       | even i            = cos d
       | even (T.length t) = sin d
       | otherwise         = d + 2
@@ -508,7 +510,7 @@ prop_foldlWithKey' = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
     (M.foldlWithKey'   f)
     (NEM.foldlWithKey' f)
   where
-    f d i t
+    f d (K i _) t
       | even i            = cos d
       | even (T.length t) = sin d
       | otherwise         = d + 2
@@ -550,7 +552,7 @@ prop_filterWithKey = ttProp (GTNEMap :-> TTMap)
     (M.filterWithKey   f)
     (NEM.filterWithKey f)
   where
-    f i = even . (+ fromIntegral i) . T.length
+    f (K i _) = even . (+ fromIntegral i) . T.length
 
 prop_restrictKeys :: Property
 prop_restrictKeys = ttProp (GTNEMap :-> GTSet GTKey :-> TTMap)
@@ -567,38 +569,38 @@ prop_partitionWithKey = ttProp (GTNEMap :-> TTThese TTNEMap TTNEMap)
     (M.partitionWithKey   f)
     (NEM.partitionWithKey f)
   where
-    f i = even . (+ fromIntegral i) . T.length
+    f (K i _) = even . (+ fromIntegral i) . T.length
     
 prop_takeWhileAntitone :: Property
 prop_takeWhileAntitone = ttProp (GTNEMap :-> TTMap)
-    (M.takeWhileAntitone   (< 0))
-    (NEM.takeWhileAntitone (< 0))
+    (M.takeWhileAntitone   ((< 0) . getKX))
+    (NEM.takeWhileAntitone ((< 0) . getKX))
 
 prop_dropWhileAntitone :: Property
 prop_dropWhileAntitone = ttProp (GTNEMap :-> TTMap)
-    (M.dropWhileAntitone   (< 0))
-    (NEM.dropWhileAntitone (< 0))
+    (M.dropWhileAntitone   ((< 0) . getKX))
+    (NEM.dropWhileAntitone ((< 0) . getKX))
 
 prop_spanAntitone :: Property
 prop_spanAntitone = ttProp (GTNEMap :-> TTThese TTNEMap TTNEMap)
-    (M.spanAntitone   (< 0))
-    (NEM.spanAntitone (< 0))
+    (M.spanAntitone   ((< 0) . getKX))
+    (NEM.spanAntitone ((< 0) . getKX))
 
 prop_mapMaybeWithKey :: Property
 prop_mapMaybeWithKey = ttProp (GTNEMap :-> TTMap)
     (M.mapMaybeWithKey   f)
     (NEM.mapMaybeWithKey f)
   where
-    f i | even i    = Just . T.length
-        | otherwise = const Nothing
+    f (K i _) | even i    = Just . T.length
+              | otherwise = const Nothing
 
 prop_mapEitherWithKey :: Property
 prop_mapEitherWithKey = ttProp (GTNEMap :-> TTThese TTNEMap TTNEMap)
     (M.mapEitherWithKey   f)
     (NEM.mapEitherWithKey f)
   where
-    f i | even i    = Right . T.reverse
-        | otherwise = Left  . T.length
+    f (K i _) | even i    = Right . T.reverse
+              | otherwise = Left  . T.length
 
 prop_split :: Property
 prop_split = ttProp (GTKey :-> GTNEMap :-> TTMThese TTNEMap TTNEMap)

@@ -20,7 +20,7 @@ main = do
     hSetBuffering stdout LineBuffering
     hSetBuffering stderr LineBuffering
 
-    results <- checkParallel (tryGroup 250 mapTests)
+    results <- checkParallel (tryGroup 100 mapTests)
 
     unless results exitFailure
 
