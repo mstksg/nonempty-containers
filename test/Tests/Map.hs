@@ -5,9 +5,7 @@
 module Tests.Map (mapTests) where
 
 import           Data.Foldable
-import           Data.Function
 import           Data.Functor.Identity
-import           Data.Maybe
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Hedgehog
@@ -15,7 +13,6 @@ import           Tests.Map.Util
 import qualified Data.Map                   as M
 import qualified Data.Map.NonEmpty          as NEM
 import qualified Data.Map.NonEmpty.Internal as NEM
-import qualified Data.Text                  as T
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
@@ -25,27 +22,6 @@ mapTests = $$(discover)
 
 dummyKey :: KeyType
 dummyKey = K 0 "hello"
-
-combiner :: KeyType -> T.Text -> T.Text -> T.Text
-combiner (K n _) v u
-    | even (T.length v) = T.reverse v <> u
-    | even n            = v <> u
-    | otherwise         = u <> v
-  
-adjuster :: KeyType -> T.Text -> T.Text
-adjuster (K i _)
-    | even i    = T.reverse
-    | otherwise = T.intersperse '_'
-
-updater :: KeyType -> T.Text -> Maybe T.Text
-updater (K i _)
-    | even i    = Just . T.reverse
-    | otherwise = const Nothing
-
-mapper :: T.Text -> T.Text
-mapper t
-    | even (T.length t) = T.reverse t
-    | otherwise         = T.intersperse '_' t
 
 
 
@@ -108,9 +84,9 @@ prop_toMapIso2 = property $ do
                 (Identity . NEM.nonEmptyMap)
 
 prop_insertMapWithKey :: Property
-prop_insertMapWithKey = ttProp (GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
-    (M.insertWithKey   combiner)
-    (NEM.insertWithKey combiner)
+prop_insertMapWithKey = ttProp (gf3 valGen :?> GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
+    M.insertWithKey
+    NEM.insertWithKey
 
 prop_singleton :: Property
 prop_singleton = ttProp (GTKey :-> GTVal :-> TTNEMap)
@@ -128,14 +104,14 @@ prop_fromDescList = ttProp (GTSorted STDesc (GTNEList Nothing (GTKey :&: GTVal))
     NEM.fromDescList
 
 prop_fromAscListWithKey :: Property
-prop_fromAscListWithKey = ttProp (GTSorted STAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
-    (M.fromAscListWithKey   combiner)
-    (NEM.fromAscListWithKey combiner)
+prop_fromAscListWithKey = ttProp (gf3 valGen :?> GTSorted STAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
+    M.fromAscListWithKey
+    NEM.fromAscListWithKey
 
 prop_fromDescListWithKey :: Property
-prop_fromDescListWithKey = ttProp (GTSorted STDesc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
-    (M.fromDescListWithKey   combiner)
-    (NEM.fromDescListWithKey combiner)
+prop_fromDescListWithKey = ttProp (gf3 valGen :?> GTSorted STDesc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
+    M.fromDescListWithKey
+    NEM.fromDescListWithKey
 
 prop_fromDistinctAscList :: Property
 prop_fromDistinctAscList = ttProp (GTSorted STDistinctAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
@@ -148,9 +124,9 @@ prop_fromDistinctDescList = ttProp (GTSorted STDistinctDesc (GTNEList Nothing (G
     NEM.fromDistinctDescList
 
 prop_fromListWithKey :: Property
-prop_fromListWithKey = ttProp (GTNEList Nothing (GTKey :&: GTVal) :-> TTNEMap)
-    (M.fromListWithKey   combiner)
-    (NEM.fromListWithKey combiner)
+prop_fromListWithKey = ttProp (gf3 valGen :?> GTNEList Nothing (GTKey :&: GTVal) :-> TTNEMap)
+    M.fromListWithKey
+    NEM.fromListWithKey
 
 prop_insert :: Property
 prop_insert = ttProp (GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
@@ -158,9 +134,9 @@ prop_insert = ttProp (GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
     NEM.insert
 
 prop_insertWithKey :: Property
-prop_insertWithKey = ttProp (GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
-    (M.insertWithKey   combiner)
-    (NEM.insertWithKey combiner)
+prop_insertWithKey = ttProp (gf3 valGen :?> GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
+    M.insertWithKey
+    NEM.insertWithKey
 
 prop_delete :: Property
 prop_delete = ttProp (GTKey :-> GTNEMap :-> TTMap)
@@ -168,32 +144,29 @@ prop_delete = ttProp (GTKey :-> GTNEMap :-> TTMap)
     NEM.delete
 
 prop_adjustWithKey :: Property
-prop_adjustWithKey = ttProp (GTKey :-> GTNEMap :-> TTNEMap)
-    (M.adjustWithKey   adjuster)
-    (NEM.adjustWithKey adjuster)
+prop_adjustWithKey = ttProp (gf2 valGen :?> GTKey :-> GTNEMap :-> TTNEMap)
+    M.adjustWithKey
+    NEM.adjustWithKey
 
 prop_updateWithKey :: Property
-prop_updateWithKey = ttProp (GTKey :-> GTNEMap :-> TTMap)
-    (M.updateWithKey   updater)
-    (NEM.updateWithKey updater)
+prop_updateWithKey = ttProp (gf2 (Gen.maybe valGen) :?> GTKey :-> GTNEMap :-> TTMap)
+    M.updateWithKey
+    NEM.updateWithKey
 
 prop_updateLookupWithKey :: Property
-prop_updateLookupWithKey = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTVal :*: TTMap)
-    (M.updateLookupWithKey   updater)
-    (NEM.updateLookupWithKey updater)
+prop_updateLookupWithKey = ttProp (gf2 (Gen.maybe valGen) :?> GTKey :-> GTNEMap :-> TTMaybe TTVal :*: TTMap)
+    M.updateLookupWithKey
+    NEM.updateLookupWithKey
 
 prop_alter :: Property
-prop_alter = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTMap)
-     (\v -> M.alter   (f . fromMaybe v))
-     (\v -> NEM.alter (f . fromMaybe v))
-  where
-    f t | even (T.length t) = Just $ T.reverse t
-        | otherwise         = Nothing
+prop_alter = ttProp (gf1 (Gen.maybe valGen) :?> GTKey :-> GTNEMap :-> TTMap)
+    M.alter
+    NEM.alter
 
 prop_alter' :: Property
-prop_alter' = ttProp (GTVal :-> GTKey :-> GTNEMap :-> TTNEMap)
-    (\v -> M.alter    (Just . mapper . fromMaybe v))
-    (\v -> NEM.alter' (       mapper . fromMaybe v))
+prop_alter' = ttProp (gf1 valGen :?> GTKey :-> GTNEMap :-> TTNEMap)
+    (M.alter . fmap Just)
+    NEM.alter'
 
 prop_alterF :: Property
 prop_alterF = ttProp (GTKey :-> GTNEMap :-> TTCtx (GTMaybe GTVal :-> TTMap) (TTMaybe TTVal))
@@ -256,14 +229,14 @@ prop_union = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
     NEM.union
 
 prop_unionWith :: Property
-prop_unionWith = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
-    (M.unionWith (combiner dummyKey))
-    (NEM.unionWith (combiner dummyKey))
+prop_unionWith = ttProp (gf2 valGen :?> GTNEMap :-> GTNEMap :-> TTNEMap)
+    M.unionWith
+    NEM.unionWith
 
 prop_unionWithKey :: Property
-prop_unionWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
-    (M.unionWithKey combiner)
-    (NEM.unionWithKey combiner)
+prop_unionWithKey = ttProp (gf3 valGen :?> GTNEMap :-> GTNEMap :-> TTNEMap)
+    M.unionWithKey
+    NEM.unionWithKey
 
 prop_unions :: Property
 prop_unions = ttProp (GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
@@ -271,9 +244,9 @@ prop_unions = ttProp (GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
     NEM.unions
 
 prop_unionsWith :: Property
-prop_unionsWith = ttProp (GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
-    (M.unionsWith (combiner dummyKey))
-    (NEM.unionsWith (combiner dummyKey))
+prop_unionsWith = ttProp (gf2 valGen :?> GTNEList (Just (Range.linear 2 5)) GTNEMap :-> TTNEMap)
+    M.unionsWith
+    NEM.unionsWith
 
 prop_difference :: Property
 prop_difference = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
@@ -281,13 +254,9 @@ prop_difference = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
     NEM.difference
 
 prop_differenceWithKey :: Property
-prop_differenceWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
-    (M.differenceWithKey f)
-    (NEM.differenceWithKey f)
-  where
-    f (K n _) v u
-      | even n    = Just (v <> u)
-      | otherwise = Nothing
+prop_differenceWithKey = ttProp (gf3 (Gen.maybe valGen) :?> GTNEMap :-> GTNEMap :-> TTMap)
+    M.differenceWithKey
+    NEM.differenceWithKey
 
 prop_intersection :: Property
 prop_intersection = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
@@ -295,19 +264,19 @@ prop_intersection = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
     NEM.intersection
 
 prop_intersectionWithKey :: Property
-prop_intersectionWithKey = ttProp (GTNEMap :-> GTNEMap :-> TTMap)
-    (M.intersectionWithKey combiner)
-    (NEM.intersectionWithKey combiner)
+prop_intersectionWithKey = ttProp (gf3 valGen :?> GTNEMap :-> GTNEMap :-> TTMap)
+    M.intersectionWithKey
+    NEM.intersectionWithKey
 
 prop_map :: Property
-prop_map = ttProp (GTNEMap :-> TTNEMap)
-    (M.map   mapper)
-    (NEM.map mapper)
+prop_map = ttProp (gf1 valGen :?> GTNEMap :-> TTNEMap)
+    M.map
+    NEM.map
 
 prop_mapWithKey :: Property
-prop_mapWithKey = ttProp (GTNEMap :-> TTNEMap)
-    (M.mapWithKey   adjuster)
-    (NEM.mapWithKey adjuster)
+prop_mapWithKey = ttProp (gf2 valGen :?> GTNEMap :-> TTNEMap)
+    M.mapWithKey
+    NEM.mapWithKey
 
 prop_traverseWithKey1 :: Property
 prop_traverseWithKey1 = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
@@ -340,180 +309,150 @@ prop_sequenceA = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
     (sequenceA . fmap (`More` Done id))
 
 prop_mapAccumWithKey :: Property
-prop_mapAccumWithKey = ttProp  ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_mapAccumWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
+                             :?> GTOther valGen
                              :-> GTNEMap
                              :-> TTOther :*: TTNEMap
                                )
-    (M.mapAccumWithKey   f)
-    (NEM.mapAccumWithKey f)
-  where
-    f d (K i _) t
-      | even i    = (sin d, t <> T.pack (show t))
-      | otherwise = (d + 2, T.reverse t         )
+    M.mapAccumWithKey
+    NEM.mapAccumWithKey
 
 prop_mapAccumRWithKey :: Property
-prop_mapAccumRWithKey = ttProp  ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_mapAccumRWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
+                              :?> GTOther valGen
                               :-> GTNEMap
                               :-> TTOther :*: TTNEMap
                                 )
-    (M.mapAccumRWithKey   f)
-    (NEM.mapAccumRWithKey f)
-  where
-    f d (K i _) t
-      | even i    = (sin d, t <> T.pack (show t))
-      | otherwise = (d + 2, T.reverse t         )
+    M.mapAccumRWithKey
+    NEM.mapAccumRWithKey
 
 prop_mapKeys :: Property
-prop_mapKeys = ttProp (GTNEMap :-> TTNEMap)
-    (M.mapKeys   f)
-    (NEM.mapKeys f)
-  where
-    f = overKX (`mod` 25)
+prop_mapKeys = ttProp (gf1 keyGen :?> GTNEMap :-> TTNEMap)
+    M.mapKeys
+    NEM.mapKeys
   
 prop_mapKeysWith :: Property
-prop_mapKeysWith = ttProp (GTNEMap :-> TTNEMap)
-    (M.mapKeysWith   (combiner dummyKey) f)
-    (NEM.mapKeysWith (combiner dummyKey) f)
-  where
-    f = overKX (`mod` 25)
-  
+prop_mapKeysWith = ttProp ( gf2 valGen
+                        :?> gf1 keyGen
+                        :?> GTNEMap
+                        :-> TTNEMap
+                          )
+    M.mapKeysWith
+    NEM.mapKeysWith
+
 prop_mapMonotonic :: Property
-prop_mapMonotonic = ttProp (GTNEMap :-> TTNEMap)
-    (M.mapKeysMonotonic   (* 2))
-    (NEM.mapKeysMonotonic (* 2))
+prop_mapMonotonic = ttProp (gf1 keyGen :?> GTNEMap :-> TTNEMap)
+    M.mapKeysMonotonic
+    NEM.mapKeysMonotonic
 
 prop_foldr :: Property
-prop_foldr = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldr = ttProp ( gf2 valGen
+                  :?> GTOther valGen
                   :-> GTNEMap
                   :-> TTOther
                     )
-    (M.foldr   f)
-    (NEM.foldr f)
-  where
-    f t d
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldr
+    NEM.foldr
   
 prop_foldl :: Property
-prop_foldl = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldl = ttProp ( gf2 valGen
+                  :?> GTOther valGen
                   :-> GTNEMap
                   :-> TTOther
                     )
-    (M.foldl   f)
-    (NEM.foldl f)
-  where
-    f d t
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldl
+    NEM.foldl
 
 prop_foldr1 :: Property
-prop_foldr1 = ttProp ( GTNEMap
+prop_foldr1 = ttProp ( gf2 valGen
+                   :?> GTNEMap
                    :-> TTOther
                      )
-    (foldr1     (combiner dummyKey))
-    (NEM.foldr1 (combiner dummyKey))
+    foldr1
+    NEM.foldr1
   
 prop_foldl1 :: Property
-prop_foldl1 = ttProp ( GTNEMap
+prop_foldl1 = ttProp ( gf2 valGen
+                   :?> GTNEMap
                    :-> TTOther
                      )
-    (foldl1     (combiner dummyKey))
-    (NEM.foldl1 (combiner dummyKey))
+    foldl1
+    NEM.foldl1
   
 prop_foldrWithKey :: Property
-prop_foldrWithKey = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldrWithKey = ttProp ( gf3 valGen
+                         :?> GTOther valGen
                          :-> GTNEMap
                          :-> TTOther
                            )
-    (M.foldrWithKey   f)
-    (NEM.foldrWithKey f)
-  where
-    f (K i _) t d
-      | even i            = cos d
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldrWithKey
+    NEM.foldrWithKey
   
 prop_foldlWithKey :: Property
-prop_foldlWithKey = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldlWithKey = ttProp ( gf3 valGen
+                         :?> GTOther valGen
                          :-> GTNEMap
                          :-> TTOther
                            )
-    (M.foldlWithKey   f)
-    (NEM.foldlWithKey f)
-  where
-    f d (K i _) t
-      | even i            = cos d
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldlWithKey
+    NEM.foldlWithKey
   
 prop_foldMapWithKey :: Property
-prop_foldMapWithKey = ttProp (GTNEMap :-> TTOther)
-    (M.foldMapWithKey   adjuster)
-    (NEM.foldMapWithKey adjuster)
+prop_foldMapWithKey = ttProp (gf2 valGen :?> GTNEMap :-> TTOther)
+    M.foldMapWithKey
+    NEM.foldMapWithKey
   
 prop_foldr' :: Property
-prop_foldr' = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldr' = ttProp ( gf2 valGen
+                   :?> GTOther valGen
                    :-> GTNEMap
                    :-> TTOther
                      )
-    (M.foldr'   f)
-    (NEM.foldr' f)
-  where
-    f t d
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldr'
+    NEM.foldr'
   
 prop_foldl' :: Property
-prop_foldl' = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldl' = ttProp ( gf2 valGen
+                   :?> GTOther valGen
                    :-> GTNEMap
                    :-> TTOther
                      )
-    (M.foldl'   f)
-    (NEM.foldl' f)
-  where
-    f d t
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldl'
+    NEM.foldl'
 
 prop_foldr1' :: Property
-prop_foldr1' = ttProp ( GTNEMap
+prop_foldr1' = ttProp ( gf2 valGen
+                    :?> GTNEMap
                     :-> TTOther
                       )
-    (foldr1      (combiner dummyKey))
-    (NEM.foldr1' (combiner dummyKey))
+    foldr1
+    NEM.foldr1'
   
 prop_foldl1' :: Property
-prop_foldl1' = ttProp ( GTNEMap
+prop_foldl1' = ttProp ( gf2 valGen
+                    :?> GTNEMap
                     :-> TTOther
                       )
-    (foldl1      (combiner dummyKey))
-    (NEM.foldl1' (combiner dummyKey))
+    foldl1
+    NEM.foldl1'
   
 prop_foldrWithKey' :: Property
-prop_foldrWithKey' = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldrWithKey' = ttProp ( gf3 valGen
+                          :?> GTOther valGen
                           :-> GTNEMap
                           :-> TTOther
                             )
-    (M.foldrWithKey'   f)
-    (NEM.foldrWithKey' f)
-  where
-    f (K i _) t d
-      | even i            = cos d
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldrWithKey'
+    NEM.foldrWithKey'
   
 prop_foldlWithKey' :: Property
-prop_foldlWithKey' = ttProp ( GTOther (Gen.double (Range.linearFrac (-1) 1))
+prop_foldlWithKey' = ttProp ( gf3 valGen
+                          :?> GTOther valGen
                           :-> GTNEMap
                           :-> TTOther
                             )
-    (M.foldlWithKey'   f)
-    (NEM.foldlWithKey' f)
-  where
-    f d (K i _) t
-      | even i            = cos d
-      | even (T.length t) = sin d
-      | otherwise         = d + 2
+    M.foldlWithKey'
+    NEM.foldlWithKey'
 
 prop_elems :: Property
 prop_elems = ttProp (GTNEMap :-> TTNEList TTVal)
@@ -541,18 +480,14 @@ prop_toDescList = ttProp (GTNEMap :-> TTNEList (TTKey :*: TTVal))
     NEM.toDescList
 
 prop_filter :: Property
-prop_filter = ttProp (GTNEMap :-> TTMap)
-    (M.filter   f)
-    (NEM.filter f)
-  where
-    f = even . T.length
+prop_filter = ttProp (gf1 Gen.bool :?> GTNEMap :-> TTMap)
+    M.filter
+    NEM.filter
 
 prop_filterWithKey :: Property
-prop_filterWithKey = ttProp (GTNEMap :-> TTMap)
-    (M.filterWithKey   f)
-    (NEM.filterWithKey f)
-  where
-    f (K i _) = even . (+ fromIntegral i) . T.length
+prop_filterWithKey = ttProp (gf2 Gen.bool :?> GTNEMap :-> TTMap)
+    M.filterWithKey
+    NEM.filterWithKey
 
 prop_restrictKeys :: Property
 prop_restrictKeys = ttProp (GTNEMap :-> GTSet GTKey :-> TTMap)
@@ -565,11 +500,9 @@ prop_withoutKeys = ttProp (GTNEMap :-> GTSet GTKey :-> TTMap)
     NEM.withoutKeys
 
 prop_partitionWithKey :: Property
-prop_partitionWithKey = ttProp (GTNEMap :-> TTThese TTNEMap TTNEMap)
-    (M.partitionWithKey   f)
-    (NEM.partitionWithKey f)
-  where
-    f (K i _) = even . (+ fromIntegral i) . T.length
+prop_partitionWithKey = ttProp (gf2 Gen.bool :?> GTNEMap :-> TTThese TTNEMap TTNEMap)
+    M.partitionWithKey
+    NEM.partitionWithKey
     
 prop_takeWhileAntitone :: Property
 prop_takeWhileAntitone = ttProp (GTNEMap :-> TTMap)
@@ -587,20 +520,17 @@ prop_spanAntitone = ttProp (GTNEMap :-> TTThese TTNEMap TTNEMap)
     (NEM.spanAntitone ((< 0) . getKX))
 
 prop_mapMaybeWithKey :: Property
-prop_mapMaybeWithKey = ttProp (GTNEMap :-> TTMap)
-    (M.mapMaybeWithKey   f)
-    (NEM.mapMaybeWithKey f)
-  where
-    f (K i _) | even i    = Just . T.length
-              | otherwise = const Nothing
+prop_mapMaybeWithKey = ttProp (gf2 (Gen.maybe valGen) :?> GTNEMap :-> TTMap)
+    M.mapMaybeWithKey
+    NEM.mapMaybeWithKey
 
 prop_mapEitherWithKey :: Property
-prop_mapEitherWithKey = ttProp (GTNEMap :-> TTThese TTNEMap TTNEMap)
-    (M.mapEitherWithKey   f)
-    (NEM.mapEitherWithKey f)
-  where
-    f (K i _) | even i    = Right . T.reverse
-              | otherwise = Left  . T.length
+prop_mapEitherWithKey = ttProp ( gf2 (Gen.choice [Left <$> valGen, Right <$> valGen])
+                             :?> GTNEMap
+                             :-> TTThese TTNEMap TTNEMap
+                               )
+    M.mapEitherWithKey
+    NEM.mapEitherWithKey
 
 prop_split :: Property
 prop_split = ttProp (GTKey :-> GTNEMap :-> TTMThese TTNEMap TTNEMap)
@@ -613,18 +543,14 @@ prop_splitLookup = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTVal :*: TTMThese TTNE
     NEM.splitLookup
 
 prop_isSubmapOfBy :: Property
-prop_isSubmapOfBy = ttProp (GTNEMap :-> GTNEMap :-> TTOther)
-    (M.isSubmapOfBy f)
-    (NEM.isSubmapOfBy f)
-  where
-    f = (<) `on` T.length
+prop_isSubmapOfBy = ttProp (gf2 Gen.bool :?> GTNEMap :-> GTNEMap :-> TTOther)
+    M.isSubmapOfBy
+    NEM.isSubmapOfBy
 
 prop_isProperSubmapOfBy :: Property
-prop_isProperSubmapOfBy = ttProp (GTNEMap :-> GTNEMap :-> TTOther)
-    (M.isProperSubmapOfBy f)
-    (NEM.isProperSubmapOfBy f)
-  where
-    f = (<) `on` T.length
+prop_isProperSubmapOfBy = ttProp (gf2 Gen.bool :?> GTNEMap :-> GTNEMap :-> TTOther)
+    M.isProperSubmapOfBy
+    NEM.isProperSubmapOfBy
 
 prop_lookupIndex :: Property
 prop_lookupIndex = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTOther)
@@ -681,24 +607,24 @@ prop_deleteFindMax = ttProp (GTNEMap :-> (TTKey :*: TTVal) :*: TTMap)
     NEM.deleteFindMax
 
 prop_updateMinWithKey :: Property
-prop_updateMinWithKey = ttProp (GTNEMap :-> TTMap)
-    (M.updateMinWithKey   updater)
-    (NEM.updateMinWithKey updater)
+prop_updateMinWithKey = ttProp (gf2 (Gen.maybe valGen) :?> GTNEMap :-> TTMap)
+    M.updateMinWithKey
+    NEM.updateMinWithKey
 
 prop_updateMaxWithKey :: Property
-prop_updateMaxWithKey = ttProp (GTNEMap :-> TTMap)
-    (M.updateMaxWithKey   updater)
-    (NEM.updateMaxWithKey updater)
+prop_updateMaxWithKey = ttProp (gf2 (Gen.maybe valGen) :?> GTNEMap :-> TTMap)
+    M.updateMaxWithKey
+    NEM.updateMaxWithKey
 
 prop_adjustMinWithKey :: Property
-prop_adjustMinWithKey = ttProp (GTNEMap :-> TTNEMap)
-    (M.updateMinWithKey   (\i -> Just . adjuster i))
-    (NEM.adjustMinWithKey adjuster)
+prop_adjustMinWithKey = ttProp (gf2 valGen :?> GTNEMap :-> TTNEMap)
+    (M.updateMinWithKey  . (fmap . fmap) Just)
+    NEM.adjustMinWithKey
 
 prop_adjustMaxWithKey :: Property
-prop_adjustMaxWithKey = ttProp (GTNEMap :-> TTNEMap)
-    (M.updateMaxWithKey   (\i -> Just . adjuster i))
-    (NEM.adjustMaxWithKey adjuster)
+prop_adjustMaxWithKey = ttProp (gf2 valGen :?> GTNEMap :-> TTNEMap)
+    (M.updateMaxWithKey  . (fmap . fmap) Just)
+    NEM.adjustMaxWithKey
 
 prop_minView :: Property
 prop_minView = ttProp (GTNEMap :-> TTMaybe (TTVal :*: TTMap))

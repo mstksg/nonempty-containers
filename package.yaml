@@ -63,3 +63,4 @@ tests:
     - nonempty-containers
     - hedgehog
     - text
+    - hedgehog-fn

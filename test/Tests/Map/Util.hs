@@ -1,13 +1,17 @@
 {-# LANGUAGE DeriveFunctor       #-}
+{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 
 module Tests.Map.Util (
     K(..), KeyType, overKX
   , SortType(..)
+  , GenFunc(..), gf1, gf2, gf3
   , GenType(..)
   , TestType(..)
   , ttProp
@@ -19,27 +23,29 @@ module Tests.Map.Util (
 import           Control.Applicative
 import           Control.Monad
 import           Data.Bifunctor
+import           Data.Char
 import           Data.Foldable
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.Kind
-import           Data.List.NonEmpty  (NonEmpty(..))
-import           Data.Map            (Map)
-import           Data.Map.NonEmpty   (NEMap)
+import           Data.List.NonEmpty       (NonEmpty(..))
+import           Data.Map                 (Map)
+import           Data.Map.NonEmpty        (NEMap)
 import           Data.Maybe
 import           Data.These
 import           Hedgehog
-import qualified Data.List.NonEmpty  as NE
-import qualified Data.Map            as M
-import qualified Data.Map.NonEmpty   as NEM
-import qualified Data.Set            as S
-import qualified Data.Text           as T
-import qualified Hedgehog.Gen        as Gen
-import qualified Hedgehog.Range      as Range
+import           Hedgehog.Function hiding ((:*:))
+import qualified Data.List.NonEmpty       as NE
+import qualified Data.Map                 as M
+import qualified Data.Map.NonEmpty        as NEM
+import qualified Data.Set                 as S
+import qualified Data.Text                as T
+import qualified Hedgehog.Gen             as Gen
+import qualified Hedgehog.Range           as Range
 
 -- | test for stability
 data K a b = K { getKX :: !a, getKY :: !b }
-    deriving (Show)
+    deriving (Show, Generic)
 
 withK :: (a -> b -> c) -> K a b -> c
 withK f (K x y) = f x y
@@ -49,6 +55,9 @@ instance Eq a => Eq (K a b) where
 
 instance Ord a => Ord (K a b) where
     compare = compare `on` getKX
+
+instance (Vary a, Vary b) => Vary (K a b)
+instance (Arg a, Arg b) => Arg (K a b)
 
 type KeyType = K Int T.Text
 
@@ -107,6 +116,28 @@ data GenType :: Type -> Type -> Type where
              -> GenType [a]                    (NonEmpty a)
              -> GenType [a]                    (NonEmpty a)
 
+data GenFunc :: Type -> Type -> Type -> Type where
+    GF  :: (Show a, Arg a, Vary a, Show b)
+        => Gen b
+        -> ((a -> b) -> f)
+        -> GenFunc f c d
+
+gf1 :: (Show a, Arg a, Vary a, Show b)
+    => Gen b
+    -> GenFunc (a -> b) c d
+gf1 = (`GF` id)
+
+gf2 :: (Show a, Show b, Arg a, Vary a, Arg b, Vary b, Show c)
+    => Gen c
+    -> GenFunc (a -> b -> c) d e
+gf2 = (`GF` curry)
+
+gf3 :: (Show a, Show b, Show c, Arg a, Vary a, Arg b, Vary b, Arg c, Vary c, Show d)
+    => Gen d
+    -> GenFunc (a -> b -> c -> d) e f
+gf3 = (`GF` (curry . curry))
+
+
 data TestType :: Type -> Type -> Type where
     TTNEMap  :: (Eq a, Show a)
              => TestType (M.Map KeyType a) (NEM.NEMap KeyType a)
@@ -140,6 +171,12 @@ data TestType :: Type -> Type -> Type where
              => TestType a                 b
              -> TestType c                 d
              -> TestType (a, c)            (b, d)
+    (:?>)    :: GenFunc f   c             d
+             -> TestType    c             d
+             -> TestType    (f -> c)      (f -> d)
+             -- Gen b
+             -- -> TestType c                 d
+             -- -> TestType ((a -> b) -> c)   ((a -> b) -> d)
     (:->)    :: (Show a, Show b)
              => GenType  a                 b
              -> TestType c                 d
@@ -147,6 +184,7 @@ data TestType :: Type -> Type -> Type where
 
 infixr 2 :&:
 infixr 1 :->
+infixr 1 :?>
 infixr 2 :*:
 
 runSorter
@@ -166,7 +204,7 @@ runGT = \case
     GTVal      -> join (,) <$> valGen
     GTOther g  -> join (,) <$> g
     GTMaybe g  -> maybe (Nothing, Nothing) (bimap Just Just) <$>
-        Gen.maybe (runGT g)
+      Gen.maybe (runGT g)
     g1 :&: g2  -> do
       (x1, y1) <- runGT g1
       (x2, y2) <- runGT g2
@@ -227,6 +265,9 @@ runTT = \case
     t1 :*: t2 -> \(x1, x2) (y1, y2) -> do
       runTT t1 x1 y1
       runTT t2 x2 y2
+    GF gt c :?> tt -> \gx gy -> do
+      f <- c <$> forAllFn (fn gt)
+      runTT tt (gx f) (gy f)
     gt :-> tt -> \f g -> do
       (x, y) <- forAll $ runGT gt
       runTT tt (f x) (g y)
@@ -329,3 +370,22 @@ mapGen = Gen.map mapSize $ (,) <$> keyGen <*> valGen
 
 neMapGen :: MonadGen m => m (NEMap KeyType T.Text)
 neMapGen = Gen.just $ NEM.nonEmptyMap <$> mapGen
+
+
+
+-- ---------------------
+-- Orphans
+-- ---------------------
+
+instance Arg Char where
+    build = via ord chr
+
+instance Arg T.Text where
+    build = via T.unpack T.pack
+
+instance Vary Char where
+    vary = contramap ord vary
+
+instance Vary T.Text where
+    vary = contramap T.unpack vary
+
