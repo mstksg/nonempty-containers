@@ -119,7 +119,6 @@ import           Prelude hiding             (foldr, foldl, filter, map, take, dr
 import qualified Data.List.NonEmpty         as NE
 import qualified Data.Semigroup.Foldable    as F1
 import qualified Data.Set                   as S
-import qualified Data.Set.Internal          as S
 
 pattern IsNonEmpty :: NESet a -> Set a
 pattern IsNonEmpty n <- (nonEmptySet->Just n)

@@ -68,7 +68,7 @@ module Data.Map.NonEmpty (
 
   -- * Construction
   , singleton
-  -- , fromSet
+  , fromSet
 
   -- ** From Unordered Lists
   , fromList
@@ -180,7 +180,7 @@ module Data.Map.NonEmpty (
   , elems
   , keys
   , assocs
-  -- , keysSet
+  , keysSet
 
   -- ** Lists
   , toList
@@ -257,6 +257,7 @@ import           Data.Map.NonEmpty.Internal
 import           Data.Maybe hiding          (mapMaybe)
 import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1)
+import           Data.Set.NonEmpty.Internal (NESet(..))
 import           Data.These
 import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map, take, drop, splitAt)
 import qualified Data.Foldable              as F
@@ -341,11 +342,15 @@ withNEMap
 withNEMap def f = maybe def f . nonEmptyMap
 {-# INLINE withNEMap #-}
 
--- fromSet
---     :: (k -> a)
---     -> NESet k
---     -> NEMap k a
--- fromSet f (NESet k ks) = NEMap k (f k) (M.fromSet f ks)
+-- | /O(n)/. Build a non-empty map from a non-empty set of keys and
+-- a function which for each key computes its value.
+--
+-- > fromSet (\k -> replicate k 'a') (Data.Set.NonEmpty.fromList (3 :| [5])) == fromList ((5,"aaaaa") :| [(3,"aaa")])
+fromSet
+    :: (k -> a)
+    -> NESet k
+    -> NEMap k a
+fromSet f (NESet k ks) = NEMap k (f k) (M.fromSet f ks)
 
 -- | /O(log n)/. Lookup the value at a key in the map.
 --
@@ -747,8 +752,11 @@ assocs :: NEMap k a -> NonEmpty (k, a)
 assocs = toList
 {-# INLINE assocs #-}
 
--- keysSet :: NEMap k a -> NESet k
--- keysSet (NEMap k _ m) = NESet k (M.keysSet m)
+-- | /O(n)/. The non-empty set of all keys of the map.
+--
+-- > keysSet (fromList ((5,"a") :| [(3,"b")])) == Data.Set.NonEmpty.fromList (3 :| [5])
+keysSet :: NEMap k a -> NESet k
+keysSet (NEMap k _ m) = NESet k (M.keysSet m)
 
 -- | /O(n)/. Map a function over all values in the map.
 --
