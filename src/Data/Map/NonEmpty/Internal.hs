@@ -94,7 +94,7 @@ import qualified Data.Semigroup.Foldable    as F1
 --
 -- You can directly construct an 'NEMap' with the API from
 -- "Data.Map.NonEmpty"; it's more or less the same as constructing a normal
--- 'Map', except you don't have access to 'Data.Map.Empty'.  There are also
+-- 'Map', except you don't have access to 'Data.Map.empty'.  There are also
 -- a few ways to construct an 'NEMap' from a 'Map':
 --
 -- 1.  The 'nonEmptyMap' smart constructor will convert a @'Map' k a@ into
@@ -105,14 +105,12 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 3.  You can use the 'Data.Map.NonEmpty.IsNonEmpty' and
 --     'Data.Map.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Map'
 --     to reveal it as either containing a 'NEMap' or an empty map.
--- 4.  'Data.Map.withNEMap' offers a continuation-based interface for
---     deconstructing a 'Map' and treating it as if it were an 'NEMap'.
+-- 4.  'Data.Map.NonEmpty.withNEMap' offers a continuation-based interface
+--     for deconstructing a 'Map' and treating it as if it were an 'NEMap'.
 --
--- You can convert an 'NEMap' into a (possibly empty) 'Map' with 'toMap' or
--- 'Data.Map.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty property from the
--- type.
-
--- TODO: should key really be a strict field?
+-- You can convert an 'NEMap' into a 'Map' with 'toMap' or
+-- 'Data.Map.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
+-- property from the type.
 data NEMap k a =
     NEMap { nemK0  :: !k   -- ^ invariant: must be smaller than smallest key in map
           , nemV0  :: a
@@ -554,7 +552,7 @@ valid (NEMap k _ m) = M.valid m
 -- /strictly less than/ all keys present in the 'Map'.  /The precondition
 -- is not checked./
 --
--- While this has the same asymptotics as 'Data.Map.insert', it saves
+-- While this has the same asymptotics as @Data.Map.insert@, it saves
 -- a constant factor for key comparison (so may be helpful if comparison is
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMinMap :: k -> a -> Map k a -> Map k a
@@ -568,7 +566,7 @@ insertMinMap kx x = \case
 -- /strictly greater than/ all keys present in the 'Map'.  /The
 -- precondition is not checked./
 --
--- While this has the same asymptotics as 'Data.Map.insert', it saves
+-- While this has the same asymptotics as @Data.Map.insert@, it saves
 -- a constant factor for key comparison (so may be helpful if comparison is
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMaxMap :: k -> a -> Map k a -> Map k a

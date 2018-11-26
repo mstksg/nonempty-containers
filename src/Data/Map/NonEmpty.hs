@@ -42,9 +42,9 @@
 -- provided in a way restructured to preserve guaruntees of non-empty maps
 -- being returned.
 --
--- Some functions (like 'mapEither', 'partition', 'span', 'spanAntitone',
--- 'split') have modified return types to account for possible
--- configurations of non-emptiness.
+-- Some functions (like 'mapEither', 'partition', 'spanAntitone', 'split')
+-- have modified return types to account for possible configurations of
+-- non-emptiness.
 --
 -- This module is intended to be imported qualified, to avoid name clashes with
 -- "Prelude" and "Data.Map" functions:
@@ -81,7 +81,7 @@ module Data.Map.NonEmpty (
   , fromAscListWithKey
   , fromDistinctAscList
 
-  -- -- ** From Descending Lists
+  -- ** From Descending Lists
   , fromDescList
   , fromDescListWith
   , fromDescListWithKey
@@ -136,7 +136,7 @@ module Data.Map.NonEmpty (
   , differenceWith
   , differenceWithKey
 
-  -- -- ** Intersection
+  -- ** Intersection
   , intersection
   , intersectionWith
   , intersectionWithKey
@@ -213,7 +213,7 @@ module Data.Map.NonEmpty (
   , isSubmapOf, isSubmapOfBy
   , isProperSubmapOf, isProperSubmapOfBy
 
-  -- -- * Indexed
+  -- * Indexed
   , lookupIndex
   , findIndex
   , elemAt
@@ -445,7 +445,10 @@ member k (NEMap k0 _ m) = case compare k k0 of
 -- > notMember 5 (fromList ((5,'a') :| [(3,'b')])) == False
 -- > notMember 1 (fromList ((5,'a') :| [(3,'b')])) == True
 notMember :: Ord k => k -> NEMap k a -> Bool
-notMember k = not . member k
+notMember k (NEMap k0 _ m) = case compare k k0 of
+    LT -> True
+    EQ -> False
+    GT -> M.member k m
 {-# INLINE notMember #-}
 
 -- | /O(log n)/. Find largest key smaller than the given one and return the
@@ -787,12 +790,9 @@ toAscList = toList
 --
 -- > toDescList (fromList ((5,"a") :| [(3,"b")])) == ((5,"a") :| [(3,"b")])
 toDescList :: NEMap k a -> NonEmpty (k, a)
-toDescList (NEMap k v m) = maybe kv0 (<> kv0)
-                         . NE.nonEmpty
-                         . M.toDescList
-                         $ m
+toDescList (NEMap k0 v0 m) = M.foldlWithKey' go ((k0, v0) :| []) m
   where
-    kv0 = (k, v) :| []
+    go xs k v = (k, v) NE.<| xs
 {-# INLINE toDescList #-}
 
 -- | /O(log n)/. Convert a 'Map' into an 'NEMap' by adding a key-value
@@ -1630,7 +1630,7 @@ withoutKeys n@(NEMap k v m) xs = case S.minView xs of
 
 -- | /O(n)/. Partition the map according to a predicate.
 --
--- Returns a 'These' with potentially two maps:
+-- Returns a 'These' with potentially two non-empty maps:
 --
 -- *   @'This' n1@ means that the predicate was true for all items.
 -- *   @'That' n2@ means that the predicate was false for all items.
@@ -1652,7 +1652,7 @@ partition f = partitionWithKey (const f)
 
 -- | /O(n)/. Partition the map according to a predicate.
 --
--- Returns a 'These' with potentially two maps:
+-- Returns a 'These' with potentially two non-empty maps:
 --
 -- *   @'This' n1@ means that the predicate was true for all items,
 --     returning the original map.
@@ -1729,7 +1729,7 @@ dropWhileAntitone f n@(NEMap k _ m)
 -- The user is responsible for ensuring that for all keys @j@ and @k@ in the map,
 -- @j \< k ==\> p j \>= p k@.
 --
--- Returns a 'These' with potentially two maps:
+-- Returns a 'These' with potentially two non-empty maps:
 --
 -- *   @'This' n1@ means that the predicate never failed for any item,
 --     returning the original map.
@@ -1740,7 +1740,6 @@ dropWhileAntitone f n@(NEMap k _ m)
 --     the point where the predicate stops holding)
 --
 -- @
--- spanAntitone p xs = ('takeWhileAntitone' p xs, 'dropWhileAntitone' p xs)
 -- spanAntitone p xs = partitionWithKey (\k _ -> p k) xs
 -- @
 --
@@ -1761,7 +1760,7 @@ spanAntitone f n@(NEMap k v m0)
     | otherwise = That n
   where
     (m1, m2) = M.spanAntitone f m0
-{-# INLINE spanAntitone #-}
+{-# INLINABLE spanAntitone #-}
 
 -- | /O(n)/. Map values and collect the 'Just' results.
 --
@@ -1795,7 +1794,7 @@ mapMaybeWithKey f (NEMap k v m) = ($ M.mapMaybeWithKey f m)
 
 -- | /O(n)/. Map values and separate the 'Left' and 'Right' results.
 --
--- Returns a 'These' with potentially two maps:
+-- Returns a 'These' with potentially two non-empty maps:
 --
 -- *   @'This' n1@ means that the results were all 'Left'.
 -- *   @'That' n2@ means that the results were all 'Right'.
@@ -1817,7 +1816,7 @@ mapEither f = mapEitherWithKey (const f)
 
 -- | /O(n)/. Map keys\/values and separate the 'Left' and 'Right' results.
 --
--- Returns a 'These' with potentially two maps:
+-- Returns a 'These' with potentially two non-empty maps:
 --
 -- *   @'This' n1@ means that the results were all 'Left'.
 -- *   @'That' n2@ means that the results were all 'Right'.
@@ -2120,10 +2119,11 @@ deleteAt i (NEMap k v m) = insertMinMap k v . M.deleteAt (i - 1) $ m
 -- | Take a given number of entries in key order, beginning with the
 -- smallest keys.
 --
--- Returns a possibly empty map ('Map'), in case we take zero elements.
+-- Returns a possibly empty map ('Map'), which can only happen if we call
+-- @take 0@.
 --
 -- @
--- take n = 'Data.Map.fromDistinctAscList' . 'Prelude.take' n . Foldable.toList . 'toList'
+-- take n = Data.Map.fromDistinctAscList . Data.List.NonEmpty.take n . 'toList'
 -- @
 take
     :: Int
@@ -2137,10 +2137,11 @@ take i (NEMap k v m) = insertMinMap k v . M.take (i - 1) $ m
 -- with the smallest keys.
 --
 -- Returns a possibly empty map ('Map'), in case we drop all of the
--- elements.
+-- elements (which can happen if we drop a number greater than or equal to
+-- the number of items in the map)
 --
 -- @
--- drop n = 'fromDistinctAscList' . 'Prelude.drop' n . Foldable.toList . 'toList'
+-- drop n = Data.Map.fromDistinctAscList . Data.List.NonEmpty.drop' n . 'toList'
 -- @
 drop
     :: Int
@@ -2174,7 +2175,7 @@ splitAt i n@(NEMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
 
 -- | /O(1)/. The minimal key of the map.  Note that this is total, making
 -- 'Data.Map.lookupMin' obsolete.  It is constant-time, so has better
--- asymptotics than 'Data.Map.lookupMin' and 'Data.Map.findMin', as well.
+-- asymptotics than @Data.Map.lookupMin@ and @Data.Map.findMin@, as well.
 --
 -- > findMin (fromList ((5,"a") :| [(3,"b")])) == (3,"b")
 findMin :: NEMap k a -> (k, a)
@@ -2182,17 +2183,17 @@ findMin (NEMap k v _) = (k, v)
 {-# INLINE findMin #-}
 
 -- | /O(log n)/. The maximal key of the map.  Note that this is total, making
--- 'Data.Map.lookupMin' obsolete.  It is constant-time, so has better
--- asymptotics than 'Data.Map.lookupMin' and 'Data.Map.findMin', as well.
+-- 'Data.Map.lookupMin' obsolete.
 --
--- > findMin (fromList ((5,"a") :| [(3,"b")])) == (3,"b")
+-- > findMax (fromList ((5,"a") :| [(3,"b")])) == (5,"a")
 findMax :: NEMap k a -> (k, a)
 findMax (NEMap k v m) = fromMaybe (k, v) . M.lookupMax $ m
 {-# INLINE findMax #-}
 
 -- | /O(1)/. Delete the minimal key. Returns a potentially empty map
--- ('Map'), because we might end up deleting the final key in the map.  It
--- is constant-time, so has better asymptotics than 'Data.Map.deleteMin'.
+-- ('Map'), because we might end up deleting the final key in a singleton
+-- map.  It is constant-time, so has better asymptotics than
+-- 'Data.Map.deleteMin'.
 --
 -- > deleteMin (fromList ((5,"a") :| [(3,"b"), (7,"c")])) == Data.Map.fromList [(5,"a"), (7,"c")]
 -- > deleteMin (singleton 5 "a") == Data.Map.empty
@@ -2201,7 +2202,8 @@ deleteMin (NEMap _ _ m) = m
 {-# INLINE deleteMin #-}
 
 -- | /O(log n)/. Delete the maximal key. Returns a potentially empty map
--- ('Map'), because we might end up deleting the final key in the map.
+-- ('Map'), because we might end up deleting the final key in a singleton
+-- map.
 --
 -- > deleteMax (fromList ((5,"a") :| [(3,"b"), (7,"c")])) == Data.Map.fromList [(3,"b"), (5,"a")]
 -- > deleteMax (singleton 5 "a") == Data.Map.empty
@@ -2291,9 +2293,9 @@ adjustMaxWithKey f (NEMap k0 v m)
 
 -- | /O(1)/. Retrieves the value associated with minimal key of the
 -- map, and the map stripped of that element.  It is constant-time, so has
--- better asymptotics than 'Data.Map.minView' for 'Map'.
+-- better asymptotics than @Data.Map.minView@ for 'Map'.
 --
--- Note that unlike 'Data.Map.minView' for 'Map', this cannot ever fail,
+-- Note that unlike @Data.Map.minView@ for 'Map', this cannot ever fail,
 -- so doesn't need to return in a 'Maybe'.  However, the result 'Map' is
 -- potentially empty, since the original map might have contained just
 -- a single item.
@@ -2304,10 +2306,10 @@ minView = first snd . deleteFindMin
 {-# INLINE minView #-}
 
 -- | /O(1)/. Delete and find the minimal key-value pair.  It is
--- constant-time, so has better asymptotics that 'Data.Map.minView' for
+-- constant-time, so has better asymptotics that @Data.Map.minView@ for
 -- 'Map'.
 --
--- Note that unlike 'Data.Map.deleteFindMin' for 'Map', this cannot ever
+-- Note that unlike @Data.Map.deleteFindMin@ for 'Map', this cannot ever
 -- fail, and so is a total function. However, the result 'Map' is
 -- potentially empty, since the original map might have contained just
 -- a single item.
@@ -2320,7 +2322,7 @@ deleteFindMin (NEMap k v m) = ((k, v), m)
 -- | /O(log n)/. Retrieves the value associated with maximal key of the
 -- map, and the map stripped of that element.
 --
--- Note that unlike 'Data.Map.maxView' from 'Map', this cannot ever fail,
+-- Note that unlike @Data.Map.maxView@ from 'Map', this cannot ever fail,
 -- so doesn't need to return in a 'Maybe'.  However, the result 'Map' is
 -- potentially empty, since the original map might have contained just
 -- a single item.
@@ -2332,7 +2334,7 @@ maxView = first snd . deleteFindMax
 
 -- | /O(log n)/. Delete and find the minimal key-value pair.
 --
--- Note that unlike 'Data.Map.deleteFindMax' for 'Map', this cannot ever
+-- Note that unlike @Data.Map.deleteFindMax@ for 'Map', this cannot ever
 -- fail, and so is a total function. However, the result 'Map' is
 -- potentially empty, since the original map might have contained just
 -- a single item.

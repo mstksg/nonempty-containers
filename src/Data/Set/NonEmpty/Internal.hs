@@ -89,14 +89,12 @@ import qualified Data.Set.Internal       as S
 -- 3.  You can use the 'Data.Set.NonEmpty.IsNonEmpty' and
 --     'Data.Set.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Set'
 --     to reveal it as either containing a 'NESet' or an empty map.
--- 4.  'Data.Set.withNESet' offers a continuation-based interface for
---     deconstructing a 'Set' and treating it as if it were an 'NESet'.
+-- 4.  'Data.Set.NonEmpty.withNESet' offers a continuation-based interface
+--     for deconstructing a 'Set' and treating it as if it were an 'NESet'.
 --
--- You can convert an 'NESet' into a (possibly empty) 'Set' with 'toSet' or
+-- You can convert an 'NESet' into a 'Set' with 'toSet' or
 -- 'Data.Set.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
 -- property from the type.
-
--- TODO: should v0 really be a strict field?
 data NESet a =
     NESet { nesV0  :: !a   -- ^ invariant: must be smaller than smallest value in set
           , nesSet :: !(Set a)
@@ -167,7 +165,7 @@ setDataType = mkDataType "Data.Set.Internal.Set" [fromListConstr]
 -- 'Nothing' if the 'Set' was originally actually empty, and @'Just' n@
 -- with an 'NESet', if the 'Set' was not empty.
 --
--- 'nonEmptySet' and @'maybe' 'Data.Set..empty' 'toSet'@ form an
+-- 'nonEmptySet' and @'maybe' 'Data.Set.empty' 'toSet'@ form an
 -- isomorphism: they are perfect structure-preserving inverses of
 -- eachother.
 --
@@ -395,7 +393,7 @@ valid (NESet x s) = S.valid s
 -- /strictly less than/ all values present in the 'Set'.  /The precondition
 -- is not checked./
 --
--- While this has the same asymptotics as 'Data.Set.insert', it saves
+-- While this has the same asymptotics as @Data.Set.insert@, it saves
 -- a constant factor for value comparison (so may be helpful if comparison
 -- is expensive) and also does not require an 'Ord' instance for the value
 -- type.
@@ -410,7 +408,7 @@ insertMinSet x = \case
 -- greater than/ all values present in the 'Set'.  /The precondition is not
 -- checked./
 --
--- While this has the same asymptotics as 'Data.Set.insert', it saves
+-- While this has the same asymptotics as @Data.Set.insert@, it saves
 -- a constant factor for value comparison (so may be helpful if comparison
 -- is expensive) and also does not require an 'Ord' instance for the value
 -- type.
