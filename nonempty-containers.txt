@@ -12,17 +12,10 @@
 @version 0.1.0.0
 
 
--- | <h1>WARNING</h1>
---   
---   This module is considered <b>internal</b>.
---   
---   The Package Versioning Policy <b>does not apply</b>.
---   
---   This contents of this module may change <b>in any way whatsoever</b>
---   and <b>without any warning</b> between minor versions of this package.
---   
---   Authors importing this module are expected to track development
---   closely.
+-- | Unsafe internal-use functions used in the implementation of
+--   <a>Data.Map.NonEmpty</a>. These functions can potentially be used to
+--   break the abstraction of <a>NEMap</a> and produce unsound sets, so be
+--   wary!
 module Data.Map.NonEmpty.Internal
 
 -- | A non-empty Map from keys <tt>k</tt> to values <tt>a</tt>. At least
@@ -328,17 +321,10 @@ instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEM
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
 
 
--- | <h1>WARNING</h1>
---   
---   This module is considered <b>internal</b>.
---   
---   The Package Versioning Policy <b>does not apply</b>.
---   
---   This contents of this module may change <b>in any way whatsoever</b>
---   and <b>without any warning</b> between minor versions of this package.
---   
---   Authors importing this module are expected to track development
---   closely.
+-- | Unsafe internal-use functions used in the implementation of
+--   <a>Data.Set.NonEmpty</a>. These functions can potentially be used to
+--   break the abstraction of <a>NESet</a> and produce unsound sets, so be
+--   wary!
 module Data.Set.NonEmpty.Internal
 
 -- | A non-empty set of values <tt>a</tt>. At least one value exists in an
