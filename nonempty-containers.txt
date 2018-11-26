@@ -81,7 +81,7 @@ NEMap :: !k -> a -> !Map k a -> NEMap k a
 --   </pre>
 singleton :: k -> a -> NEMap k a
 
--- | <i>O(log n)</i> Smart constructor for an <a>NEMap</a> from a
+-- | <i>O(log n)</i>. Smart constructor for an <a>NEMap</a> from a
 --   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
 --   actually empty, and <tt><a>Just</a> n</tt> with an <a>NEMap</a>, if
 --   the <a>Map</a> was not empty.
@@ -326,6 +326,161 @@ instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
 
+module Data.Set.NonEmpty.Internal
+data NESet a
+NESet :: !a -> !Set a -> NESet a
+
+-- | invariant: must be smaller than smallest value in set
+[nesV0] :: NESet a -> !a
+[nesSet] :: NESet a -> !Set a
+nonEmptySet :: Set a -> Maybe (NESet a)
+toSet :: NESet a -> Set a
+
+-- | <i>O(1)</i>. Create a singleton set.
+singleton :: a -> NESet a
+
+-- | <i>O(log n)</i>. Insert an element in a set. If the set already
+--   contains an element equal to the given value, it is replaced with the
+--   new value.
+insert :: Ord a => a -> NESet a -> NESet a
+
+-- | <i>O(n*log n)</i>. Create a set from a list of elements.
+fromList :: Ord a => NonEmpty a -> NESet a
+toList :: NESet a -> NonEmpty a
+size :: NESet a -> Int
+union :: Ord a => NESet a -> NESet a -> NESet a
+unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+foldr :: (a -> b -> b) -> b -> NESet a -> b
+foldl :: (a -> b -> a) -> a -> NESet b -> a
+foldr' :: (a -> b -> b) -> b -> NESet a -> b
+foldl' :: (a -> b -> a) -> a -> NESet b -> a
+
+-- | Only legal if all items in the first set are less than all items in
+--   the second set
+merge :: NESet a -> NESet a -> NESet a
+
+-- | <i>O(n)</i>. Test if the internal set structure is valid.
+valid :: Ord a => NESet a -> Bool
+insertMinSet :: a -> Set a -> Set a
+insertMaxSet :: a -> Set a -> Set a
+instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Set.NonEmpty.Internal.NESet a)
+instance GHC.Classes.Ord a => GHC.Classes.Ord (Data.Set.NonEmpty.Internal.NESet a)
+instance GHC.Show.Show a => GHC.Show.Show (Data.Set.NonEmpty.Internal.NESet a)
+instance (GHC.Read.Read a, GHC.Classes.Ord a) => GHC.Read.Read (Data.Set.NonEmpty.Internal.NESet a)
+instance Data.Functor.Classes.Eq1 Data.Set.NonEmpty.Internal.NESet
+instance Data.Functor.Classes.Ord1 Data.Set.NonEmpty.Internal.NESet
+instance Data.Functor.Classes.Show1 Data.Set.NonEmpty.Internal.NESet
+instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Set.NonEmpty.Internal.NESet a)
+instance (Data.Data.Data a, GHC.Classes.Ord a) => Data.Data.Data (Data.Set.NonEmpty.Internal.NESet a)
+instance GHC.Classes.Ord a => GHC.Base.Semigroup (Data.Set.NonEmpty.Internal.NESet a)
+instance Data.Foldable.Foldable Data.Set.NonEmpty.Internal.NESet
+instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESet
+
+module Data.Set.NonEmpty
+data NESet a
+pattern IsNonEmpty :: NESet a -> Set a
+pattern IsEmpty :: Set a
+nonEmptySet :: Set a -> Maybe (NESet a)
+toSet :: NESet a -> Set a
+withNESet :: r -> (NESet a -> r) -> Set a -> r
+insertSet :: Ord a => a -> Set a -> NESet a
+insertSetMin :: a -> Set a -> NESet a
+insertSetMax :: a -> Set a -> NESet a
+
+-- | <i>O(log n)</i>. Unsafe version of <a>nonEmptySet</a>. Coerces a
+--   <a>Set</a> into an <a>NESet</a>, but is undefined (throws a runtime
+--   exception when evaluation is attempted) for an empty <a>Set</a>.
+unsafeFromSet :: Set a -> NESet a
+
+-- | <i>O(1)</i>. Create a singleton set.
+singleton :: a -> NESet a
+
+-- | <i>O(n*log n)</i>. Create a set from a list of elements.
+fromList :: Ord a => NonEmpty a -> NESet a
+fromAscList :: Eq a => NonEmpty a -> NESet a
+fromDescList :: Eq a => NonEmpty a -> NESet a
+fromDistinctAscList :: NonEmpty a -> NESet a
+fromDistinctDescList :: NonEmpty a -> NESet a
+powerSet :: forall a. () => NESet a -> NESet (NESet a)
+
+-- | <i>O(log n)</i>. Insert an element in a set. If the set already
+--   contains an element equal to the given value, it is replaced with the
+--   new value.
+insert :: Ord a => a -> NESet a -> NESet a
+delete :: Ord a => a -> NESet a -> Set a
+member :: Ord a => a -> NESet a -> Bool
+notMember :: Ord a => a -> NESet a -> Bool
+lookupLT :: Ord a => a -> NESet a -> Maybe a
+lookupGT :: Ord a => a -> NESet a -> Maybe a
+lookupLE :: Ord a => a -> NESet a -> Maybe a
+lookupGE :: Ord a => a -> NESet a -> Maybe a
+size :: NESet a -> Int
+isSubsetOf :: Ord a => NESet a -> NESet a -> Bool
+isProperSubsetOf :: Ord a => NESet a -> NESet a -> Bool
+disjoint :: Ord a => NESet a -> NESet a -> Bool
+union :: Ord a => NESet a -> NESet a -> NESet a
+unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+difference :: Ord a => NESet a -> NESet a -> Set a
+
+-- | Same as <a>difference</a>.
+(\\) :: Ord a => NESet a -> NESet a -> Set a
+intersection :: Ord a => NESet a -> NESet a -> Set a
+cartesianProduct :: NESet a -> NESet b -> NESet (a, b)
+disjointUnion :: NESet a -> NESet b -> NESet (Either a b)
+filter :: (a -> Bool) -> NESet a -> Set a
+takeWhileAntitone :: (a -> Bool) -> NESet a -> Set a
+dropWhileAntitone :: (a -> Bool) -> NESet a -> Set a
+spanAntitone :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
+partition :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
+split :: Ord a => a -> NESet a -> Maybe (These (NESet a) (NESet a))
+splitMember :: Ord a => a -> NESet a -> (Bool, Maybe (These (NESet a) (NESet a)))
+splitRoot :: NESet a -> NonEmpty (NESet a)
+lookupIndex :: Ord a => a -> NESet a -> Maybe Int
+findIndex :: Ord a => a -> NESet a -> Int
+elemAt :: Int -> NESet a -> a
+deleteAt :: Int -> NESet a -> Set a
+take :: Int -> NESet a -> Set a
+drop :: Int -> NESet a -> Set a
+splitAt :: Int -> NESet a -> These (NESet a) (NESet a)
+map :: Ord b => (a -> b) -> NESet a -> NESet b
+mapMonotonic :: (a -> b) -> NESet a -> NESet b
+foldr :: (a -> b -> b) -> b -> NESet a -> b
+foldl :: (a -> b -> a) -> a -> NESet b -> a
+
+-- | A variant of <a>foldr</a> that has no base case, and thus may only be
+--   applied to non-empty structures.
+--   
+--   <pre>
+--   <a>foldr1</a> f = <a>foldr1</a> f . <a>toList</a>
+--   </pre>
+foldr1 :: Foldable t => (a -> a -> a) -> t a -> a
+
+-- | A variant of <a>foldl</a> that has no base case, and thus may only be
+--   applied to non-empty structures.
+--   
+--   <pre>
+--   <a>foldl1</a> f = <a>foldl1</a> f . <a>toList</a>
+--   </pre>
+foldl1 :: Foldable t => (a -> a -> a) -> t a -> a
+foldr' :: (a -> b -> b) -> b -> NESet a -> b
+foldl' :: (a -> b -> a) -> a -> NESet b -> a
+foldr1' :: (a -> a -> a) -> NESet a -> a
+foldl1' :: (a -> a -> a) -> NESet a -> a
+findMin :: NESet a -> a
+findMax :: NESet a -> a
+deleteMin :: NESet a -> Set a
+deleteMax :: NESet a -> Set a
+deleteFindMin :: NESet a -> (a, Set a)
+deleteFindMax :: NESet a -> (a, Set a)
+elems :: NESet a -> NonEmpty a
+toList :: NESet a -> NonEmpty a
+toAscList :: NESet a -> NonEmpty a
+toDescList :: NESet a -> NonEmpty a
+
+-- | <i>O(n)</i>. Test if the internal set structure is valid.
+valid :: Ord a => NESet a -> Bool
+instance GHC.Base.Semigroup (Data.Set.NonEmpty.MergeNESet a)
+
 
 -- | <h1>Non-Empty Finite Maps (lazy interface)</h1>
 --   
@@ -459,7 +614,7 @@ pattern IsNonEmpty :: NEMap k a -> Map k a
 --   See <a>IsNonEmpty</a> for more information.
 pattern IsEmpty :: Map k a
 
--- | <i>O(log n)</i> Smart constructor for an <a>NEMap</a> from a
+-- | <i>O(log n)</i>. Smart constructor for an <a>NEMap</a> from a
 --   <a>Map</a>. Returns <a>Nothing</a> if the <a>Map</a> was originally
 --   actually empty, and <tt><a>Just</a> n</tt> with an <a>NEMap</a>, if
 --   the <a>Map</a> was not empty.
@@ -573,6 +728,11 @@ insertMapMin :: k -> a -> Map k a -> NEMap k a
 --   </pre>
 insertMapMax :: k -> a -> Map k a -> NEMap k a
 
+-- | <i>O(log n)</i>. Unsafe version of <a>nonEmptyMap</a>. Coerces a
+--   <a>Map</a> into an <a>NEMap</a>, but is undefined (throws a runtime
+--   exception when evaluation is attempted) for an empty <a>Map</a>.
+unsafeFromMap :: Map k a -> NEMap k a
+
 -- | <i>O(1)</i>. A map with a single element.
 --   
 --   <pre>
@@ -580,6 +740,14 @@ insertMapMax :: k -> a -> Map k a -> NEMap k a
 --   size (singleton 1 'a') == 1
 --   </pre>
 singleton :: k -> a -> NEMap k a
+
+-- | <i>O(n)</i>. Build a non-empty map from a non-empty set of keys and a
+--   function which for each key computes its value.
+--   
+--   <pre>
+--   fromSet (\k -&gt; replicate k 'a') (Data.Set.NonEmpty.fromList (3 :| [5])) == fromList ((5,"aaaaa") :| [(3,"aaa")])
+--   </pre>
+fromSet :: (k -> a) -> NESet k -> NEMap k a
 
 -- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
 --   key/value pairs. See also <a>fromAscList</a>. If the list contains
@@ -1498,6 +1666,13 @@ keys :: NEMap k a -> NonEmpty k
 --   </pre>
 assocs :: NEMap k a -> NonEmpty (k, a)
 
+-- | <i>O(n)</i>. The non-empty set of all keys of the map.
+--   
+--   <pre>
+--   keysSet (fromList ((5,"a") :| [(3,"b")])) == Data.Set.NonEmpty.fromList (3 :| [5])
+--   </pre>
+keysSet :: NEMap k a -> NESet k
+
 -- | <i>O(n)</i>. Convert the map to a non-empty list of key/value pairs.
 --   
 --   <pre>
@@ -1548,7 +1723,7 @@ filterWithKey :: (k -> a -> Bool) -> NEMap k a -> Map k a
 --   
 --   <pre>
 --   m `restrictKeys` s = <a>filterWithKey</a> (k _ -&gt; k `<a>member</a>` s) m
---   m `restrictKeys` s = m `<a>intersection</a>` <tt>fromSet</tt> (const ()) s
+--   m `restrictKeys` s = m `<a>intersection</a>` <a>fromSet</a> (const ()) s
 --   </pre>
 restrictKeys :: Ord k => NEMap k a -> Set k -> Map k a
 
@@ -1557,7 +1732,7 @@ restrictKeys :: Ord k => NEMap k a -> Set k -> Map k a
 --   
 --   <pre>
 --   m `withoutKeys` s = <a>filterWithKey</a> (k _ -&gt; k `<a>notMember</a>` s) m
---   m `withoutKeys` s = m `<a>difference</a>` <tt>fromSet</tt> (const ()) s
+--   m `withoutKeys` s = m `<a>difference</a>` <a>fromSet</a> (const ()) s
 --   </pre>
 withoutKeys :: Ord k => NEMap k a -> Set k -> Map k a
 
@@ -2119,147 +2294,3 @@ maxView :: NEMap k a -> (a, Map k a)
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
-
-module Data.Set.NonEmpty.Internal
-data NESet a
-NESet :: !a -> !Set a -> NESet a
-
--- | invariant: must be smaller than smallest value in set
-[nesV0] :: NESet a -> !a
-[nesSet] :: NESet a -> !Set a
-nonEmptySet :: Set a -> Maybe (NESet a)
-toSet :: NESet a -> Set a
-
--- | <i>O(1)</i>. Create a singleton set.
-singleton :: a -> NESet a
-
--- | <i>O(log n)</i>. Insert an element in a set. If the set already
---   contains an element equal to the given value, it is replaced with the
---   new value.
-insert :: Ord a => a -> NESet a -> NESet a
-
--- | <i>O(n*log n)</i>. Create a set from a list of elements.
-fromList :: Ord a => NonEmpty a -> NESet a
-toList :: NESet a -> NonEmpty a
-size :: NESet a -> Int
-union :: Ord a => NESet a -> NESet a -> NESet a
-unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
-foldr :: (a -> b -> b) -> b -> NESet a -> b
-foldl :: (a -> b -> a) -> a -> NESet b -> a
-foldr' :: (a -> b -> b) -> b -> NESet a -> b
-foldl' :: (a -> b -> a) -> a -> NESet b -> a
-
--- | <i>O(n)</i>. Test if the internal set structure is valid.
-valid :: Ord a => NESet a -> Bool
-insertMinSet :: a -> Set a -> Set a
-insertMaxSet :: a -> Set a -> Set a
-instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Set.NonEmpty.Internal.NESet a)
-instance GHC.Classes.Ord a => GHC.Classes.Ord (Data.Set.NonEmpty.Internal.NESet a)
-instance GHC.Show.Show a => GHC.Show.Show (Data.Set.NonEmpty.Internal.NESet a)
-instance (GHC.Read.Read a, GHC.Classes.Ord a) => GHC.Read.Read (Data.Set.NonEmpty.Internal.NESet a)
-instance Data.Functor.Classes.Eq1 Data.Set.NonEmpty.Internal.NESet
-instance Data.Functor.Classes.Ord1 Data.Set.NonEmpty.Internal.NESet
-instance Data.Functor.Classes.Show1 Data.Set.NonEmpty.Internal.NESet
-instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Set.NonEmpty.Internal.NESet a)
-instance (Data.Data.Data a, GHC.Classes.Ord a) => Data.Data.Data (Data.Set.NonEmpty.Internal.NESet a)
-instance GHC.Classes.Ord a => GHC.Base.Semigroup (Data.Set.NonEmpty.Internal.NESet a)
-instance Data.Foldable.Foldable Data.Set.NonEmpty.Internal.NESet
-instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESet
-
-module Data.Set.NonEmpty
-data NESet a
-pattern IsNonEmpty :: NESet a -> Set a
-pattern IsEmpty :: Set a
-nonEmptySet :: Set a -> Maybe (NESet a)
-toSet :: NESet a -> Set a
-withNESet :: r -> (NESet a -> r) -> Set a -> r
-insertSet :: Ord a => a -> Set a -> NESet a
-insertSetMin :: a -> Set a -> NESet a
-insertSetMax :: a -> Set a -> NESet a
-
--- | <i>O(1)</i>. Create a singleton set.
-singleton :: a -> NESet a
-
--- | <i>O(n*log n)</i>. Create a set from a list of elements.
-fromList :: Ord a => NonEmpty a -> NESet a
-fromAscList :: Eq a => NonEmpty a -> NESet a
-fromDescList :: Eq a => NonEmpty a -> NESet a
-fromDistinctAscList :: NonEmpty a -> NESet a
-fromDistinctDescList :: NonEmpty a -> NESet a
-
--- | <i>O(log n)</i>. Insert an element in a set. If the set already
---   contains an element equal to the given value, it is replaced with the
---   new value.
-insert :: Ord a => a -> NESet a -> NESet a
-delete :: Ord a => a -> NESet a -> Set a
-member :: Ord a => a -> NESet a -> Bool
-notMember :: Ord a => a -> NESet a -> Bool
-lookupLT :: Ord a => a -> NESet a -> Maybe a
-lookupGT :: Ord a => a -> NESet a -> Maybe a
-lookupLE :: Ord a => a -> NESet a -> Maybe a
-lookupGE :: Ord a => a -> NESet a -> Maybe a
-size :: NESet a -> Int
-isSubsetOf :: Ord a => NESet a -> NESet a -> Bool
-isProperSubsetOf :: Ord a => NESet a -> NESet a -> Bool
-disjoint :: Ord a => NESet a -> NESet a -> Bool
-union :: Ord a => NESet a -> NESet a -> NESet a
-unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
-difference :: Ord a => NESet a -> NESet a -> Set a
-
--- | Same as <a>difference</a>.
-(\\) :: Ord a => NESet a -> NESet a -> Set a
-intersection :: Ord a => NESet a -> NESet a -> Set a
-cartesianProduct :: NESet a -> NESet b -> NESet (a, b)
-disjointUnion :: NESet a -> NESet b -> NESet (Either a b)
-filter :: (a -> Bool) -> NESet a -> Set a
-takeWhileAntitone :: (a -> Bool) -> NESet a -> Set a
-dropWhileAntitone :: (a -> Bool) -> NESet a -> Set a
-spanAntitone :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
-partition :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
-split :: Ord a => a -> NESet a -> Maybe (These (NESet a) (NESet a))
-splitMember :: Ord a => a -> NESet a -> (Bool, Maybe (These (NESet a) (NESet a)))
-splitRoot :: NESet a -> NonEmpty (NESet a)
-lookupIndex :: Ord a => a -> NESet a -> Maybe Int
-findIndex :: Ord a => a -> NESet a -> Int
-elemAt :: Int -> NESet a -> a
-deleteAt :: Int -> NESet a -> Set a
-take :: Int -> NESet a -> Set a
-drop :: Int -> NESet a -> Set a
-splitAt :: Int -> NESet a -> These (NESet a) (NESet a)
-map :: Ord b => (a -> b) -> NESet a -> NESet b
-mapMonotonic :: (a -> b) -> NESet a -> NESet b
-foldr :: (a -> b -> b) -> b -> NESet a -> b
-foldl :: (a -> b -> a) -> a -> NESet b -> a
-
--- | A variant of <a>foldr</a> that has no base case, and thus may only be
---   applied to non-empty structures.
---   
---   <pre>
---   <a>foldr1</a> f = <a>foldr1</a> f . <a>toList</a>
---   </pre>
-foldr1 :: Foldable t => (a -> a -> a) -> t a -> a
-
--- | A variant of <a>foldl</a> that has no base case, and thus may only be
---   applied to non-empty structures.
---   
---   <pre>
---   <a>foldl1</a> f = <a>foldl1</a> f . <a>toList</a>
---   </pre>
-foldl1 :: Foldable t => (a -> a -> a) -> t a -> a
-foldr' :: (a -> b -> b) -> b -> NESet a -> b
-foldl' :: (a -> b -> a) -> a -> NESet b -> a
-foldr1' :: (a -> a -> a) -> NESet a -> a
-foldl1' :: (a -> a -> a) -> NESet a -> a
-findMin :: NESet a -> a
-findMax :: NESet a -> a
-deleteMin :: NESet a -> Set a
-deleteMax :: NESet a -> Set a
-deleteFindMin :: NESet a -> (a, Set a)
-deleteFindMax :: NESet a -> (a, Set a)
-elems :: NESet a -> NonEmpty a
-toList :: NESet a -> NonEmpty a
-toAscList :: NESet a -> NonEmpty a
-toDescList :: NESet a -> NonEmpty a
-
--- | <i>O(n)</i>. Test if the internal set structure is valid.
-valid :: Ord a => NESet a -> Bool
