@@ -1,9 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TupleSections     #-}
+{-# LANGUAGE TypeApplications  #-}
 
 module Tests.Map (mapTests) where
 
+import           Control.Applicative
+import           Data.Coerce
 import           Data.Foldable
 import           Data.Functor.Identity
 import           Data.Semigroup.Foldable
@@ -13,6 +16,7 @@ import           Tests.Map.Util
 import qualified Data.Map                   as M
 import qualified Data.Map.NonEmpty          as NEM
 import qualified Data.Map.NonEmpty.Internal as NEM
+import qualified Data.Text                  as T
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
@@ -173,10 +177,46 @@ prop_alterF = ttProp (GTKey :-> GTNEMap :-> TTCtx (GTMaybe GTVal :-> TTMap) (TTM
     (M.alterF   (Context id))
     (NEM.alterF (Context id))
 
+prop_alterF_rules_Const :: Property
+prop_alterF_rules_Const = ttProp ( gf1 (Const <$> valGen)
+                               :?> GTKey
+                               :-> GTNEMap
+                               :-> TTOther
+                                 )
+    (\f k m -> getConst (M.alterF   f k m))
+    (\f k m -> getConst (NEM.alterF f k m))
+
+prop_alterF_rules_Identity :: Property
+prop_alterF_rules_Identity = ttProp ( gf1 (Identity <$> Gen.maybe valGen)
+                                  :?> GTKey
+                                  :-> GTNEMap
+                                  :-> TTMap
+                                    )
+    (\f k m -> runIdentity (M.alterF   f k m))
+    (\f k m -> runIdentity (NEM.alterF f k m))
+
 prop_alterF' :: Property
 prop_alterF' = ttProp (GTKey :-> GTNEMap :-> TTCtx (GTVal :-> TTNEMap) (TTMaybe TTVal))
     (M.alterF    (Context Just))
     (NEM.alterF' (Context id))
+
+prop_alterF'_rules_Const :: Property
+prop_alterF'_rules_Const = ttProp ( gf1 (Const <$> valGen)
+                                :?> GTKey
+                                :-> GTNEMap
+                                :-> TTOther
+                                  )
+    (\f k m -> let f' = fmap Just . f in getConst (M.alterF    f' k m))
+    (\f k m -> getConst (NEM.alterF' f k m))
+
+prop_alterF'_rules_Identity :: Property
+prop_alterF'_rules_Identity = ttProp ( gf1 (Identity <$> valGen)
+                                   :?> GTKey
+                                   :-> GTNEMap
+                                   :-> TTNEMap
+                                     )
+    (\f k m -> let f' = fmap Just . f in runIdentity (M.alterF   f' k m))
+    (\f k m -> runIdentity (NEM.alterF' f k m))
 
 prop_lookup :: Property
 prop_lookup = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTVal)
@@ -273,10 +313,35 @@ prop_map = ttProp (gf1 valGen :?> GTNEMap :-> TTNEMap)
     M.map
     NEM.map
 
+prop_map_rules_map :: Property
+prop_map_rules_map = ttProp (gf1 valGen :?> gf1 valGen :?> GTNEMap :-> TTNEMap)
+    (\f g xs -> M.map   f (M.map   g xs))
+    (\f g xs -> NEM.map f (NEM.map g xs))
+
+prop_map_rules_coerce :: Property
+prop_map_rules_coerce = ttProp (GTNEMap :-> TTNEMap)
+    (M.map   @T.Text @T.Text coerce)
+    (NEM.map @T.Text @T.Text coerce)
+
+prop_map_rules_mapWithKey :: Property
+prop_map_rules_mapWithKey = ttProp (gf1 valGen :?> gf2 valGen :?> GTNEMap :-> TTNEMap)
+    (\f g xs -> M.map f (M.mapWithKey   g xs))
+    (\f g xs -> NEM.map f (NEM.mapWithKey g xs))
+
 prop_mapWithKey :: Property
 prop_mapWithKey = ttProp (gf2 valGen :?> GTNEMap :-> TTNEMap)
     M.mapWithKey
     NEM.mapWithKey
+
+prop_mapWithKey_rules_mapWithKey :: Property
+prop_mapWithKey_rules_mapWithKey = ttProp (gf2 valGen :?> gf2 valGen :?> GTNEMap :-> TTNEMap)
+    (\f g xs -> M.mapWithKey   f (M.mapWithKey   g xs))
+    (\f g xs -> NEM.mapWithKey f (NEM.mapWithKey g xs))
+
+prop_mapWithKey_rules_map :: Property
+prop_mapWithKey_rules_map = ttProp (gf2 valGen :?> gf1 valGen :?> GTNEMap :-> TTNEMap)
+    (\f g xs -> M.mapWithKey   f (M.map   g xs))
+    (\f g xs -> NEM.mapWithKey f (NEM.map g xs))
 
 prop_traverseWithKey1 :: Property
 prop_traverseWithKey1 = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
