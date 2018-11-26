@@ -44,7 +44,7 @@ module Data.Map.NonEmpty.Internal
 --   
 --   You can directly construct an <a>NEMap</a> with the API from
 --   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
---   normal <a>Map</a>, except you don't have access to <a>Empty</a>. There
+--   normal <a>Map</a>, except you don't have access to <a>empty</a>. There
 --   are also a few ways to construct an <a>NEMap</a> from a <a>Map</a>:
 --   
 --   <ol>
@@ -62,9 +62,9 @@ module Data.Map.NonEmpty.Internal
 --   <a>NEMap</a>.</li>
 --   </ol>
 --   
---   You can convert an <a>NEMap</a> into a (possibly empty) <a>Map</a>
---   with <a>toMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
---   non-empty property from the type.
+--   You can convert an <a>NEMap</a> into a <a>Map</a> with <a>toMap</a> or
+--   <a>IsNonEmpty</a>, essentially "obscuring" the non-empty property from
+--   the type.
 data NEMap k a
 NEMap :: !k -> a -> !Map k a -> NEMap k a
 
@@ -288,10 +288,10 @@ foldMapWithKey :: Semigroup m => (k -> a -> m) -> NEMap k a -> m
 --   <i>strictly less than</i> all keys present in the <a>Map</a>. /The
 --   precondition is not checked./
 --   
---   While this has the same asymptotics as <a>insert</a>, it saves a
---   constant factor for key comparison (so may be helpful if comparison is
---   expensive) and also does not require an <a>Ord</a> instance for the
---   key type.
+--   While this has the same asymptotics as <tt>Data.Map.insert</tt>, it
+--   saves a constant factor for key comparison (so may be helpful if
+--   comparison is expensive) and also does not require an <a>Ord</a>
+--   instance for the key type.
 insertMinMap :: k -> a -> Map k a -> Map k a
 
 -- | <i>O(log n)</i>. Insert new key and value into a map where keys are
@@ -299,10 +299,10 @@ insertMinMap :: k -> a -> Map k a -> Map k a
 --   <i>strictly greater than</i> all keys present in the <a>Map</a>. /The
 --   precondition is not checked./
 --   
---   While this has the same asymptotics as <a>insert</a>, it saves a
---   constant factor for key comparison (so may be helpful if comparison is
---   expensive) and also does not require an <a>Ord</a> instance for the
---   key type.
+--   While this has the same asymptotics as <tt>Data.Map.insert</tt>, it
+--   saves a constant factor for key comparison (so may be helpful if
+--   comparison is expensive) and also does not require an <a>Ord</a>
+--   instance for the key type.
 insertMaxMap :: k -> a -> Map k a -> Map k a
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
@@ -376,9 +376,9 @@ module Data.Set.NonEmpty.Internal
 --   <a>NESet</a>.</li>
 --   </ol>
 --   
---   You can convert an <a>NESet</a> into a (possibly empty) <a>Set</a>
---   with <a>toSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
---   non-empty property from the type.
+--   You can convert an <a>NESet</a> into a <a>Set</a> with <a>toSet</a> or
+--   <a>IsNonEmpty</a>, essentially "obscuring" the non-empty property from
+--   the type.
 data NESet a
 NESet :: !a -> !Set a -> NESet a
 
@@ -391,9 +391,9 @@ NESet :: !a -> !Set a -> NESet a
 --   actually empty, and <tt><a>Just</a> n</tt> with an <a>NESet</a>, if
 --   the <a>Set</a> was not empty.
 --   
---   <a>nonEmptySet</a> and <tt><a>maybe</a> 'Data.Set..empty'
---   <a>toSet</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>Set</a> being an <a>NESet</a>.
@@ -487,10 +487,10 @@ valid :: Ord a => NESet a -> Bool
 --   must be <i>strictly less than</i> all values present in the
 --   <a>Set</a>. /The precondition is not checked./
 --   
---   While this has the same asymptotics as <a>insert</a>, it saves a
---   constant factor for value comparison (so may be helpful if comparison
---   is expensive) and also does not require an <a>Ord</a> instance for the
---   value type.
+--   While this has the same asymptotics as <tt>Data.Set.insert</tt>, it
+--   saves a constant factor for value comparison (so may be helpful if
+--   comparison is expensive) and also does not require an <a>Ord</a>
+--   instance for the value type.
 insertMinSet :: a -> Set a -> Set a
 
 -- | <i>O(log n)</i>. Insert new value into a set where values are
@@ -498,10 +498,10 @@ insertMinSet :: a -> Set a -> Set a
 --   </i>strictly greater than<i> all values present in the <a>Set</a>.
 --   </i>The precondition is not checked./
 --   
---   While this has the same asymptotics as <a>insert</a>, it saves a
---   constant factor for value comparison (so may be helpful if comparison
---   is expensive) and also does not require an <a>Ord</a> instance for the
---   value type.
+--   While this has the same asymptotics as <tt>Data.Set.insert</tt>, it
+--   saves a constant factor for value comparison (so may be helpful if
+--   comparison is expensive) and also does not require an <a>Ord</a>
+--   instance for the value type.
 insertMaxSet :: a -> Set a -> Set a
 instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Set.NonEmpty.Internal.NESet a)
 instance GHC.Classes.Ord a => GHC.Classes.Ord (Data.Set.NonEmpty.Internal.NESet a)
@@ -516,6 +516,43 @@ instance GHC.Classes.Ord a => GHC.Base.Semigroup (Data.Set.NonEmpty.Internal.NES
 instance Data.Foldable.Foldable Data.Set.NonEmpty.Internal.NESet
 instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESet
 
+
+-- | <h1>Non-Empty Finite Sets</h1>
+--   
+--   The <tt><a>NESet</a> e</tt> type represents a non-empty set of
+--   elements of type <tt>e</tt>. Most operations require that <tt>e</tt>
+--   be an instance of the <a>Ord</a> class. A <a>NESet</a> is strict in
+--   its elements.
+--   
+--   See documentation for <a>NESet</a> for information on how to convert
+--   and manipulate such non-empty set.
+--   
+--   This module essentially re-imports the API of <a>Data.Set</a> and its
+--   <a>Set</a> type, along with semantics and asymptotics. In most
+--   situations, asymptotics are different only by a constant factor. In
+--   some situations, asmyptotics are even better (constant-time instead of
+--   log-time). All typeclass constraints are identical to their
+--   <a>Data.Set</a> counterparts.
+--   
+--   Because <a>NESet</a> is implemented using <a>Set</a>, all of the
+--   caveats of using <a>Set</a> apply (such as the limitation of the
+--   maximum size of sets).
+--   
+--   All functions take non-empty sets as inputs. In situations where their
+--   results can be guarunteed to also be non-empty, they also return
+--   non-empty sets. In situations where their results could potentially be
+--   empty, <a>Set</a> is returned instead.
+--   
+--   Some functions (<a>partition</a>, <a>spanAntitone</a>, <a>split</a>)
+--   have modified return types to account for possible configurations of
+--   non-emptiness.
+--   
+--   This module is intended to be imported qualified, to avoid name
+--   clashes with <a>Prelude</a> and <a>Data.Set</a> functions:
+--   
+--   <pre>
+--   import qualified Data.Set.NonEmpty as NES
+--   </pre>
 module Data.Set.NonEmpty
 
 -- | A non-empty set of values <tt>a</tt>. At least one value exists in an
@@ -553,11 +590,55 @@ module Data.Set.NonEmpty
 --   <a>NESet</a>.</li>
 --   </ol>
 --   
---   You can convert an <a>NESet</a> into a (possibly empty) <a>Set</a>
---   with <a>toSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
---   non-empty property from the type.
+--   You can convert an <a>NESet</a> into a <a>Set</a> with <a>toSet</a> or
+--   <a>IsNonEmpty</a>, essentially "obscuring" the non-empty property from
+--   the type.
 data NESet a
+
+-- | <i>O(1)</i> match, <i>O(log n)</i> usage of contents. The
+--   <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow you to treat a
+--   <a>Set</a> as if it were either a <tt><a>IsNonEmpty</a> n</tt> (where
+--   <tt>n</tt> is a <a>NESet</a>) or an <a>IsEmpty</a>.
+--   
+--   For example, you can pattern match on a <a>Set</a>:
+--   
+--   <pre>
+--   myFunc :: <a>Set</a> X -&gt; Y
+--   myFunc (<a>IsNonEmpty</a> n) =  -- here, the user provided a non-empty set, and <tt>n</tt> is the <a>NESet</a>
+--   myFunc <a>IsEmpty</a>        =  -- here, the user provided an empty set
+--   </pre>
+--   
+--   Matching on <tt><a>IsNonEmpty</a> n</tt> means that the original
+--   <a>Set</a> was <i>not</i> empty, and you have a verified-non-empty
+--   <a>NESet</a> <tt>n</tt> to use.
+--   
+--   Note that patching on this pattern is <i>O(1)</i>. However, using the
+--   contents requires a <i>O(log n)</i> cost that is deferred until after
+--   the pattern is matched on (and is not incurred at all if the contents
+--   are never used).
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
+--   convert a <a>NESet</a> back into a <a>Set</a>, obscuring its
+--   non-emptiness (see <a>toSet</a>).
 pattern IsNonEmpty :: NESet a -> Set a
+
+-- | <i>O(1)</i>. The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow
+--   you to treat a <a>Set</a> as if it were either a <tt><a>IsNonEmpty</a>
+--   n</tt> (where <tt>n</tt> is a <a>NESet</a>) or an <a>IsEmpty</a>.
+--   
+--   Matching on <a>IsEmpty</a> means that the original <a>Set</a> was
+--   empty.
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsEmpty</a> as an
+--   expression, and it will be interpreted as <a>empty</a>.
+--   
+--   See <a>IsNonEmpty</a> for more information.
 pattern IsEmpty :: Set a
 
 -- | <i>O(log n)</i>. Smart constructor for an <a>NESet</a> from a
@@ -565,9 +646,9 @@ pattern IsEmpty :: Set a
 --   actually empty, and <tt><a>Just</a> n</tt> with an <a>NESet</a>, if
 --   the <a>Set</a> was not empty.
 --   
---   <a>nonEmptySet</a> and <tt><a>maybe</a> 'Data.Set..empty'
---   <a>toSet</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>Set</a> being an <a>NESet</a>.
@@ -591,9 +672,62 @@ nonEmptySet :: Set a -> Maybe (NESet a)
 --   toSet (fromList ((3,"a") :| [(5,"b")])) == Data.Set.fromList [(3,"a"), (5,"b")]
 --   </pre>
 toSet :: NESet a -> Set a
+
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>Set</a> as if it were an <a>NESet</a>. <tt><a>withNESet</a> def
+--   f</tt> will take a <a>Set</a>. If set is empty, it will evaluate to
+--   <tt>def</tt>. Otherwise, a non-empty set <a>NESet</a> will be fed to
+--   the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptySet</a> == <a>withNESet</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
 withNESet :: r -> (NESet a -> r) -> Set a -> r
+
+-- | <i>O(log n)</i>. Convert a <a>Set</a> into an <a>NESet</a> by adding a
+--   value. Because of this, we know that the set must have at least one
+--   element, and so therefore cannot be empty.
+--   
+--   See <a>insertSetMin</a> for a version that is constant-time if the new
+--   value is <i>strictly smaller than</i> all values in the original set
+--   
+--   <pre>
+--   insertSet 4 (Data.Set.fromList [5, 3]) == fromList (3 :| [4, 5])
+--   insertSet 4 Data.Set.empty == singleton 4 "c"
+--   </pre>
 insertSet :: Ord a => a -> Set a -> NESet a
+
+-- | <i>O(1)</i> Convert a <a>Set</a> into an <a>NESet</a> by adding a
+--   value where the value is <i>strictly less than</i> all values in the
+--   input set The values in the original map must all be <i>strictly
+--   greater than</i> the new value. <i>The precondition is not
+--   checked.</i>
+--   
+--   <pre>
+--   insertSetMin 2 (Data.Set.fromList [5, 3]) == fromList (2 :| [3, 5])
+--   valid (insertSetMin 2 (Data.Set.fromList [5, 3])) == True
+--   valid (insertSetMin 7 (Data.Set.fromList [5, 3])) == False
+--   valid (insertSetMin 3 (Data.Set.fromList [5, 3])) == False
+--   </pre>
 insertSetMin :: a -> Set a -> NESet a
+
+-- | <i>O(1)</i> Convert a <a>Set</a> into an <a>NESet</a> by adding a
+--   value where the value is <i>strictly less than</i> all values in the
+--   input set The values in the original map must all be <i>strictly
+--   greater than</i> the new value. <i>The precondition is not
+--   checked.</i>
+--   
+--   While this has the same asymptotics as <a>insertSet</a>, it saves a
+--   constant factor for key comparison (so may be helpful if comparison is
+--   expensive) and also does not require an <a>Ord</a> instance for the
+--   key type.
+--   
+--   <pre>
+--   insertSetMin 7 (Data.Set.fromList [5, 3]) == fromList (3 :| [5, 7])
+--   valid (insertSetMin 7 (Data.Set.fromList [5, 3])) == True
+--   valid (insertSetMin 2 (Data.Set.fromList [5, 3])) == False
+--   valid (insertSetMin 5 (Data.Set.fromList [5, 3])) == False
+--   </pre>
 insertSetMax :: a -> Set a -> NESet a
 
 -- | <i>O(log n)</i>. Unsafe version of <a>nonEmptySet</a>. Coerces a
@@ -606,29 +740,119 @@ singleton :: a -> NESet a
 
 -- | <i>O(n*log n)</i>. Create a set from a list of elements.
 fromList :: Ord a => NonEmpty a -> NESet a
+
+-- | <i>O(n)</i>. Build a set from an ascending list in linear time. /The
+--   precondition (input list is ascending) is not checked./
 fromAscList :: Eq a => NonEmpty a -> NESet a
+
+-- | <i>O(n)</i>. Build a set from a descending list in linear time. <i>The
+--   precondition (input list is descending) is not checked.</i>
 fromDescList :: Eq a => NonEmpty a -> NESet a
+
+-- | <i>O(n)</i>. Build a set from an ascending list of distinct elements
+--   in linear time. <i>The precondition (input list is strictly ascending)
+--   is not checked.</i>
 fromDistinctAscList :: NonEmpty a -> NESet a
+
+-- | <i>O(n)</i>. Build a set from a descending list of distinct elements
+--   in linear time. <i>The precondition (input list is strictly
+--   descending) is not checked.</i>
 fromDistinctDescList :: NonEmpty a -> NESet a
+
+-- | Calculate the power set of a non-empty: the set of all its (non-empty)
+--   subsets.
+--   
+--   <pre>
+--   t `<a>member</a>` powerSet s == t `<a>isSubsetOf</a>` s
+--   </pre>
+--   
+--   Example:
+--   
+--   <pre>
+--   powerSet (fromList (1 :| [2,3])) =
+--     fromList (singleton 1 :| [ singleton 2
+--                              , singleton 3
+--                              , fromList (1 :| [2])
+--                              , fromList (1 :| [3])
+--                              , fromList (2 :| [3])
+--                              , fromList (1 :| [2,3])
+--                              ]
+--              )
+--   </pre>
+--   
+--   We know that the result is non-empty because the result will always at
+--   least contain the original set.
 powerSet :: forall a. () => NESet a -> NESet (NESet a)
 
 -- | <i>O(log n)</i>. Insert an element in a set. If the set already
 --   contains an element equal to the given value, it is replaced with the
 --   new value.
 insert :: Ord a => a -> NESet a -> NESet a
+
+-- | <i>O(log n)</i>. Delete an element from a set.
 delete :: Ord a => a -> NESet a -> Set a
+
+-- | <i>O(log n)</i>. Is the element in the set?
 member :: Ord a => a -> NESet a -> Bool
+
+-- | <i>O(log n)</i>. Is the element not in the set?
 notMember :: Ord a => a -> NESet a -> Bool
+
+-- | <i>O(log n)</i>. Find largest element smaller than the given one.
+--   
+--   <pre>
+--   lookupLT 3 (fromList (3 :| [5])) == Nothing
+--   lookupLT 5 (fromList (3 :| [5])) == Just 3
+--   </pre>
 lookupLT :: Ord a => a -> NESet a -> Maybe a
+
+-- | <i>O(log n)</i>. Find smallest element greater than the given one.
+--   
+--   <pre>
+--   lookupLT 4 (fromList (3 :| [5])) == Just 5
+--   lookupLT 5 (fromList (3 :| [5])) == Nothing
+--   </pre>
 lookupGT :: Ord a => a -> NESet a -> Maybe a
+
+-- | <i>O(log n)</i>. Find largest element smaller or equal to the given
+--   one.
+--   
+--   <pre>
+--   lookupLT 2 (fromList (3 :| [5])) == Nothing
+--   lookupLT 4 (fromList (3 :| [5])) == Just 3
+--   lookupLT 5 (fromList (3 :| [5])) == Just 5
+--   </pre>
 lookupLE :: Ord a => a -> NESet a -> Maybe a
+
+-- | <i>O(log n)</i>. Find smallest element greater or equal to the given
+--   one.
+--   
+--   <pre>
+--   lookupLT 3 (fromList (3 :| [5])) == Just 3
+--   lookupLT 4 (fromList (3 :| [5])) == Just 5
+--   lookupLT 6 (fromList (3 :| [5])) == Nothing
+--   </pre>
 lookupGE :: Ord a => a -> NESet a -> Maybe a
 
 -- | <i>O(1)</i>. The number of elements in the set. Guaranteed to be
 --   greater than zero.
 size :: NESet a -> Int
+
+-- | <i>O(n+m)</i>. Is this a subset? <tt>(s1 `isSubsetOf` s2)</tt> tells
+--   whether <tt>s1</tt> is a subset of <tt>s2</tt>.
 isSubsetOf :: Ord a => NESet a -> NESet a -> Bool
+
+-- | <i>O(n+m)</i>. Is this a proper subset? (ie. a subset but not equal).
 isProperSubsetOf :: Ord a => NESet a -> NESet a -> Bool
+
+-- | <i>O(n+m)</i>. Check whether two sets are disjoint (i.e. their
+--   intersection is empty).
+--   
+--   <pre>
+--   disjoint (fromList (2:|[4,6]))   (fromList (1:|[3]))     == True
+--   disjoint (fromList (2:|[4,6,8])) (fromList (2:|[3,5,7])) == False
+--   disjoint (fromList (1:|[2]))     (fromList (1:|[2,3,4])) == False
+--   </pre>
 disjoint :: Ord a => NESet a -> NESet a -> Bool
 
 -- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The union of two sets, preferring
@@ -637,29 +861,315 @@ union :: Ord a => NESet a -> NESet a -> NESet a
 
 -- | The union of a non-empty list of sets
 unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Difference of two sets.
+--   
+--   Returns a potentially empty set (<a>Set</a>) because the first set
+--   might be a subset of the second set, and therefore have all of its
+--   elements removed.
 difference :: Ord a => NESet a -> NESet a -> Set a
 
 -- | Same as <a>difference</a>.
 (\\) :: Ord a => NESet a -> NESet a -> Set a
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The intersection of two sets.
+--   
+--   Returns a potentially empty set (<a>Set</a>), because the two sets
+--   might have an empty intersection.
+--   
+--   Elements of the result come from the first set, so for example
+--   
+--   <pre>
+--   import qualified Data.Set.NonEmpty as NES
+--   data AB = A | B deriving Show
+--   instance Ord AB where compare _ _ = EQ
+--   instance Eq AB where _ == _ = True
+--   main = print (NES.singleton A `NES.intersection` NES.singleton B,
+--                 NES.singleton B `NES.intersection` NES.singleton A)
+--   </pre>
+--   
+--   prints <tt>(fromList (A:|[]),fromList (B:|[]))</tt>.
 intersection :: Ord a => NESet a -> NESet a -> Set a
+
+-- | Calculate the Cartesian product of two sets.
+--   
+--   <pre>
+--   cartesianProduct xs ys = fromList $ liftA2 (,) (toList xs) (toList ys)
+--   </pre>
+--   
+--   Example:
+--   
+--   <pre>
+--   cartesianProduct (fromList (1:|[2])) (fromList (<tt>a</tt>:|[<tt>b</tt>])) =
+--     fromList ((1,<tt>a</tt>) :| [(1,<tt>b</tt>), (2,<tt>a</tt>), (2,<tt>b</tt>)])
+--   </pre>
 cartesianProduct :: NESet a -> NESet b -> NESet (a, b)
+
+-- | Calculate the disjoint union of two sets.
+--   
+--   <pre>
+--   disjointUnion xs ys = map Left xs `<a>union</a>` map Right ys
+--   </pre>
+--   
+--   Example:
+--   
+--   <pre>
+--   disjointUnion (fromList (1:|[2])) (fromList ("hi":|["bye"])) =
+--     fromList (Left 1 :| [Left 2, Right "hi", Right "bye"])
+--   </pre>
 disjointUnion :: NESet a -> NESet b -> NESet (Either a b)
+
+-- | <i>O(n)</i>. Filter all elements that satisfy the predicate.
+--   
+--   Returns a potentially empty set (<a>Set</a>) because the predicate
+--   might filter out all items in the original non-empty set.
 filter :: (a -> Bool) -> NESet a -> Set a
+
+-- | <i>O(log n)</i>. Take while a predicate on the elements holds. The
+--   user is responsible for ensuring that for all elements <tt>j</tt> and
+--   <tt>k</tt> in the set, <tt>j &lt; k ==&gt; p j &gt;= p k</tt>. See
+--   note at <a>spanAntitone</a>.
+--   
+--   Returns a potentially empty set (<a>Set</a>) because the predicate
+--   might fail on the first input.
+--   
+--   <pre>
+--   takeWhileAntitone p = Data.Set.fromDistinctAscList . Data.List.NonEmpty.takeWhile p . <a>toList</a>
+--   takeWhileAntitone p = <a>filter</a> p
+--   </pre>
 takeWhileAntitone :: (a -> Bool) -> NESet a -> Set a
+
+-- | <i>O(log n)</i>. Drop while a predicate on the elements holds. The
+--   user is responsible for ensuring that for all elements <tt>j</tt> and
+--   <tt>k</tt> in the set, <tt>j &lt; k ==&gt; p j &gt;= p k</tt>. See
+--   note at <a>spanAntitone</a>.
+--   
+--   Returns a potentially empty set (<a>Set</a>) because the predicate
+--   might be true for all items.
+--   
+--   <pre>
+--   dropWhileAntitone p = Data.Set.fromDistinctAscList . Data.List.NonEmpty.dropWhile p . <a>toList</a>
+--   dropWhileAntitone p = <a>filter</a> (not . p)
+--   </pre>
 dropWhileAntitone :: (a -> Bool) -> NESet a -> Set a
+
+-- | <i>O(log n)</i>. Divide a set at the point where a predicate on the
+--   elements stops holding. The user is responsible for ensuring that for
+--   all elements <tt>j</tt> and <tt>k</tt> in the set, <tt>j &lt; k ==&gt;
+--   p j &gt;= p k</tt>.
+--   
+--   Returns a <a>These</a> with potentially two non-empty sets:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the predicate never failed for
+--   any item, returning the original set</li>
+--   <li><tt><a>That</a> n2</tt> means that the predicate failed for the
+--   first item, returning the original set</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the set up to the
+--   point where the predicate stops holding) and <tt>n2</tt> (the set
+--   starting from the point where the predicate stops holding)</li>
+--   </ul>
+--   
+--   <pre>
+--   spanAntitone p xs = partition p xs
+--   </pre>
+--   
+--   Note: if <tt>p</tt> is not actually antitone, then
+--   <tt>spanAntitone</tt> will split the set at some <i>unspecified</i>
+--   point where the predicate switches from holding to not holding (where
+--   the predicate is seen to hold before the first element and to fail
+--   after the last element).
 spanAntitone :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
+
+-- | <i>O(n)</i>. Partition the map according to a predicate.
+--   
+--   Returns a <a>These</a> with potentially two non-empty sets:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
+--   items.</li>
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
+--   items.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   that were true for the predicate) and <tt>n2</tt> (all of the items
+--   that were false for the predicate).</li>
+--   </ul>
+--   
+--   See also <a>split</a>.
+--   
+--   <pre>
+--   partition (&gt; 3) (fromList (5 :| [3])) == These (singleton 5) (singleton 3)
+--   partition (&lt; 7) (fromList (5 :| [3])) == This  (fromList (3 :| [5]))
+--   partition (&gt; 7) (fromList (5 :| [3])) == That  (fromList (3 :| [5]))
+--   </pre>
 partition :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
+
+-- | <i>O(log n)</i>. The expression (<tt><a>split</a> x set</tt>) is
+--   potentially a <a>These</a> containing up to two <a>NESet</a>s based on
+--   splitting the set into sets containing items before and after the
+--   value <tt>x</tt>. It will never return a set that contains <tt>x</tt>
+--   itself.
+--   
+--   <ul>
+--   <li><a>Nothing</a> means that <tt>x</tt> was the only value in the the
+--   original set, and so there are no items before or after it.</li>
+--   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>x</tt> was larger
+--   than or equal to all items in the set, and <tt>n1</tt> is the entire
+--   original set (minus <tt>x</tt>, if it was present)</li>
+--   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>x</tt> was smaller
+--   than or equal to all items in the set, and <tt>n2</tt> is the entire
+--   original set (minus <tt>x</tt>, if it was present)</li>
+--   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
+--   set of all values from the original set less than <tt>x</tt>) and
+--   <tt>n2</tt> (the set of all values from the original set greater than
+--   <tt>x</tt>).</li>
+--   </ul>
+--   
+--   <pre>
+--   split 2 (fromList (5 :| [3])) == Just (That  (fromList (3 :| [5]))      )
+--   split 3 (fromList (5 :| [3])) == Just (That  (singleton 5)              )
+--   split 4 (fromList (5 :| [3])) == Just (These (singleton 3) (singleton 5))
+--   split 5 (fromList (5 :| [3])) == Just (This  (singleton 3)              )
+--   split 6 (fromList (5 :| [3])) == Just (This  (fromList (3 :| [5]))      )
+--   split 5 (singleton 5)         == Nothing
+--   </pre>
 split :: Ord a => a -> NESet a -> Maybe (These (NESet a) (NESet a))
+
+-- | <i>O(log n)</i>. The expression (<tt><tt>splitLookup</tt> x set</tt>)
+--   splits a set just like <a>split</a> but also returns <tt><a>member</a>
+--   x set</tt> (whether or not <tt>x</tt> was in <tt>set</tt>)
+--   
+--   <pre>
+--   splitMember 2 (fromList (5 :| [3])) == (False, Just (That  (fromList (3 :| [5)]))))
+--   splitMember 3 (fromList (5 :| [3])) == (True , Just (That  (singleton 5)))
+--   splitMember 4 (fromList (5 :| [3])) == (False, Just (These (singleton 3) (singleton 5)))
+--   splitMember 5 (fromList (5 :| [3])) == (True , Just (This  (singleton 3))
+--   splitMember 6 (fromList (5 :| [3])) == (False, Just (This  (fromList (3 :| [5])))
+--   splitMember 5 (singleton 5)         == (True , Nothing)
+--   </pre>
 splitMember :: Ord a => a -> NESet a -> (Bool, Maybe (These (NESet a) (NESet a)))
+
+-- | <i>O(1)</i>. Decompose a set into pieces based on the structure of the
+--   underlying tree. This function is useful for consuming a set in
+--   parallel.
+--   
+--   No guarantee is made as to the sizes of the pieces; an internal, but
+--   deterministic process determines this. However, it is guaranteed that
+--   the pieces returned will be in ascending order (all elements in the
+--   first subset less than all elements in the second, and so on).
+--   
+--   Note that the current implementation does not return more than four
+--   subsets, but you should not depend on this behaviour because it can
+--   change in the future without notice.
 splitRoot :: NESet a -> NonEmpty (NESet a)
+
+-- | <i>O(log n)</i>. Lookup the <i>index</i> of an element, which is its
+--   zero-based index in the sorted sequence of elements. The index is a
+--   number from <i>0</i> up to, but not including, the <a>size</a> of the
+--   set.
+--   
+--   <pre>
+--   isJust   (lookupIndex 2 (fromList (5:|[3]))) == False
+--   fromJust (lookupIndex 3 (fromList (5:|[3]))) == 0
+--   fromJust (lookupIndex 5 (fromList (5:|[3]))) == 1
+--   isJust   (lookupIndex 6 (fromList (5:|[3]))) == False
+--   </pre>
 lookupIndex :: Ord a => a -> NESet a -> Maybe Int
+
+-- | <i>O(log n)</i>. Return the <i>index</i> of an element, which is its
+--   zero-based index in the sorted sequence of elements. The index is a
+--   number from <i>0</i> up to, but not including, the <a>size</a> of the
+--   set. Calls <a>error</a> when the element is not a <a>member</a> of the
+--   set.
+--   
+--   <pre>
+--   findIndex 2 (fromList (5:|[3]))    Error: element is not in the set
+--   findIndex 3 (fromList (5:|[3])) == 0
+--   findIndex 5 (fromList (5:|[3])) == 1
+--   findIndex 6 (fromList (5:|[3]))    Error: element is not in the set
+--   </pre>
 findIndex :: Ord a => a -> NESet a -> Int
+
+-- | <i>O(log n)</i>. Retrieve an element by its <i>index</i>, i.e. by its
+--   zero-based index in the sorted sequence of elements. If the
+--   <i>index</i> is out of range (less than zero, greater or equal to
+--   <a>size</a> of the set), <a>error</a> is called.
+--   
+--   <pre>
+--   elemAt 0 (fromList (5:|[3])) == 3
+--   elemAt 1 (fromList (5:|[3])) == 5
+--   elemAt 2 (fromList (5:|[3]))    Error: index out of range
+--   </pre>
 elemAt :: Int -> NESet a -> a
+
+-- | <i>O(log n)</i>. Delete the element at <i>index</i>, i.e. by its
+--   zero-based index in the sorted sequence of elements. If the
+--   <i>index</i> is out of range (less than zero, greater or equal to
+--   <a>size</a> of the set), <a>error</a> is called.
+--   
+--   Returns a potentially empty set (<a>Set</a>), because this could
+--   potentailly delete the final element in a singleton set.
+--   
+--   <pre>
+--   deleteAt 0    (fromList (5:|[3])) == singleton 5
+--   deleteAt 1    (fromList (5:|[3])) == singleton 3
+--   deleteAt 2    (fromList (5:|[3]))    Error: index out of range
+--   deleteAt (-1) (fromList (5:|[3]))    Error: index out of range
+--   </pre>
 deleteAt :: Int -> NESet a -> Set a
+
+-- | Take a given number of elements in order, beginning with the smallest
+--   ones.
+--   
+--   Returns a potentailly empty set (<a>Set</a>), which can only happen
+--   when calling <tt>take 0</tt>.
+--   
+--   <pre>
+--   take n = Data.Set.fromDistinctAscList . Data.List.NonEmpty.take n . <a>toAscList</a>
+--   </pre>
 take :: Int -> NESet a -> Set a
+
+-- | Drop a given number of elements in order, beginning with the smallest
+--   ones.
+--   
+--   Returns a potentailly empty set (<a>Set</a>), in the case that
+--   <a>drop</a> is called with a number equal to or greater the number of
+--   items in the set, and we drop every item.
+--   
+--   <pre>
+--   drop n = Data.Set.fromDistinctAscList . Data.List.NonEmpty.drop n . <a>toAscList</a>
+--   </pre>
 drop :: Int -> NESet a -> Set a
+
+-- | <i>O(log n)</i>. Split a set at a particular index <tt>i</tt>.
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that there are less than <tt>i</tt>
+--   items in the set, and <tt>n1</tt> is the original set.</li>
+--   <li><tt><a>That</a> n2</tt> means <tt>i</tt> was 0; we dropped 0
+--   items, so <tt>n2</tt> is the original set.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (taking <tt>i</tt>
+--   items from the original set) and <tt>n2</tt> (dropping <tt>i</tt>
+--   items from the original set))</li>
+--   </ul>
 splitAt :: Int -> NESet a -> These (NESet a) (NESet a)
+
+-- | <i>O(n*log n)</i>. <tt><a>map</a> f s</tt> is the set obtained by
+--   applying <tt>f</tt> to each element of <tt>s</tt>.
+--   
+--   It's worth noting that the size of the result may be smaller if, for
+--   some <tt>(x,y)</tt>, <tt>x /= y &amp;&amp; f x == f y</tt>
 map :: Ord b => (a -> b) -> NESet a -> NESet b
+
+-- | <i>O(n)</i>. <tt><a>mapMonotonic</a> f s == <a>map</a> f s</tt>, but
+--   works only when <tt>f</tt> is strictly increasing. <i>The precondition
+--   is not checked.</i> Semi-formally, we have:
+--   
+--   <pre>
+--   and [x &lt; y ==&gt; f x &lt; f y | x &lt;- ls, y &lt;- ls]
+--                       ==&gt; mapMonotonic f s == map f s
+--       where ls = Data.Foldable.toList s
+--   </pre>
 mapMonotonic :: (a -> b) -> NESet a -> NESet b
 
 -- | <i>O(n)</i>. Fold the elements in the set using the given
@@ -709,19 +1219,95 @@ foldr' :: (a -> b -> b) -> b -> NESet a -> b
 --   operator is evaluated before using the result in the next application.
 --   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldr1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldr1' :: (a -> a -> a) -> NESet a -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldl1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
 foldl1' :: (a -> a -> a) -> NESet a -> a
+
+-- | <i>O(1)</i>. The minimal element of a set. Note that this is total,
+--   making <a>lookupMin</a> obsolete. It is constant-time, so has better
+--   asymptotics than <tt>Data.Set.lookupMin</tt> and
+--   <tt>Data.Map.findMin</tt> as well.
+--   
+--   <pre>
+--   findMin (fromList (5 :| [3])) == 3
+--   </pre>
 findMin :: NESet a -> a
+
+-- | <i>O(log n)</i>. The maximal key of a set Note that this is total,
+--   making <a>lookupMin</a> obsolete.
+--   
+--   <pre>
+--   findMax (fromList (5 :| [3])) == 5
+--   </pre>
 findMax :: NESet a -> a
+
+-- | <i>O(1)</i>. Delete the minimal element. Returns a potentially empty
+--   set (<a>Set</a>), because we might delete the final item in a
+--   singleton set. It is constant-time, so has better asymptotics than
+--   <tt>Data.Set.deleteMin</tt>.
+--   
+--   <pre>
+--   deleteMin (fromList (5 :| [3, 7])) == Data.Set.fromList [5, 7]
+--   deleteMin (singleton 5) == Data.Set.empty
+--   </pre>
 deleteMin :: NESet a -> Set a
+
+-- | <i>O(log n)</i>. Delete the maximal element. Returns a potentially
+--   empty set (<a>Set</a>), because we might delete the final item in a
+--   singleton set.
+--   
+--   <pre>
+--   deleteMax (fromList (5 :| [3, 7])) == Data.Set.fromList [3, 5]
+--   deleteMax (singleton 5) == Data.Set.empty
+--   </pre>
 deleteMax :: NESet a -> Set a
+
+-- | <i>O(1)</i>. Delete and find the minimal element. It is constant-time,
+--   so has better asymptotics that <tt>Data.Set.minView</tt> for
+--   <a>Set</a>.
+--   
+--   Note that unlike <tt>Data.Set.deleteFindMin</tt> for <a>Set</a>, this
+--   cannot ever fail, and so is a total function. However, the result
+--   <a>Set</a> is potentially empty, since the original set might have
+--   contained just a single item.
+--   
+--   <pre>
+--   deleteFindMin (fromList (5 :| [3, 10])) == (3, Data.Set.fromList [5, 10])
+--   </pre>
 deleteFindMin :: NESet a -> (a, Set a)
+
+-- | <i>O(log n)</i>. Delete and find the minimal element.
+--   
+--   Note that unlike <tt>Data.Set.deleteFindMax</tt> for <a>Set</a>, this
+--   cannot ever fail, and so is a total function. However, the result
+--   <a>Set</a> is potentially empty, since the original set might have
+--   contained just a single item.
+--   
+--   <pre>
+--   deleteFindMax (fromList (5 :| [3, 10])) == (10, Data.Set.fromList [3, 5])
+--   </pre>
 deleteFindMax :: NESet a -> (a, Set a)
+
+-- | <i>O(n)</i>. An alias of <a>toAscList</a>. The elements of a set in
+--   ascending order.
 elems :: NESet a -> NonEmpty a
 
 -- | <i>O(n)</i>. Convert the set to a non-empty list of elements.
 toList :: NESet a -> NonEmpty a
+
+-- | <i>O(n)</i>. Convert the set to an ascending non-empty list of
+--   elements.
 toAscList :: NESet a -> NonEmpty a
+
+-- | <i>O(n)</i>. Convert the set to a descending non-empty list of
+--   elements.
 toDescList :: NESet a -> NonEmpty a
 
 -- | <i>O(n)</i>. Test if the internal set structure is valid.
@@ -761,7 +1347,7 @@ instance GHC.Base.Semigroup (Data.Set.NonEmpty.MergeNESet a)
 --   way restructured to preserve guaruntees of non-empty maps being
 --   returned.
 --   
---   Some functions (like <a>mapEither</a>, <a>partition</a>, <a>span</a>,
+--   Some functions (like <a>mapEither</a>, <a>partition</a>,
 --   <a>spanAntitone</a>, <a>split</a>) have modified return types to
 --   account for possible configurations of non-emptiness.
 --   
@@ -792,7 +1378,7 @@ module Data.Map.NonEmpty
 --   
 --   You can directly construct an <a>NEMap</a> with the API from
 --   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
---   normal <a>Map</a>, except you don't have access to <a>Empty</a>. There
+--   normal <a>Map</a>, except you don't have access to <a>empty</a>. There
 --   are also a few ways to construct an <a>NEMap</a> from a <a>Map</a>:
 --   
 --   <ol>
@@ -810,9 +1396,9 @@ module Data.Map.NonEmpty
 --   <a>NEMap</a>.</li>
 --   </ol>
 --   
---   You can convert an <a>NEMap</a> into a (possibly empty) <a>Map</a>
---   with <a>toMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
---   non-empty property from the type.
+--   You can convert an <a>NEMap</a> into a <a>Map</a> with <a>toMap</a> or
+--   <a>IsNonEmpty</a>, essentially "obscuring" the non-empty property from
+--   the type.
 data NEMap k a
 
 -- | <i>O(1)</i> match, <i>O(log n)</i> usage of contents. The
@@ -1986,7 +2572,7 @@ withoutKeys :: Ord k => NEMap k a -> Set k -> Map k a
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns a <a>These</a> with potentially two maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
 --   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
@@ -2009,7 +2595,7 @@ partition :: (a -> Bool) -> NEMap k a -> These (NEMap k a) (NEMap k a)
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns a <a>These</a> with potentially two maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
 --   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
@@ -2060,7 +2646,7 @@ dropWhileAntitone :: (k -> Bool) -> NEMap k a -> Map k a
 --   keys <tt>j</tt> and <tt>k</tt> in the map, <tt>j &lt; k ==&gt; p j
 --   &gt;= p k</tt>.
 --   
---   Returns a <a>These</a> with potentially two maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
 --   <li><tt><a>This</a> n1</tt> means that the predicate never failed for
@@ -2074,7 +2660,6 @@ dropWhileAntitone :: (k -> Bool) -> NEMap k a -> Map k a
 --   </ul>
 --   
 --   <pre>
---   spanAntitone p xs = (<a>takeWhileAntitone</a> p xs, <a>dropWhileAntitone</a> p xs)
 --   spanAntitone p xs = partitionWithKey (k _ -&gt; p k) xs
 --   </pre>
 --   
@@ -2112,7 +2697,7 @@ mapMaybeWithKey :: (k -> a -> Maybe b) -> NEMap k a -> Map k b
 -- | <i>O(n)</i>. Map values and separate the <a>Left</a> and <a>Right</a>
 --   results.
 --   
---   Returns a <a>These</a> with potentially two maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
 --   <li><tt><a>This</a> n1</tt> means that the results were all
@@ -2137,7 +2722,7 @@ mapEither :: (a -> Either b c) -> NEMap k a -> These (NEMap k b) (NEMap k c)
 -- | <i>O(n)</i>. Map keys/values and separate the <a>Left</a> and
 --   <a>Right</a> results.
 --   
---   Returns a <a>These</a> with potentially two maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
 --   <li><tt><a>This</a> n1</tt> means that the results were all
@@ -2351,11 +2936,11 @@ deleteAt :: Int -> NEMap k a -> Map k a
 -- | Take a given number of entries in key order, beginning with the
 --   smallest keys.
 --   
---   Returns a possibly empty map (<a>Map</a>), in case we take zero
---   elements.
+--   Returns a possibly empty map (<a>Map</a>), which can only happen if we
+--   call <tt>take 0</tt>.
 --   
 --   <pre>
---   take n = <a>fromDistinctAscList</a> . <a>take</a> n . Foldable.toList . <a>toList</a>
+--   take n = Data.Map.fromDistinctAscList . Data.List.NonEmpty.take n . <a>toList</a>
 --   </pre>
 take :: Int -> NEMap k a -> Map k a
 
@@ -2363,10 +2948,11 @@ take :: Int -> NEMap k a -> Map k a
 --   smallest keys.
 --   
 --   Returns a possibly empty map (<a>Map</a>), in case we drop all of the
---   elements.
+--   elements (which can happen if we drop a number greater than or equal
+--   to the number of items in the map)
 --   
 --   <pre>
---   drop n = <a>fromDistinctAscList</a> . <a>drop</a> n . Foldable.toList . <a>toList</a>
+--   drop n = Data.Map.fromDistinctAscList . Data.List.NonEmpty.drop' n . <a>toList</a>
 --   </pre>
 drop :: Int -> NEMap k a -> Map k a
 
@@ -2385,7 +2971,8 @@ splitAt :: Int -> NEMap k a -> These (NEMap k a) (NEMap k a)
 
 -- | <i>O(1)</i>. The minimal key of the map. Note that this is total,
 --   making <a>lookupMin</a> obsolete. It is constant-time, so has better
---   asymptotics than <a>lookupMin</a> and <a>findMin</a>, as well.
+--   asymptotics than <tt>Data.Map.lookupMin</tt> and
+--   <tt>Data.Map.findMin</tt>, as well.
 --   
 --   <pre>
 --   findMin (fromList ((5,"a") :| [(3,"b")])) == (3,"b")
@@ -2393,17 +2980,16 @@ splitAt :: Int -> NEMap k a -> These (NEMap k a) (NEMap k a)
 findMin :: NEMap k a -> (k, a)
 
 -- | <i>O(log n)</i>. The maximal key of the map. Note that this is total,
---   making <a>lookupMin</a> obsolete. It is constant-time, so has better
---   asymptotics than <a>lookupMin</a> and <a>findMin</a>, as well.
+--   making <a>lookupMin</a> obsolete.
 --   
 --   <pre>
---   findMin (fromList ((5,"a") :| [(3,"b")])) == (3,"b")
+--   findMax (fromList ((5,"a") :| [(3,"b")])) == (5,"a")
 --   </pre>
 findMax :: NEMap k a -> (k, a)
 
 -- | <i>O(1)</i>. Delete the minimal key. Returns a potentially empty map
---   (<a>Map</a>), because we might end up deleting the final key in the
---   map. It is constant-time, so has better asymptotics than
+--   (<a>Map</a>), because we might end up deleting the final key in a
+--   singleton map. It is constant-time, so has better asymptotics than
 --   <a>deleteMin</a>.
 --   
 --   <pre>
@@ -2413,8 +2999,8 @@ findMax :: NEMap k a -> (k, a)
 deleteMin :: NEMap k a -> Map k a
 
 -- | <i>O(log n)</i>. Delete the maximal key. Returns a potentially empty
---   map (<a>Map</a>), because we might end up deleting the final key in
---   the map.
+--   map (<a>Map</a>), because we might end up deleting the final key in a
+--   singleton map.
 --   
 --   <pre>
 --   deleteMax (fromList ((5,"a") :| [(3,"b"), (7,"c")])) == Data.Map.fromList [(3,"b"), (5,"a")]
@@ -2423,13 +3009,13 @@ deleteMin :: NEMap k a -> Map k a
 deleteMax :: NEMap k a -> Map k a
 
 -- | <i>O(1)</i>. Delete and find the minimal key-value pair. It is
---   constant-time, so has better asymptotics that <a>minView</a> for
---   <a>Map</a>.
+--   constant-time, so has better asymptotics that
+--   <tt>Data.Map.minView</tt> for <a>Map</a>.
 --   
---   Note that unlike <a>deleteFindMin</a> for <a>Map</a>, this cannot ever
---   fail, and so is a total function. However, the result <a>Map</a> is
---   potentially empty, since the original map might have contained just a
---   single item.
+--   Note that unlike <tt>Data.Map.deleteFindMin</tt> for <a>Map</a>, this
+--   cannot ever fail, and so is a total function. However, the result
+--   <a>Map</a> is potentially empty, since the original map might have
+--   contained just a single item.
 --   
 --   <pre>
 --   deleteFindMin (fromList ((5,"a") :| [(3,"b"), (10,"c")])) == ((3,"b"), Data.Map.fromList [(5,"a"), (10,"c")])
@@ -2438,10 +3024,10 @@ deleteFindMin :: NEMap k a -> ((k, a), Map k a)
 
 -- | <i>O(log n)</i>. Delete and find the minimal key-value pair.
 --   
---   Note that unlike <a>deleteFindMax</a> for <a>Map</a>, this cannot ever
---   fail, and so is a total function. However, the result <a>Map</a> is
---   potentially empty, since the original map might have contained just a
---   single item.
+--   Note that unlike <tt>Data.Map.deleteFindMax</tt> for <a>Map</a>, this
+--   cannot ever fail, and so is a total function. However, the result
+--   <a>Map</a> is potentially empty, since the original map might have
+--   contained just a single item.
 --   
 --   <pre>
 --   deleteFindMax (fromList ((5,"a") :| [(3,"b"), (10,"c")])) == ((10,"c"), Data.Map.fromList [(3,"b"), (5,"a")])
@@ -2515,12 +3101,12 @@ adjustMaxWithKey :: (k -> a -> a) -> NEMap k a -> NEMap k a
 
 -- | <i>O(1)</i>. Retrieves the value associated with minimal key of the
 --   map, and the map stripped of that element. It is constant-time, so has
---   better asymptotics than <a>minView</a> for <a>Map</a>.
+--   better asymptotics than <tt>Data.Map.minView</tt> for <a>Map</a>.
 --   
---   Note that unlike <a>minView</a> for <a>Map</a>, this cannot ever fail,
---   so doesn't need to return in a <a>Maybe</a>. However, the result
---   <a>Map</a> is potentially empty, since the original map might have
---   contained just a single item.
+--   Note that unlike <tt>Data.Map.minView</tt> for <a>Map</a>, this cannot
+--   ever fail, so doesn't need to return in a <a>Maybe</a>. However, the
+--   result <a>Map</a> is potentially empty, since the original map might
+--   have contained just a single item.
 --   
 --   <pre>
 --   minView (fromList ((5,"a") :| [(3,"b")])) == ("b", Data.Map.singleton 5 "a")
@@ -2530,10 +3116,10 @@ minView :: NEMap k a -> (a, Map k a)
 -- | <i>O(log n)</i>. Retrieves the value associated with maximal key of
 --   the map, and the map stripped of that element.
 --   
---   Note that unlike <a>maxView</a> from <a>Map</a>, this cannot ever
---   fail, so doesn't need to return in a <a>Maybe</a>. However, the result
---   <a>Map</a> is potentially empty, since the original map might have
---   contained just a single item.
+--   Note that unlike <tt>Data.Map.maxView</tt> from <a>Map</a>, this
+--   cannot ever fail, so doesn't need to return in a <a>Maybe</a>.
+--   However, the result <a>Map</a> is potentially empty, since the
+--   original map might have contained just a single item.
 --   
 --   <pre>
 --   maxView (fromList ((5,"a") :| [(3,"b")])) == ("a", Data.Map.singleton 3 "b")
