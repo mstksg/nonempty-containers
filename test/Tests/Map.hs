@@ -340,10 +340,12 @@ prop_mapKeysWith = ttProp ( gf2 valGen
     M.mapKeysWith
     NEM.mapKeysWith
 
-prop_mapMonotonic :: Property
-prop_mapMonotonic = ttProp (gf1 keyGen :?> GTNEMap :-> TTNEMap)
+prop_mapKeysMonotonic :: Property
+prop_mapKeysMonotonic = ttProp (GF valGen go :?> GTNEMap :-> TTNEMap)
     M.mapKeysMonotonic
     NEM.mapKeysMonotonic
+  where
+    go f (K i t) = K (i * 2) (f t)
 
 prop_foldr :: Property
 prop_foldr = ttProp ( gf2 valGen

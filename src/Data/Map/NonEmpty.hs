@@ -1126,7 +1126,7 @@ adjustWithKey
     -> NEMap k a
 adjustWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> n
-    EQ -> NEMap k0 (f k v) m
+    EQ -> NEMap k0 (f k0 v) m
     GT -> NEMap k0 v . M.adjustWithKey f k $ m
 {-# INLINE adjustWithKey #-}
 
@@ -1172,8 +1172,8 @@ updateWithKey
     -> Map k a
 updateWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> toMap n
-    EQ -> maybe m (flip (insertMinMap k0) m) . f k $ v
-    GT -> insertMinMap k0 v . M.updateWithKey f k  $ m
+    EQ -> maybe m (flip (insertMinMap k0) m) . f k0 $ v
+    GT -> insertMinMap k0 v . M.updateWithKey f k   $ m
 {-# INLINE updateWithKey #-}
 
 -- | /O(log n)/. The expression (@'updateWithKey' f k map@) updates the
@@ -1197,7 +1197,7 @@ updateLookupWithKey
     -> (Maybe a, Map k a)
 updateLookupWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> (Nothing, toMap n)
-    EQ -> (f k0 v  , maybe m (flip (insertMinMap k0) m) . f k0 $ v)
+    EQ -> (f k0 v , maybe m (flip (insertMinMap k0) m) . f k0 $ v)
     GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
 {-# INLINE updateLookupWithKey #-}
 
@@ -1933,11 +1933,11 @@ isSubmapOfBy
     -> NEMap k a
     -> NEMap k b
     -> Bool
-isSubmapOfBy f (toMap->m0) (NEMap k v m1) = kvSub
+isSubmapOfBy f (NEMap k v m0) (toMap->m1) = kvSub
                                          && M.isSubmapOfBy f m0 m1
   where
-    kvSub = case M.lookup k m0 of
-      Just v0 -> f v0 v
+    kvSub = case M.lookup k m1 of
+      Just v0 -> f v v0
       Nothing -> False
 {-# INLINE isSubmapOfBy #-}
 
