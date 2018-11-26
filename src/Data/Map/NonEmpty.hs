@@ -41,7 +41,7 @@
 -- 'adjustMin', 'adjustMax', 'adjustMinWithKey', 'adjustMaxWithKey') are
 -- provided in a way restructured to preserve guaruntees of non-empty maps
 -- being returned.
--- 
+--
 -- Some functions (like 'mapEither', 'partition', 'span', 'spanAntitone',
 -- 'split') have modified return types to account for possible
 -- configurations of non-emptiness.
@@ -1092,9 +1092,10 @@ fromDistinctDescList ((k, v) :| xs) = insertMapMax k v
 -- > delete 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 3 "b"
 -- > delete 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.Singleton [(3, "b"), (5, "a")]
 delete :: Ord k => k -> NEMap k a -> Map k a
-delete k (NEMap k0 v m)
-    | k == k0   = m
-    | otherwise = insertMinMap k0 v . M.delete k $ m
+delete k n@(NEMap k0 v m) = case compare k k0 of
+    LT -> toMap n
+    EQ -> m
+    GT -> insertMinMap k0 v . M.delete k $ m
 {-# INLINE delete #-}
 
 -- | /O(log n)/. Update a value at a specific key with the result of the
@@ -1263,7 +1264,7 @@ alter f k n@(NEMap k0 v m) = case compare k k0 of
 -- fastest way.
 --
 -- See 'alterF'' for a version that disallows deletion, and so therefore
--- can return 'NEMap' and be used to implement 'insert' 
+-- can return 'NEMap' and be used to implement 'insert'
 --
 -- Note on rewrite rules:
 --
@@ -1818,7 +1819,7 @@ mapEitherWithKey f (NEMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
       Right v' -> That                         (singleton k v')
     (Just n1, Nothing) -> case f k v of
       Left  v' -> This  (insertMapMin k v' m1)
-      Right v' -> These n1                     (singleton k v')       
+      Right v' -> These n1                     (singleton k v')
     (Nothing, Just n2) -> case f k v of
       Left  v' -> These (singleton k v')       n2
       Right v' -> That                         (insertMapMin k v' m2)
@@ -1978,7 +1979,8 @@ isProperSubmapOfBy
     -> NEMap k a
     -> NEMap k b
     -> Bool
-isProperSubmapOfBy f m1 m2 = M.isProperSubmapOfBy f (toMap m1) (toMap m2)
+isProperSubmapOfBy f m1 m2 = M.size (nemMap m1) < M.size (nemMap m2)
+                          && isSubmapOfBy f m1 m2
 {-# INLINE isProperSubmapOfBy #-}
 
 -- | /O(log n)/. Lookup the /index/ of a key, which is its zero-based index
@@ -2032,7 +2034,7 @@ elemAt
     -> NEMap k a
     -> (k, a)
 elemAt 0 (NEMap k v _) = (k, v)
-elemAt n (NEMap _ _ m) = M.elemAt (n - 1) m
+elemAt i (NEMap _ _ m) = M.elemAt (i - 1) m
 {-# INLINABLE elemAt #-}
 
 -- | /O(log n)/. Update the element at /index/, i.e. by its zero-based index in
@@ -2058,7 +2060,7 @@ updateAt
     -> NEMap k a
     -> Map k a
 updateAt f 0 (NEMap k v m) = maybe m (flip (insertMinMap k) m) $ f k v
-updateAt f n (NEMap k v m) = insertMinMap k v . M.updateAt f (n - 1) $ m
+updateAt f i (NEMap k v m) = insertMinMap k v . M.updateAt f (i - 1) $ m
 {-# INLINABLE updateAt #-}
 
 -- | /O(log n)/. Variant of 'updateAt' that disallows deletion.  Allows us
@@ -2069,8 +2071,8 @@ adjustAt
     -> NEMap k a
     -> NEMap k a
 adjustAt f 0 (NEMap k0 v m) = NEMap k0 (f k0 v) m
-adjustAt f n (NEMap k0 v m) = NEMap k0 v
-                            . M.updateAt (\k -> Just . f k) (n - 1)
+adjustAt f i (NEMap k0 v m) = NEMap k0 v
+                            . M.updateAt (\k -> Just . f k) (i - 1)
                             $ m
 {-# INLINABLE adjustAt #-}
 
@@ -2091,7 +2093,7 @@ deleteAt
     -> NEMap k a
     -> Map k a
 deleteAt 0 (NEMap _ _ m) = m
-deleteAt n (NEMap k v m) = insertMinMap k v . M.deleteAt (n - 1) $ m
+deleteAt i (NEMap k v m) = insertMinMap k v . M.deleteAt (i - 1) $ m
 {-# INLINABLE deleteAt #-}
 
 -- | Take a given number of entries in key order, beginning with the
@@ -2106,8 +2108,8 @@ take
     :: Int
     -> NEMap k a
     -> Map k a
-take 0 (NEMap _ _ _) = M.empty
-take n (NEMap k v m) = insertMinMap k v . M.take (n - 1) $ m
+take 0 NEMap{}       = M.empty
+take i (NEMap k v m) = insertMinMap k v . M.take (i - 1) $ m
 {-# INLINABLE take #-}
 
 -- | Drop a given number of entries in key order, beginning
@@ -2124,7 +2126,7 @@ drop
     -> NEMap k a
     -> Map k a
 drop 0 n             = toMap n
-drop n (NEMap _ _ m) = M.drop (n - 1) m
+drop i (NEMap _ _ m) = M.drop (i - 1) m
 {-# INLINABLE drop #-}
 
 -- | /O(log n)/. Split a map at a particular index @i@.

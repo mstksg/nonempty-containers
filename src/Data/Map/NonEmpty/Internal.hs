@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE ViewPatterns       #-}
 
@@ -69,7 +70,6 @@ import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1(fold1))
 import           Data.Semigroup.Traversable (Traversable1(..))
 import           Data.Typeable              (Typeable)
-import           GHC.Exts                   ( reallyUnsafePtrEquality#, isTrue# )
 import           Prelude hiding             (foldr1, foldl1, foldr, foldl, map)
 import           Text.Read
 import qualified Data.Foldable              as F
@@ -112,6 +112,8 @@ import qualified Data.Semigroup.Foldable    as F1
 -- You can convert an 'NEMap' into a (possibly empty) 'Map' with 'toMap' or
 -- 'Data.Map.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty property from the
 -- type.
+
+-- TODO: should key really be a strict field?
 data NEMap k a =
     NEMap { nemK0  :: !k   -- ^ invariant: must be smaller than smallest key in map
           , nemV0  :: a
@@ -545,8 +547,6 @@ valid (NEMap k _ m) = M.valid m
 
 
 
-
-
 -- | /O(log n)/. Insert new key and value into a map where keys are
 -- /strictly greater than/ the new key.  That is, the new key must be
 -- /strictly less than/ all keys present in the 'Map'.  /The precondition
@@ -556,15 +556,9 @@ valid (NEMap k _ m) = M.valid m
 -- factor for key comparison (so may be helpful if comparison is
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMinMap :: k -> a -> Map k a -> Map k a
-insertMinMap kx0 = go kx0 kx0
-  where
-    go :: k -> k -> a -> Map k a -> Map k a
-    go orig !_  x Tip = M.singleton (lazy orig) x
-    go orig !kx x t@(Bin _ ky y l r)
-        | l' `ptrEq` l = t
-        | otherwise    = M.balanceL ky y l' r
-      where
-        !l' = go orig kx x l
+insertMinMap kx x = \case
+    Tip            -> M.singleton kx x
+    Bin _ ky y l r -> M.balanceL ky y (insertMinMap kx x l) r
 {-# INLINABLE insertMinMap #-}
 
 -- | /O(log n)/. Insert new key and value into a map where keys are
@@ -576,20 +570,7 @@ insertMinMap kx0 = go kx0 kx0
 -- factor for key comparison (so may be helpful if comparison is
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMaxMap :: k -> a -> Map k a -> Map k a
-insertMaxMap kx0 = go kx0 kx0
-  where
-    go :: k -> k -> a -> Map k a -> Map k a
-    go orig !_  x Tip = M.singleton (lazy orig) x
-    go orig !kx x t@(Bin _ ky y l r)
-        | r' `ptrEq` r = t
-        | otherwise    = M.balanceR ky y l r'
-      where
-        !r' = go orig kx x r
+insertMaxMap kx x = \case
+    Tip            -> M.singleton kx x
+    Bin _ ky y l r -> M.balanceR ky y l (insertMaxMap kx x r)
 {-# INLINABLE insertMaxMap #-}
-
-lazy :: a -> a
-lazy x = x
-
-ptrEq :: a -> a -> Bool
-ptrEq x y = isTrue# (reallyUnsafePtrEquality# x y)
-{-# INLINE ptrEq #-}

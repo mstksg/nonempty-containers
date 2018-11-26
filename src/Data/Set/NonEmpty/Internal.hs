@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE ViewPatterns       #-}
 
@@ -32,7 +33,6 @@ import           Data.Semigroup
 import           Data.Semigroup.Foldable (Foldable1)
 import           Data.Set.Internal       (Set(..))
 import           Data.Typeable           (Typeable)
-import           GHC.Exts                ( reallyUnsafePtrEquality#, isTrue# )
 import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
 import           Text.Read
 import qualified Data.Foldable           as F
@@ -270,29 +270,16 @@ valid (NESet x s) = S.valid s
 
 
 
-
 insertMinSet :: a -> Set a -> Set a
-insertMinSet x0 = go x0 x0
-  where
-    go :: a -> a -> Set a -> Set a
-    go orig !_ Tip = S.singleton (lazy orig)
-    go orig !x t@(Bin _ y l r)
-        | l' `ptrEq` l = t
-        | otherwise    = balanceL y l' r
-      where
-        !l' = go orig x l
+insertMinSet x = \case
+    Tip         -> S.singleton x
+    Bin _ y l r -> balanceL y (insertMinSet x l) r
 {-# INLINABLE insertMinSet #-}
 
 insertMaxSet :: a -> Set a -> Set a
-insertMaxSet x0 = go x0 x0
-  where
-    go :: a -> a -> Set a -> Set a
-    go orig !_ Tip = S.singleton (lazy orig)
-    go orig !x t@(Bin _ y l r)
-        | r' `ptrEq` r = t
-        | otherwise    = balanceR y l r'
-      where
-        !r' = go orig x r
+insertMaxSet x = \case
+    Tip         -> S.singleton x
+    Bin _ y l r -> balanceR y l (insertMaxSet x r)
 {-# INLINABLE insertMaxSet #-}
 
 balanceL :: a -> Set a -> Set a -> Set a
@@ -340,16 +327,3 @@ balanceR x l r = case l of
 delta,ratio :: Int
 delta = 3
 ratio = 2
-
-
-
-
-
-
-
-lazy :: a -> a
-lazy x = x
-
-ptrEq :: a -> a -> Bool
-ptrEq x y = isTrue# (reallyUnsafePtrEquality# x y)
-{-# INLINE ptrEq #-}
