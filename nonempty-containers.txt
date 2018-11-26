@@ -949,6 +949,15 @@ alter' :: Ord k => (Maybe a -> a) -> k -> NEMap k a -> NEMap k a
 --   from most functions expecting lenses, getters, and setters, so can be
 --   thought of as a "psuedo-lens", with virtually the same practical
 --   applications as a legitimate lens.
+--   
+--   <b>WARNING</b>: The rewrite rule for <a>Identity</a> exposes an
+--   inconsistency in undefined behavior for <a>Data.Map</a>.
+--   <tt>Data.Map.alterF</tt> will actually <i>maintain</i> the original
+--   key in the map when used with <a>Identity</a>; however,
+--   <tt>Data.Map.insertWith</tt> will <i>replace</i> the orginal key in
+--   the map. The rewrite rule for <a>alterF'</a> has chosen to be faithful
+--   to <tt>Data.Map.insertWith</tt>, and <i>not</i>
+--   <tt>Data.Map.alterF</tt>, for the sake of a cleaner implementation.
 alterF' :: (Ord k, Functor f) => (Maybe a -> f a) -> k -> NEMap k a -> f (NEMap k a)
 
 -- | <i>O(log n)</i>. Lookup the value at a key in the map.
