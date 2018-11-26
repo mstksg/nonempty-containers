@@ -548,10 +548,10 @@ insertMapWithKey :: Ord k => (k -> a -> a -> a) -> k -> a -> Map k a -> NEMap k 
 --   greater than</i> the new key. <i>The precondition is not checked.</i>
 --   
 --   <pre>
---   insertMap 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((2,"c") :| [(3,"b"), (5,"a")])
---   valid (insertMap 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == True
---   valid (insertMap 7 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
---   valid (insertMap 3 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
+--   insertMapMin 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((2,"c") :| [(3,"b"), (5,"a")])
+--   valid (insertMapMin 2 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == True
+--   valid (insertMapMin 7 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
+--   valid (insertMapMin 3 "c" (Data.Map.fromList [(5,"a"), (3,"b")])) == False
 --   </pre>
 insertMapMin :: k -> a -> Map k a -> NEMap k a
 
@@ -2159,12 +2159,22 @@ instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESe
 
 module Data.Set.NonEmpty
 data NESet a
+nonEmptySet :: Set a -> Maybe (NESet a)
+toSet :: NESet a -> Set a
+withNESet :: r -> (NESet a -> r) -> Set a -> r
+insertSet :: Ord a => a -> Set a -> NESet a
+insertSetMin :: a -> Set a -> NESet a
+insertSetMax :: a -> Set a -> NESet a
 
 -- | <i>O(1)</i>. Create a singleton set.
 singleton :: a -> NESet a
 
 -- | <i>O(n*log n)</i>. Create a set from a list of elements.
 fromList :: Ord a => NonEmpty a -> NESet a
+fromAscList :: Eq a => NonEmpty a -> NESet a
+fromDescList :: Eq a => NonEmpty a -> NESet a
+fromDistinctAscList :: NonEmpty a -> NESet a
+fromDistinctDescList :: NonEmpty a -> NESet a
 
 -- | <i>O(log n)</i>. Insert an element in a set. If the set already
 --   contains an element equal to the given value, it is replaced with the
@@ -2195,7 +2205,10 @@ foldr' :: (a -> b -> b) -> b -> NESet a -> b
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
 foldr1' :: (a -> a -> a) -> NESet a -> a
 foldl1' :: (a -> a -> a) -> NESet a -> a
+elems :: NESet a -> NonEmpty a
 toList :: NESet a -> NonEmpty a
+toAscList :: NESet a -> NonEmpty a
+toDescList :: NESet a -> NonEmpty a
 
 -- | <i>O(n)</i>. Test if the internal set structure is valid.
 valid :: Ord a => NESet a -> Bool
