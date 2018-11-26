@@ -64,6 +64,7 @@ module Data.Map.NonEmpty (
   , insertMapWithKey
   , insertMapMin
   , insertMapMax
+  , unsafeFromMap
 
   -- * Construction
   , singleton
@@ -314,6 +315,17 @@ pattern IsEmpty <- (M.null->True)
     IsEmpty = M.empty
 
 {-# COMPLETE IsNonEmpty, IsEmpty #-}
+
+-- | /O(log n)/. Unsafe version of 'nonEmptyMap'.  Coerces a 'Map' into an
+-- 'NEMap', but is undefined (throws a runtime exception when evaluation is
+-- attempted) for an empty 'Map'.
+unsafeFromMap
+    :: Map k a
+    -> NEMap k a
+unsafeFromMap = withNEMap e id
+  where
+    e = errorWithoutStackTrace "NEMap.unsafeFromMap: empty map"
+{-# INLINE unsafeFromMap #-}
 
 -- | /O(log n)/. A general continuation-based way to consume a 'Map' as if
 -- it were an 'NEMap'. @'withNEMap' def f@ will take a 'Map'.  If map is

@@ -19,6 +19,7 @@ module Data.Set.NonEmpty.Internal (
   , foldl
   , foldr'
   , foldl'
+  , merge
   , valid
   , insertMinSet
   , insertMaxSet
@@ -38,6 +39,7 @@ import           Text.Read
 import qualified Data.Foldable           as F
 import qualified Data.Semigroup.Foldable as F1
 import qualified Data.Set                as S
+import qualified Data.Set.Internal       as S
 
 data NESet a =
     NESet { nesV0  :: !a   -- ^ invariant: must be smaller than smallest value in set
@@ -58,7 +60,7 @@ instance Ord a => Ord (NESet a) where
 
 instance Show a => Show (NESet a) where
     showsPrec p xs = showParen (p > 10) $
-      showString "fromList " . shows (toList xs)
+      showString "fromList (" . shows (toList xs) . showString ")"
 
 instance (Read a, Ord a) => Read (NESet a) where
     readPrec = parens $ prec 10 $ do
@@ -258,6 +260,10 @@ instance Foldable1 NESet where
 
 
 
+-- | Only legal if all items in the first set are less than all items in
+-- the second set
+merge :: NESet a -> NESet a -> NESet a
+merge (NESet x1 s1) n2 = NESet x1 $ s1 `S.merge` toSet n2
 
 -- | /O(n)/. Test if the internal set structure is valid.
 valid :: Ord a => NESet a -> Bool

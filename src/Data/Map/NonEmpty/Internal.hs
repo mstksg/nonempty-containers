@@ -172,7 +172,7 @@ instance (Ord k, Read k, Read e) => Read (NEMap k e) where
 
 instance (Show k, Show a) => Show (NEMap k a) where
     showsPrec d m  = showParen (d > 10) $
-      showString "fromList " . shows (toList m)
+      showString "fromList (" . shows (toList m) . showString ")"
 
 instance (NFData k, NFData a) => NFData (NEMap k a) where
     rnf (NEMap k v a) = rnf k `seq` rnf v `seq` rnf a
@@ -401,7 +401,7 @@ toList :: NEMap k a -> NonEmpty (k, a)
 toList (NEMap k v m) = (k,v) :| M.toList m
 {-# INLINE toList #-}
 
--- | /O(log n)/ Smart constructor for an 'NEMap' from a 'Map'.  Returns
+-- | /O(log n)/. Smart constructor for an 'NEMap' from a 'Map'.  Returns
 -- 'Nothing' if the 'Map' was originally actually empty, and @'Just' n@
 -- with an 'NEMap', if the 'Map' was not empty.
 --

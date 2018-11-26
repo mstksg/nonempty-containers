@@ -1,7 +1,8 @@
-{-# LANGUAGE BangPatterns    #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TupleSections   #-}
-{-# LANGUAGE ViewPatterns    #-}
+{-# LANGUAGE BangPatterns        #-}
+{-# LANGUAGE PatternSynonyms     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE ViewPatterns        #-}
 
 module Data.Set.NonEmpty (
   -- * Non-Empty Set Type
@@ -15,6 +16,7 @@ module Data.Set.NonEmpty (
   , insertSet
   , insertSetMin
   , insertSetMax
+  , unsafeFromSet
 
   -- * Construction
   , singleton
@@ -23,7 +25,7 @@ module Data.Set.NonEmpty (
   , fromDescList
   , fromDistinctAscList
   , fromDistinctDescList
-  -- , powerSet
+  , powerSet
 
   -- -- * Insertion
   , insert
@@ -115,7 +117,9 @@ import           Data.Set.NonEmpty.Internal
 import           Data.These
 import           Prelude hiding             (foldr, foldl, filter, map, take, drop, splitAt)
 import qualified Data.List.NonEmpty         as NE
+import qualified Data.Semigroup.Foldable    as F1
 import qualified Data.Set                   as S
+import qualified Data.Set.Internal          as S
 
 pattern IsNonEmpty :: NESet a -> Set a
 pattern IsNonEmpty n <- (nonEmptySet->Just n)
@@ -128,6 +132,17 @@ pattern IsEmpty <- (S.null->True)
     IsEmpty = S.empty
 
 {-# COMPLETE IsNonEmpty, IsEmpty #-}
+
+-- | /O(log n)/. Unsafe version of 'nonEmptySet'.  Coerces a 'Set' into an
+-- 'NESet', but is undefined (throws a runtime exception when evaluation is
+-- attempted) for an empty 'Set'.
+unsafeFromSet
+    :: Set a
+    -> NESet a
+unsafeFromSet = withNESet e id
+  where
+    e = errorWithoutStackTrace "NESet.unsafeFromSet: empty set"
+{-# INLINE unsafeFromSet #-}
 
 withNESet
     :: r                  -- ^ value to return if set is empty
@@ -170,10 +185,23 @@ fromDistinctDescList (x :| xs) = insertSetMax x
                                $ xs
 {-# INLINE fromDistinctDescList #-}
 
--- powerSet
---     :: NESet a
---     -> NESet (NESet a)
--- powerSet (NESet x s) = _ $ S.powerSet s
+powerSet
+    :: forall a. ()
+    => NESet a
+    -> NESet (NESet a)
+powerSet (NESet x s0) = case nonEmptySet p1 of
+    -- s0 was empty originally
+    Nothing -> singleton (singleton x)
+    -- s1 was not empty originally
+    Just p2 -> forSure (S.mapMonotonic (insertSetMin x) p0)
+             `merge` p2
+  where
+    p0 = S.powerSet s0
+    p1 = S.mapMonotonic forSure
+       . S.deleteMin
+       $ p0
+    forSure = withNESet (errorWithoutStackTrace "NESet.powerSet: internal error")
+                        id
 
 delete :: Ord a => a -> NESet a -> Set a
 delete x n@(NESet x0 s) = case compare x x0 of
@@ -295,9 +323,9 @@ cartesianProduct
     :: NESet a
     -> NESet b
     -> NESet (a, b)
-cartesianProduct n1@(NESet x1 _) n2@(NESet x2 _) = NESet (x1, x2) s3
-  where
-    s3 = S.deleteMin $ toSet n1 `S.cartesianProduct` toSet n2
+cartesianProduct n1 n2 = getMergeNESet
+                       . F1.foldMap1 (\x -> MergeNESet $ mapMonotonic (x,) n2)
+                       $ n1
 {-# INLINE cartesianProduct #-}
 
 disjointUnion
@@ -565,3 +593,10 @@ combineEq (x :| xs) = go x xs
     go z (y:ys)
       | z == y    = go z ys
       | otherwise = z NE.<| go y ys
+
+
+-- | Used for 'cartesianProduct'
+newtype MergeNESet a = MergeNESet { getMergeNESet :: NESet a }
+
+instance Semigroup (MergeNESet a) where
+  MergeNESet n1 <> MergeNESet n2 = MergeNESet (merge n1 n2)
