@@ -1329,6 +1329,14 @@ alter' f k n@(NEMap k0 v m) = case compare k k0 of
 -- this can match the shape expected from most functions expecting lenses,
 -- getters, and setters, so can be thought of as a "psuedo-lens", with
 -- virtually the same practical applications as a legitimate lens.
+--
+-- __WARNING__: The rewrite rule for 'Identity' exposes an inconsistency in
+-- undefined behavior for "Data.Map".  @Data.Map.alterF@ will actually
+-- /maintain/ the original key in the map when used with 'Identity';
+-- however, @Data.Map.insertWith@ will /replace/ the orginal key in the
+-- map.  The rewrite rule for 'alterF'' has chosen to be faithful to
+-- @Data.Map.insertWith@, and /not/ @Data.Map.alterF@, for the sake of
+-- a cleaner implementation.
 alterF'
     :: (Ord k, Functor f)
     => (Maybe a -> f a)
@@ -1337,7 +1345,7 @@ alterF'
     -> f (NEMap k a)
 alterF' f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> flip (NEMap k ) (toMap n) <$> f Nothing
-    EQ -> flip (NEMap k0) m          <$> f (Just v)
+    EQ -> flip (NEMap k0) m         <$> f (Just v)
     GT -> NEMap k0 v <$> M.alterF (fmap Just . f) k m
 {-# INLINABLE [2] alterF' #-}
 
