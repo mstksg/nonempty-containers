@@ -1,7 +1,6 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase         #-}
-{-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE ViewPatterns       #-}
 
 -- |
@@ -95,8 +94,8 @@ import qualified Data.Semigroup.Foldable    as F1
 --
 -- You can directly construct an 'NEMap' with the API from
 -- "Data.Map.NonEmpty"; it's more or less the same as constructing a normal
--- 'Map', except you don't have access to 'M.empty'.  There are also a few
--- ways to construct an 'NEMap' from a 'Map':
+-- 'Map', except you don't have access to 'Data.Map.Empty'.  There are also
+-- a few ways to construct an 'NEMap' from a 'Map':
 --
 -- 1.  The 'nonEmptyMap' smart constructor will convert a @'Map' k a@ into
 --     a @'Maybe' ('NEMap' k a)@, returning 'Nothing' if the original 'Map'
@@ -328,7 +327,8 @@ elems :: NEMap k a -> NonEmpty a
 elems (NEMap _ v m) = v :| M.elems m
 {-# INLINE elems #-}
 
--- | /O(1)/. The number of elements in the map.
+-- | /O(1)/. The number of elements in the map.  Guaranteed to be greater
+-- than zero.
 --
 -- > size (singleton 1 'a')                          == 1
 -- > size (fromList ((1,'a') :| [(2,'c'), (3,'b')])) == 3
@@ -343,7 +343,7 @@ size (NEMap _ _ m) = 1 + M.size m
 -- Can be thought of as "obscuring" the non-emptiness of the map in its
 -- type.  See the 'Data.Map.NonEmpty.IsNotEmpty' pattern.
 --
--- 'nonEmptyMap' and @'maybe' 'M.empty' 'toMap'@ form an isomorphism: they
+-- 'nonEmptyMap' and @'maybe' 'Data.Map.empty' 'toMap'@ form an isomorphism: they
 -- are perfect structure-preserving inverses of eachother.
 --
 -- > toMap (fromList ((3,"a") :| [(5,"b")])) == Data.Map.fromList [(3,"a"), (5,"b")]
@@ -405,8 +405,9 @@ toList (NEMap k v m) = (k,v) :| M.toList m
 -- 'Nothing' if the 'Map' was originally actually empty, and @'Just' n@
 -- with an 'NEMap', if the 'Map' was not empty.
 --
--- 'nonEmptyMap' and @'maybe' 'M.empty' 'toMap'@ form an isomorphism: they
--- are perfect structure-preserving inverses of eachother.
+-- 'nonEmptyMap' and @'maybe' 'Data.Map.empty' 'toMap'@ form an
+-- isomorphism: they are perfect structure-preserving inverses of
+-- eachother.
 --
 -- See 'Data.Map.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
 -- "match on" the possiblity of a 'Map' being an 'NEMap'.
@@ -480,7 +481,8 @@ instance Functor (NEMap k) where
 
 -- | Traverses elements in order of ascending keys
 --
--- 'foldr1', 'foldl1', 'minimum', 'maximum' are all total.
+-- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
+-- 'Data.Foldable.maximum' are all total.
 instance Foldable (NEMap k) where
     fold      (NEMap _ v m) = v <> F.fold m
     {-# INLINE fold #-}
@@ -552,8 +554,8 @@ valid (NEMap k _ m) = M.valid m
 -- /strictly less than/ all keys present in the 'Map'.  /The precondition
 -- is not checked./
 --
--- While this has the same asymptotics as 'M.insert', it saves a constant
--- factor for key comparison (so may be helpful if comparison is
+-- While this has the same asymptotics as 'Data.Map.insert', it saves
+-- a constant factor for key comparison (so may be helpful if comparison is
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMinMap :: k -> a -> Map k a -> Map k a
 insertMinMap kx x = \case
@@ -566,8 +568,8 @@ insertMinMap kx x = \case
 -- /strictly greater than/ all keys present in the 'Map'.  /The
 -- precondition is not checked./
 --
--- While this has the same asymptotics as 'M.insert', it saves a constant
--- factor for key comparison (so may be helpful if comparison is
+-- While this has the same asymptotics as 'Data.Map.insert', it saves
+-- a constant factor for key comparison (so may be helpful if comparison is
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMaxMap :: k -> a -> Map k a -> Map k a
 insertMaxMap kx x = \case

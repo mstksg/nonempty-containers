@@ -1605,7 +1605,8 @@ restrictKeys n@(NEMap k v m) xs = case S.minView xs of
       GT -> toMap n `M.restrictKeys` ys
 {-# INLINE restrictKeys #-}
 
--- | /O(m*log(n\/m + 1)), m <= n/. Remove all keys in a 'Set' from an 'NEMap'.
+-- | /O(m*log(n\/m + 1)), m <= n/. Remove all keys in a 'Data.Set.Set' from
+-- an 'NEMap'.
 --
 -- @
 -- m \`withoutKeys\` s = 'filterWithKey' (\k _ -> k ``Set.notMember`` s) m

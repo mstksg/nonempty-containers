@@ -598,4 +598,4 @@ combineEq (x :| xs) = go x xs
 newtype MergeNESet a = MergeNESet { getMergeNESet :: NESet a }
 
 instance Semigroup (MergeNESet a) where
-  MergeNESet n1 <> MergeNESet n2 = MergeNESet (merge n1 n2)
+    MergeNESet n1 <> MergeNESet n2 = MergeNESet (merge n1 n2)

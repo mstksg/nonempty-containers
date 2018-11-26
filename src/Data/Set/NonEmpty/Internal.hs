@@ -1,9 +1,28 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase         #-}
-{-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE ViewPatterns       #-}
 
+-- |
+-- Module      : Data.Set.NonEmpty.Internal
+-- Copyright   : (c) Justin Le 2018
+-- License     : BSD3
+--
+-- Maintainer  : justin@jle.im
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- = WARNING
+--
+-- This module is considered __internal__.
+--
+-- The Package Versioning Policy __does not apply__.
+--
+-- This contents of this module may change __in any way whatsoever__
+-- and __without any warning__ between minor versions of this package.
+--
+-- Authors importing this module are expected to track development
+-- closely.
 module Data.Set.NonEmpty.Internal (
     NESet(..)
   , nonEmptySet
@@ -41,6 +60,43 @@ import qualified Data.Semigroup.Foldable as F1
 import qualified Data.Set                as S
 import qualified Data.Set.Internal       as S
 
+-- | A non-empty set of values @a@.  At least one value exists in an
+-- @'NESet' a@ at all times.
+--
+-- Functions that /take/ an 'NESet' can safely operate on it with the
+-- assumption that it has at least one item.
+--
+-- Functions that /return/ an 'NESet' provide an assurance that the result
+-- has at least one item.
+--
+-- "Data.Set.NonEmpty" re-exports the API of "Data.Set", faithfully
+-- reproducing asymptotics, typeclass constraints, and semantics.
+-- Functions that ensure that input and output sets are both non-empty
+-- (like 'Data.Set.NonEmpty.insert') return 'NESet', but functions that
+-- might potentially return an empty map (like 'Data.Set.NonEmpty.delete')
+-- return a 'Set' instead.
+--
+-- You can directly construct an 'NESet' with the API from
+-- "Data.Set.NonEmpty"; it's more or less the same as constructing a normal
+-- 'Set', except you don't have access to 'Data.Set.empty'.  There are also
+-- a few ways to construct an 'NESet' from a 'Set':
+--
+-- 1.  The 'nonEmptySet' smart constructor will convert a @'Set' a@ into
+--     a @'Maybe' ('NESet' a)@, returning 'Nothing' if the original 'Set'
+--     was empty.
+-- 2.  You can use the 'Data.Set.NonEmpty.insertSet' family of functions to
+--     insert a value into a 'Set' to create a guarunteed 'NESet'.
+-- 3.  You can use the 'Data.Set.NonEmpty.IsNonEmpty' and
+--     'Data.Set.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Set'
+--     to reveal it as either containing a 'NESet' or an empty map.
+-- 4.  'Data.Set.withNESet' offers a continuation-based interface for
+--     deconstructing a 'Set' and treating it as if it were an 'NESet'.
+--
+-- You can convert an 'NESet' into a (possibly empty) 'Set' with 'toSet' or
+-- 'Data.Set.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
+-- property from the type.
+
+-- TODO: should v0 really be a strict field?
 data NESet a =
     NESet { nesV0  :: !a   -- ^ invariant: must be smaller than smallest value in set
           , nesSet :: !(Set a)
@@ -107,10 +163,34 @@ setDataType = mkDataType "Data.Set.Internal.Set" [fromListConstr]
 
 
 
+-- | /O(log n)/. Smart constructor for an 'NESet' from a 'Set'.  Returns
+-- 'Nothing' if the 'Set' was originally actually empty, and @'Just' n@
+-- with an 'NESet', if the 'Set' was not empty.
+--
+-- 'nonEmptySet' and @'maybe' 'Data.Set..empty' 'toSet'@ form an
+-- isomorphism: they are perfect structure-preserving inverses of
+-- eachother.
+--
+-- See 'Data.Set.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
+-- "match on" the possiblity of a 'Set' being an 'NESet'.
+--
+-- > nonEmptySet (Data.Set.fromList [3,5]) == fromList (3:|[5])
 nonEmptySet :: Set a -> Maybe (NESet a)
 nonEmptySet = (fmap . uncurry) NESet . S.minView
 {-# INLINE nonEmptySet #-}
 
+-- | /O(log n)/.
+-- Convert a non-empty set back into a normal possibly-empty map, for usage
+-- with functions that expect 'Set'.
+--
+-- Can be thought of as "obscuring" the non-emptiness of the set in its
+-- type.  See the 'Data.Set.NonEmpty.IsNotEmpty' pattern.
+--
+-- 'nonEmptySet' and @'maybe' 'Data.Set.empty' 'toSet'@ form an
+-- isomorphism: they are perfect structure-preserving inverses of
+-- eachother.
+--
+-- > toSet (fromList ((3,"a") :| [(5,"b")])) == Data.Set.fromList [(3,"a"), (5,"b")]
 toSet :: NESet a -> Set a
 toSet (NESet x s) = insertMinSet x s
 {-# INLINE toSet #-}
@@ -132,7 +212,6 @@ insert x n@(NESet x0 s) = case compare x x0 of
 
 -- | /O(n*log n)/. Create a set from a list of elements.
 
--- TODO: Not undefined behavior (can keep first item)
 -- TODO: write manually and optimize to be equivalent to
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'S.fromList'.
@@ -142,44 +221,77 @@ fromList (x :| s) = maybe (singleton x) (insert x)
                   $ S.fromList s
 {-# INLINE fromList #-}
 
+-- | /O(n)/. Convert the set to a non-empty list of elements.
 toList :: NESet a -> NonEmpty a
 toList (NESet x s) = x :| S.toList s
 {-# INLINE toList #-}
 
+-- | /O(1)/. The number of elements in the set.  Guaranteed to be greater
+-- than zero.
 size :: NESet a -> Int
 size (NESet _ s) = 1 + S.size s
 {-# INLINE size #-}
 
+-- | /O(n)/. Fold the elements in the set using the given right-associative
+-- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'Data.Set.NonEmpty.toAscList'@.
+--
+-- For example,
+--
+-- > elemsList set = foldr (:) [] set
 foldr :: (a -> b -> b) -> b -> NESet a -> b
 foldr f z (NESet x s) = x `f` S.foldr f z s
 {-# INLINE foldr #-}
 
+-- | /O(n)/. A strict version of 'foldr'. Each application of the operator is
+-- evaluated before using the result in the next application. This
+-- function is strict in the starting value.
 foldr' :: (a -> b -> b) -> b -> NESet a -> b
 foldr' f z (NESet x s) = x `f` y
   where
     !y = S.foldr' f z s
 {-# INLINE foldr' #-}
 
+-- | /O(n)/. A version of 'foldr' that uses the value at the maximal value
+-- in the set as the starting value.
+--
+-- Note that, unlike 'Data.Foldable.foldr1' for 'Set', this function is
+-- total if the input function is total.
 foldr1 :: (a -> a -> a) -> NESet a -> a
 foldr1 f (NESet x s) = maybe x (f x . uncurry (S.foldr f))
                      . S.maxView
                      $ s
 {-# INLINE foldr1 #-}
 
+-- | /O(n)/. Fold the elements in the set using the given left-associative
+-- binary operator, such that @'foldl' f z == 'Prelude.foldl' f z . 'Data.Set.NonEmpty.toAscList'@.
+--
+-- For example,
+--
+-- > descElemsList set = foldl (flip (:)) [] set
 foldl :: (a -> b -> a) -> a -> NESet b -> a
 foldl f z (NESet x s) = S.foldl f (f z x) s
 {-# INLINE foldl #-}
 
+-- | /O(n)/. A strict version of 'foldl'. Each application of the operator is
+-- evaluated before using the result in the next application. This
+-- function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
 foldl' f z (NESet x s) = S.foldl' f y s
   where
     !y = f z x
 {-# INLINE foldl' #-}
 
+-- | /O(n)/. A version of 'foldl' that uses the value at the minimal value
+-- in the set as the starting value.
+--
+-- Note that, unlike 'Data.Foldable.foldl1' for 'Set', this function is
+-- total if the input function is total.
 foldl1 :: (a -> a -> a) -> NESet a -> a
 foldl1 f (NESet x s) = S.foldl f x s
 {-# INLINE foldl1 #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. The union of two sets, preferring the first set when
+-- equal elements are encountered.
 union
     :: Ord a
     => NESet a
@@ -191,6 +303,7 @@ union n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
     GT -> NESet x2 . S.union (toSet n1) $ s2
 {-# INLINE union #-}
 
+-- | The union of a non-empty list of sets
 unions
     :: (Foldable1 f, Ord a)
     => f (NESet a)
@@ -207,7 +320,8 @@ instance Ord a => Semigroup (NESet a) where
 
 -- | Traverses elements in ascending order
 --
--- 'foldr1', 'foldl1', 'minimum', 'maximum' are all total.
+-- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
+-- 'Data.Foldable.maximum' are all total.
 instance Foldable NESet where
     fold      (NESet x s) = x <> F.fold s
     {-# INLINE fold #-}
@@ -260,8 +374,8 @@ instance Foldable1 NESet where
 
 
 
--- | Only legal if all items in the first set are less than all items in
--- the second set
+-- | Unsafely merge two disjoint sets.  Only legal if all items in the
+-- first set are less than all items in the second set
 merge :: NESet a -> NESet a -> NESet a
 merge (NESet x1 s1) n2 = NESet x1 $ s1 `S.merge` toSet n2
 
@@ -276,12 +390,30 @@ valid (NESet x s) = S.valid s
 
 
 
+-- | /O(log n)/. Insert new value into a set where values are
+-- /strictly greater than/ the new values  That is, the new value must be
+-- /strictly less than/ all values present in the 'Set'.  /The precondition
+-- is not checked./
+--
+-- While this has the same asymptotics as 'Data.Set.insert', it saves
+-- a constant factor for value comparison (so may be helpful if comparison
+-- is expensive) and also does not require an 'Ord' instance for the value
+-- type.
 insertMinSet :: a -> Set a -> Set a
 insertMinSet x = \case
     Tip         -> S.singleton x
     Bin _ y l r -> balanceL y (insertMinSet x l) r
 {-# INLINABLE insertMinSet #-}
 
+-- | /O(log n)/. Insert new value into a set where values are /strictly
+-- less than/ the new value.  That is, the new value must be /strictly
+-- greater than/ all values present in the 'Set'.  /The precondition is not
+-- checked./
+--
+-- While this has the same asymptotics as 'Data.Set.insert', it saves
+-- a constant factor for value comparison (so may be helpful if comparison
+-- is expensive) and also does not require an 'Ord' instance for the value
+-- type.
 insertMaxSet :: a -> Set a -> Set a
 insertMaxSet x = \case
     Tip         -> S.singleton x
@@ -308,6 +440,10 @@ balanceL x l r = case r of
                      (_, _) -> error "Failure in Data.Set.NonEmpty.Internal.balanceL"
                 | otherwise -> Bin (1+ls+rs) x l r
 {-# NOINLINE balanceL #-}
+
+-- ------------------------------------------
+-- | Unexported code from "Data.Set.Internal"
+-- ------------------------------------------
 
 balanceR :: a -> Set a -> Set a -> Set a
 balanceR x l r = case l of
