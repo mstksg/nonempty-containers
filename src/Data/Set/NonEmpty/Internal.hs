@@ -12,17 +12,9 @@
 -- Stability   : experimental
 -- Portability : non-portable
 --
--- = WARNING
---
--- This module is considered __internal__.
---
--- The Package Versioning Policy __does not apply__.
---
--- This contents of this module may change __in any way whatsoever__
--- and __without any warning__ between minor versions of this package.
---
--- Authors importing this module are expected to track development
--- closely.
+-- Unsafe internal-use functions used in the implementation of
+-- "Data.Set.NonEmpty".  These functions can potentially be used to break
+-- the abstraction of 'NESet' and produce unsound sets, so be wary!
 module Data.Set.NonEmpty.Internal (
     NESet(..)
   , nonEmptySet
