@@ -2168,6 +2168,8 @@ instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESe
 
 module Data.Set.NonEmpty
 data NESet a
+pattern IsNonEmpty :: NESet a -> Set a
+pattern IsEmpty :: Set a
 nonEmptySet :: Set a -> Maybe (NESet a)
 toSet :: NESet a -> Set a
 withNESet :: r -> (NESet a -> r) -> Set a -> r
@@ -2189,9 +2191,43 @@ fromDistinctDescList :: NonEmpty a -> NESet a
 --   contains an element equal to the given value, it is replaced with the
 --   new value.
 insert :: Ord a => a -> NESet a -> NESet a
+delete :: Ord a => a -> NESet a -> Set a
+member :: Ord a => a -> NESet a -> Bool
+notMember :: Ord a => a -> NESet a -> Bool
+lookupLT :: Ord a => a -> NESet a -> Maybe a
+lookupGT :: Ord a => a -> NESet a -> Maybe a
+lookupLE :: Ord a => a -> NESet a -> Maybe a
+lookupGE :: Ord a => a -> NESet a -> Maybe a
 size :: NESet a -> Int
+isSubsetOf :: Ord a => NESet a -> NESet a -> Bool
+isProperSubsetOf :: Ord a => NESet a -> NESet a -> Bool
+disjoint :: Ord a => NESet a -> NESet a -> Bool
 union :: Ord a => NESet a -> NESet a -> NESet a
 unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+difference :: Ord a => NESet a -> NESet a -> Set a
+
+-- | Same as <a>difference</a>.
+(\\) :: Ord a => NESet a -> NESet a -> Set a
+intersection :: Ord a => NESet a -> NESet a -> Set a
+cartesianProduct :: NESet a -> NESet b -> NESet (a, b)
+disjointUnion :: NESet a -> NESet b -> NESet (Either a b)
+filter :: (a -> Bool) -> NESet a -> Set a
+takeWhileAntitone :: (a -> Bool) -> NESet a -> Set a
+dropWhileAntitone :: (a -> Bool) -> NESet a -> Set a
+spanAntitone :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
+partition :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
+split :: Ord a => a -> NESet a -> Maybe (These (NESet a) (NESet a))
+splitMember :: Ord a => a -> NESet a -> (Bool, Maybe (These (NESet a) (NESet a)))
+splitRoot :: NESet a -> NonEmpty (NESet a)
+lookupIndex :: Ord a => a -> NESet a -> Maybe Int
+findIndex :: Ord a => a -> NESet a -> Int
+elemAt :: Int -> NESet a -> a
+deleteAt :: Int -> NESet a -> Set a
+take :: Int -> NESet a -> Set a
+drop :: Int -> NESet a -> Set a
+splitAt :: Int -> NESet a -> These (NESet a) (NESet a)
+map :: Ord b => (a -> b) -> NESet a -> NESet b
+mapMonotonic :: (a -> b) -> NESet a -> NESet b
 foldr :: (a -> b -> b) -> b -> NESet a -> b
 foldl :: (a -> b -> a) -> a -> NESet b -> a
 
@@ -2214,6 +2250,12 @@ foldr' :: (a -> b -> b) -> b -> NESet a -> b
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
 foldr1' :: (a -> a -> a) -> NESet a -> a
 foldl1' :: (a -> a -> a) -> NESet a -> a
+findMin :: NESet a -> a
+findMax :: NESet a -> a
+deleteMin :: NESet a -> Set a
+deleteMax :: NESet a -> Set a
+deleteFindMin :: NESet a -> (a, Set a)
+deleteFindMax :: NESet a -> (a, Set a)
 elems :: NESet a -> NonEmpty a
 toList :: NESet a -> NonEmpty a
 toAscList :: NESet a -> NonEmpty a
