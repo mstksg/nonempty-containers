@@ -44,7 +44,7 @@ module Data.Map.NonEmpty.Internal
 --   
 --   You can directly construct an <a>NEMap</a> with the API from
 --   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
---   normal <a>Map</a>, except you don't have access to <a>empty</a>. There
+--   normal <a>Map</a>, except you don't have access to <a>Empty</a>. There
 --   are also a few ways to construct an <a>NEMap</a> from a <a>Map</a>:
 --   
 --   <ol>
@@ -167,7 +167,8 @@ unions :: (Foldable1 f, Ord k) => f (NEMap k a) -> NEMap k a
 --   </pre>
 elems :: NEMap k a -> NonEmpty a
 
--- | <i>O(1)</i>. The number of elements in the map.
+-- | <i>O(1)</i>. The number of elements in the map. Guaranteed to be
+--   greater than zero.
 --   
 --   <pre>
 --   size (singleton 1 'a')                          == 1
@@ -326,14 +327,95 @@ instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
 
+
+-- | <h1>WARNING</h1>
+--   
+--   This module is considered <b>internal</b>.
+--   
+--   The Package Versioning Policy <b>does not apply</b>.
+--   
+--   This contents of this module may change <b>in any way whatsoever</b>
+--   and <b>without any warning</b> between minor versions of this package.
+--   
+--   Authors importing this module are expected to track development
+--   closely.
 module Data.Set.NonEmpty.Internal
+
+-- | A non-empty set of values <tt>a</tt>. At least one value exists in an
+--   <tt><a>NESet</a> a</tt> at all times.
+--   
+--   Functions that <i>take</i> an <a>NESet</a> can safely operate on it
+--   with the assumption that it has at least one item.
+--   
+--   Functions that <i>return</i> an <a>NESet</a> provide an assurance that
+--   the result has at least one item.
+--   
+--   <a>Data.Set.NonEmpty</a> re-exports the API of <a>Data.Set</a>,
+--   faithfully reproducing asymptotics, typeclass constraints, and
+--   semantics. Functions that ensure that input and output sets are both
+--   non-empty (like <a>insert</a>) return <a>NESet</a>, but functions that
+--   might potentially return an empty map (like <a>delete</a>) return a
+--   <a>Set</a> instead.
+--   
+--   You can directly construct an <a>NESet</a> with the API from
+--   <a>Data.Set.NonEmpty</a>; it's more or less the same as constructing a
+--   normal <a>Set</a>, except you don't have access to <a>empty</a>. There
+--   are also a few ways to construct an <a>NESet</a> from a <a>Set</a>:
+--   
+--   <ol>
+--   <li>The <a>nonEmptySet</a> smart constructor will convert a
+--   <tt><a>Set</a> a</tt> into a <tt><a>Maybe</a> (<a>NESet</a> a)</tt>,
+--   returning <a>Nothing</a> if the original <a>Set</a> was empty.</li>
+--   <li>You can use the <a>insertSet</a> family of functions to insert a
+--   value into a <a>Set</a> to create a guarunteed <a>NESet</a>.</li>
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>Set</a> to reveal it as either containing a
+--   <a>NESet</a> or an empty map.</li>
+--   <li><a>withNESet</a> offers a continuation-based interface for
+--   deconstructing a <a>Set</a> and treating it as if it were an
+--   <a>NESet</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NESet</a> into a (possibly empty) <a>Set</a>
+--   with <a>toSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   non-empty property from the type.
 data NESet a
 NESet :: !a -> !Set a -> NESet a
 
 -- | invariant: must be smaller than smallest value in set
 [nesV0] :: NESet a -> !a
 [nesSet] :: NESet a -> !Set a
+
+-- | <i>O(log n)</i>. Smart constructor for an <a>NESet</a> from a
+--   <a>Set</a>. Returns <a>Nothing</a> if the <a>Set</a> was originally
+--   actually empty, and <tt><a>Just</a> n</tt> with an <a>NESet</a>, if
+--   the <a>Set</a> was not empty.
+--   
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> 'Data.Set..empty'
+--   <a>toSet</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
+--   
+--   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
+--   the possiblity of a <a>Set</a> being an <a>NESet</a>.
+--   
+--   <pre>
+--   nonEmptySet (Data.Set.fromList [3,5]) == fromList (3:|[5])
+--   </pre>
 nonEmptySet :: Set a -> Maybe (NESet a)
+
+-- | <i>O(log n)</i>. Convert a non-empty set back into a normal
+--   possibly-empty map, for usage with functions that expect <a>Set</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the set in its
+--   type. See the <a>IsNotEmpty</a> pattern.
+--   
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
+--   
+--   <pre>
+--   toSet (fromList ((3,"a") :| [(5,"b")])) == Data.Set.fromList [(3,"a"), (5,"b")]
+--   </pre>
 toSet :: NESet a -> Set a
 
 -- | <i>O(1)</i>. Create a singleton set.
@@ -346,22 +428,80 @@ insert :: Ord a => a -> NESet a -> NESet a
 
 -- | <i>O(n*log n)</i>. Create a set from a list of elements.
 fromList :: Ord a => NonEmpty a -> NESet a
+
+-- | <i>O(n)</i>. Convert the set to a non-empty list of elements.
 toList :: NESet a -> NonEmpty a
+
+-- | <i>O(1)</i>. The number of elements in the set. Guaranteed to be
+--   greater than zero.
 size :: NESet a -> Int
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The union of two sets, preferring
+--   the first set when equal elements are encountered.
 union :: Ord a => NESet a -> NESet a -> NESet a
+
+-- | The union of a non-empty list of sets
 unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
+
+-- | <i>O(n)</i>. Fold the elements in the set using the given
+--   right-associative binary operator, such that <tt><a>foldr</a> f z ==
+--   <a>foldr</a> f z . <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   elemsList set = foldr (:) [] set
+--   </pre>
 foldr :: (a -> b -> b) -> b -> NESet a -> b
+
+-- | <i>O(n)</i>. Fold the elements in the set using the given
+--   left-associative binary operator, such that <tt><a>foldl</a> f z ==
+--   <a>foldl</a> f z . <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   descElemsList set = foldl (flip (:)) [] set
+--   </pre>
 foldl :: (a -> b -> a) -> a -> NESet b -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldr</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldr' :: (a -> b -> b) -> b -> NESet a -> b
+
+-- | <i>O(n)</i>. A strict version of <a>foldl</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
 
--- | Only legal if all items in the first set are less than all items in
---   the second set
+-- | Unsafely merge two disjoint sets. Only legal if all items in the first
+--   set are less than all items in the second set
 merge :: NESet a -> NESet a -> NESet a
 
 -- | <i>O(n)</i>. Test if the internal set structure is valid.
 valid :: Ord a => NESet a -> Bool
+
+-- | <i>O(log n)</i>. Insert new value into a set where values are
+--   <i>strictly greater than</i> the new values That is, the new value
+--   must be <i>strictly less than</i> all values present in the
+--   <a>Set</a>. /The precondition is not checked./
+--   
+--   While this has the same asymptotics as <a>insert</a>, it saves a
+--   constant factor for value comparison (so may be helpful if comparison
+--   is expensive) and also does not require an <a>Ord</a> instance for the
+--   value type.
 insertMinSet :: a -> Set a -> Set a
+
+-- | <i>O(log n)</i>. Insert new value into a set where values are
+--   /strictly less than<i> the new value. That is, the new value must be
+--   </i>strictly greater than<i> all values present in the <a>Set</a>.
+--   </i>The precondition is not checked./
+--   
+--   While this has the same asymptotics as <a>insert</a>, it saves a
+--   constant factor for value comparison (so may be helpful if comparison
+--   is expensive) and also does not require an <a>Ord</a> instance for the
+--   value type.
 insertMaxSet :: a -> Set a -> Set a
 instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Set.NonEmpty.Internal.NESet a)
 instance GHC.Classes.Ord a => GHC.Classes.Ord (Data.Set.NonEmpty.Internal.NESet a)
@@ -377,10 +517,79 @@ instance Data.Foldable.Foldable Data.Set.NonEmpty.Internal.NESet
 instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESet
 
 module Data.Set.NonEmpty
+
+-- | A non-empty set of values <tt>a</tt>. At least one value exists in an
+--   <tt><a>NESet</a> a</tt> at all times.
+--   
+--   Functions that <i>take</i> an <a>NESet</a> can safely operate on it
+--   with the assumption that it has at least one item.
+--   
+--   Functions that <i>return</i> an <a>NESet</a> provide an assurance that
+--   the result has at least one item.
+--   
+--   <a>Data.Set.NonEmpty</a> re-exports the API of <a>Data.Set</a>,
+--   faithfully reproducing asymptotics, typeclass constraints, and
+--   semantics. Functions that ensure that input and output sets are both
+--   non-empty (like <a>insert</a>) return <a>NESet</a>, but functions that
+--   might potentially return an empty map (like <a>delete</a>) return a
+--   <a>Set</a> instead.
+--   
+--   You can directly construct an <a>NESet</a> with the API from
+--   <a>Data.Set.NonEmpty</a>; it's more or less the same as constructing a
+--   normal <a>Set</a>, except you don't have access to <a>empty</a>. There
+--   are also a few ways to construct an <a>NESet</a> from a <a>Set</a>:
+--   
+--   <ol>
+--   <li>The <a>nonEmptySet</a> smart constructor will convert a
+--   <tt><a>Set</a> a</tt> into a <tt><a>Maybe</a> (<a>NESet</a> a)</tt>,
+--   returning <a>Nothing</a> if the original <a>Set</a> was empty.</li>
+--   <li>You can use the <a>insertSet</a> family of functions to insert a
+--   value into a <a>Set</a> to create a guarunteed <a>NESet</a>.</li>
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>Set</a> to reveal it as either containing a
+--   <a>NESet</a> or an empty map.</li>
+--   <li><a>withNESet</a> offers a continuation-based interface for
+--   deconstructing a <a>Set</a> and treating it as if it were an
+--   <a>NESet</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NESet</a> into a (possibly empty) <a>Set</a>
+--   with <a>toSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   non-empty property from the type.
 data NESet a
 pattern IsNonEmpty :: NESet a -> Set a
 pattern IsEmpty :: Set a
+
+-- | <i>O(log n)</i>. Smart constructor for an <a>NESet</a> from a
+--   <a>Set</a>. Returns <a>Nothing</a> if the <a>Set</a> was originally
+--   actually empty, and <tt><a>Just</a> n</tt> with an <a>NESet</a>, if
+--   the <a>Set</a> was not empty.
+--   
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> 'Data.Set..empty'
+--   <a>toSet</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
+--   
+--   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
+--   the possiblity of a <a>Set</a> being an <a>NESet</a>.
+--   
+--   <pre>
+--   nonEmptySet (Data.Set.fromList [3,5]) == fromList (3:|[5])
+--   </pre>
 nonEmptySet :: Set a -> Maybe (NESet a)
+
+-- | <i>O(log n)</i>. Convert a non-empty set back into a normal
+--   possibly-empty map, for usage with functions that expect <a>Set</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the set in its
+--   type. See the <a>IsNotEmpty</a> pattern.
+--   
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
+--   
+--   <pre>
+--   toSet (fromList ((3,"a") :| [(5,"b")])) == Data.Set.fromList [(3,"a"), (5,"b")]
+--   </pre>
 toSet :: NESet a -> Set a
 withNESet :: r -> (NESet a -> r) -> Set a -> r
 insertSet :: Ord a => a -> Set a -> NESet a
@@ -414,11 +623,19 @@ lookupLT :: Ord a => a -> NESet a -> Maybe a
 lookupGT :: Ord a => a -> NESet a -> Maybe a
 lookupLE :: Ord a => a -> NESet a -> Maybe a
 lookupGE :: Ord a => a -> NESet a -> Maybe a
+
+-- | <i>O(1)</i>. The number of elements in the set. Guaranteed to be
+--   greater than zero.
 size :: NESet a -> Int
 isSubsetOf :: Ord a => NESet a -> NESet a -> Bool
 isProperSubsetOf :: Ord a => NESet a -> NESet a -> Bool
 disjoint :: Ord a => NESet a -> NESet a -> Bool
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The union of two sets, preferring
+--   the first set when equal elements are encountered.
 union :: Ord a => NESet a -> NESet a -> NESet a
+
+-- | The union of a non-empty list of sets
 unions :: (Foldable1 f, Ord a) => f (NESet a) -> NESet a
 difference :: Ord a => NESet a -> NESet a -> Set a
 
@@ -444,7 +661,27 @@ drop :: Int -> NESet a -> Set a
 splitAt :: Int -> NESet a -> These (NESet a) (NESet a)
 map :: Ord b => (a -> b) -> NESet a -> NESet b
 mapMonotonic :: (a -> b) -> NESet a -> NESet b
+
+-- | <i>O(n)</i>. Fold the elements in the set using the given
+--   right-associative binary operator, such that <tt><a>foldr</a> f z ==
+--   <a>foldr</a> f z . <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   elemsList set = foldr (:) [] set
+--   </pre>
 foldr :: (a -> b -> b) -> b -> NESet a -> b
+
+-- | <i>O(n)</i>. Fold the elements in the set using the given
+--   left-associative binary operator, such that <tt><a>foldl</a> f z ==
+--   <a>foldl</a> f z . <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   descElemsList set = foldl (flip (:)) [] set
+--   </pre>
 foldl :: (a -> b -> a) -> a -> NESet b -> a
 
 -- | A variant of <a>foldr</a> that has no base case, and thus may only be
@@ -462,7 +699,15 @@ foldr1 :: Foldable t => (a -> a -> a) -> t a -> a
 --   <a>foldl1</a> f = <a>foldl1</a> f . <a>toList</a>
 --   </pre>
 foldl1 :: Foldable t => (a -> a -> a) -> t a -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldr</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldr' :: (a -> b -> b) -> b -> NESet a -> b
+
+-- | <i>O(n)</i>. A strict version of <a>foldl</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
 foldr1' :: (a -> a -> a) -> NESet a -> a
 foldl1' :: (a -> a -> a) -> NESet a -> a
@@ -473,6 +718,8 @@ deleteMax :: NESet a -> Set a
 deleteFindMin :: NESet a -> (a, Set a)
 deleteFindMax :: NESet a -> (a, Set a)
 elems :: NESet a -> NonEmpty a
+
+-- | <i>O(n)</i>. Convert the set to a non-empty list of elements.
 toList :: NESet a -> NonEmpty a
 toAscList :: NESet a -> NonEmpty a
 toDescList :: NESet a -> NonEmpty a
@@ -545,7 +792,7 @@ module Data.Map.NonEmpty
 --   
 --   You can directly construct an <a>NEMap</a> with the API from
 --   <a>Data.Map.NonEmpty</a>; it's more or less the same as constructing a
---   normal <a>Map</a>, except you don't have access to <a>empty</a>. There
+--   normal <a>Map</a>, except you don't have access to <a>Empty</a>. There
 --   are also a few ways to construct an <a>NEMap</a> from a <a>Map</a>:
 --   
 --   <ol>
@@ -1249,7 +1496,8 @@ lookupLE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 --   </pre>
 lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 
--- | <i>O(1)</i>. The number of elements in the map.
+-- | <i>O(1)</i>. The number of elements in the map. Guaranteed to be
+--   greater than zero.
 --   
 --   <pre>
 --   size (singleton 1 'a')                          == 1
@@ -1727,7 +1975,7 @@ filterWithKey :: (k -> a -> Bool) -> NEMap k a -> Map k a
 --   </pre>
 restrictKeys :: Ord k => NEMap k a -> Set k -> Map k a
 
--- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Remove all keys in a <tt>Set</tt>
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Remove all keys in a <a>Set</a>
 --   from an <a>NEMap</a>.
 --   
 --   <pre>
