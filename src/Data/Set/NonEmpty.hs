@@ -261,7 +261,7 @@ insertSetMin :: a -> Set a -> NESet a
 insertSetMin = NESet
 {-# INLINE insertSetMin #-}
 
--- | /O(1)/ Convert a 'Set' into an 'NESet' by adding a value where the
+-- | /O(log n)/ Convert a 'Set' into an 'NESet' by adding a value where the
 -- value is /strictly less than/ all values in the input set  The values in
 -- the original map must all be /strictly greater than/ the new value.
 -- /The precondition is not checked./

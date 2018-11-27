@@ -171,8 +171,8 @@ withNEIntSet def f = maybe def f . nonEmptyIntSet
 -- Because of this, we know that the set must have at least one
 -- element, and so therefore cannot be empty.
 --
--- See 'insertIntSetMin' for a version that is constant-time if the new value is
--- /strictly smaller than/ all values in the original set
+-- See 'insertIntSetMin' for a version that is constant-time if the new
+-- value is /strictly smaller than/ all values in the original set
 --
 -- > insertIntSet 4 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [4, 5])
 -- > insertIntSet 4 Data.IntSet.empty == singleton 4 "c"
@@ -193,28 +193,24 @@ insertIntSetMin :: Key -> IntSet -> NEIntSet
 insertIntSetMin = NEIntSet
 {-# INLINE insertIntSetMin #-}
 
--- | /O(1)/ Convert a 'IntSet' into an 'NEIntSet' by adding a value where the
--- value is /strictly less than/ all values in the input set  The values in
--- the original map must all be /strictly greater than/ the new value.
--- /The precondition is not checked./
+-- | /O(log n)/ Convert a 'IntSet' into an 'NEIntSet' by adding a value
+-- where the value is /strictly less than/ all values in the input set  The
+-- values in the original map must all be /strictly greater than/ the new
+-- value.  /The precondition is not checked./
 --
--- While this has the same asymptotics as 'insertIntSet', it saves a constant
--- factor for key comparison (so may be helpful if comparison is expensive)
--- and also does not require an 'Ord' instance for the key type.
---
--- > insertIntSetMin 7 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [5, 7])
--- > valid (insertIntSetMin 7 (Data.IntSet.fromList [5, 3])) == True
--- > valid (insertIntSetMin 2 (Data.IntSet.fromList [5, 3])) == False
--- > valid (insertIntSetMin 5 (Data.IntSet.fromList [5, 3])) == False
+-- At the current moment, this is identical simply 'insertIntSet'; however,
+-- it is left both for consistency and as a placeholder for a future
+-- version where optimizations are implemented to allow for a faster
+-- implementation.
 insertIntSetMax :: Key -> IntSet -> NEIntSet
 insertIntSetMax x = withNEIntSet (singleton x) go
   where
     go (NEIntSet x0 s0) = NEIntSet x0 . insertMaxIntSet x $ s0
 {-# INLINE insertIntSetMax #-}
 
--- | /O(log n)/. Unsafe version of 'nonEmptyIntSet'.  Coerces a 'IntSet' into an
--- 'NEIntSet', but is undefined (throws a runtime exception when evaluation is
--- attempted) for an empty 'IntSet'.
+-- | /O(log n)/. Unsafe version of 'nonEmptyIntSet'.  Coerces a 'IntSet'
+-- into an 'NEIntSet', but is undefined (throws a runtime exception when
+-- evaluation is attempted) for an empty 'IntSet'.
 unsafeFromIntSet
     :: IntSet
     -> NEIntSet
@@ -694,8 +690,8 @@ deleteFindMin (NEIntSet x s) = (x, s)
 -- > deleteFindMax (fromList (5 :| [3, 10])) == (10, Data.IntSet.fromList [3, 5])
 deleteFindMax :: NEIntSet -> (Key, IntSet)
 deleteFindMax (NEIntSet x s) = maybe (x, S.empty) (second (insertMinIntSet x))
-                          . S.maxView
-                          $ s
+                             . S.maxView
+                             $ s
 {-# INLINE deleteFindMax #-}
 
 -- | /O(n)/. An alias of 'toAscList'. The elements of a set in ascending

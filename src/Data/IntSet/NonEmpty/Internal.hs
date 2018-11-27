@@ -1,6 +1,4 @@
-{-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE ViewPatterns       #-}
 
 -- |
@@ -25,10 +23,6 @@ module Data.IntSet.NonEmpty.Internal (
   , toList
   , union
   , unions
-  -- , foldr
-  -- , foldl
-  -- , foldr'
-  -- , foldl'
   , valid
   , insertMinIntSet
   , insertMaxIntSet
@@ -42,7 +36,6 @@ import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup
 import           Data.Semigroup.Foldable (Foldable1)
 import           Data.Typeable           (Typeable)
-import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
 import           Text.Read
 import qualified Data.Foldable           as F
 import qualified Data.IntSet             as S
@@ -232,10 +225,9 @@ valid (NEIntSet x s) = all ((x <) . fst) (S.minView s)
 -- /strictly less than/ all values present in the 'IntSet'.  /The precondition
 -- is not checked./
 --
--- While this has the same asymptotics as @Data.IntSet.insert@, it saves
--- a constant factor for value comparison (so may be helpful if comparison
--- is expensive) and also does not require an 'Ord' instance for the value
--- type.
+-- At the moment this is simply an alias for @Data.IntSet.insert@, but it's
+-- left here as a placeholder in case this eventually gets implemented in
+-- a more efficient way.
 
 -- TODO: implementation
 insertMinIntSet :: Key -> IntSet -> IntSet
@@ -247,10 +239,9 @@ insertMinIntSet = S.insert
 -- greater than/ all values present in the 'IntSet'.  /The precondition is not
 -- checked./
 --
--- While this has the same asymptotics as @Data.IntSet.insert@, it saves
--- a constant factor for value comparison (so may be helpful if comparison
--- is expensive) and also does not require an 'Ord' instance for the value
--- type.
+-- At the moment this is simply an alias for @Data.IntSet.insert@, but it's
+-- left here as a placeholder in case this eventually gets implemented in
+-- a more efficient way.
 
 -- TODO: implementation
 insertMaxIntSet :: Key -> IntSet -> IntSet
