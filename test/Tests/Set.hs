@@ -3,8 +3,8 @@
 module Tests.Set (setTests) where
 
 import           Data.Functor.Identity
-import           Data.Semigroup.Traversable
 import           Hedgehog
+import           Test.Tasty
 import           Tests.Util
 import qualified Data.Set                   as S
 import qualified Data.Set.NonEmpty          as NES
@@ -12,8 +12,10 @@ import qualified Data.Set.NonEmpty.Internal as NES
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
-setTests :: Group
-setTests = $$(discover)
+setTests :: TestTree
+setTests = groupTree $$(discover)
+
+
 
 
 

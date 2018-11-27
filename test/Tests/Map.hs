@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TupleSections     #-}
 {-# LANGUAGE TypeApplications  #-}
@@ -12,6 +11,7 @@ import           Data.Functor.Identity
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Hedgehog
+import           Test.Tasty
 import           Tests.Util
 import qualified Data.Map                   as M
 import qualified Data.Map.NonEmpty          as NEM
@@ -20,9 +20,8 @@ import qualified Data.Text                  as T
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
-mapTests :: Group
-mapTests = $$(discover)
-
+mapTests :: TestTree
+mapTests = groupTree $$(discover)
 
 
 

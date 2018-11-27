@@ -447,7 +447,7 @@ notMember :: Ord k => k -> NEMap k a -> Bool
 notMember k (NEMap k0 _ m) = case compare k k0 of
     LT -> True
     EQ -> False
-    GT -> M.member k m
+    GT -> M.notMember k m
 {-# INLINE notMember #-}
 
 -- | /O(log n)/. Find largest key smaller than the given one and return the

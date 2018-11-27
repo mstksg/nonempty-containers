@@ -5,6 +5,7 @@
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
 {-# OPTIONS_GHC -Wno-orphans     #-}
@@ -16,6 +17,7 @@ module Tests.Util (
   , GenType(..)
   , TestType(..)
   , ttProp
+  , groupTree
   , Context(..)
   , Bazaar(..)
   , keyGen, valGen, mapSize, mapGen, neMapGen, setGen, neSetGen
@@ -29,23 +31,36 @@ import           Data.Foldable
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.Kind
-import           Data.List.NonEmpty       (NonEmpty(..))
-import           Data.Map                 (Map)
-import           Data.Map.NonEmpty        (NEMap)
+import           Data.List.NonEmpty         (NonEmpty(..))
+import           Data.Map                   (Map)
+import           Data.Map.NonEmpty          (NEMap)
 import           Data.Maybe
-import           Data.Set                 (Set)
-import           Data.Set.NonEmpty        (NESet)
+import           Data.Set                   (Set)
+import           Data.Set.NonEmpty          (NESet)
 import           Data.These
 import           Hedgehog
-import           Hedgehog.Function hiding ((:*:))
-import qualified Data.List.NonEmpty       as NE
-import qualified Data.Map                 as M
-import qualified Data.Map.NonEmpty        as NEM
-import qualified Data.Set                 as S
-import qualified Data.Set.NonEmpty        as NES
-import qualified Data.Text                as T
-import qualified Hedgehog.Gen             as Gen
-import qualified Hedgehog.Range           as Range
+import           Hedgehog.Function hiding   ((:*:))
+import           Hedgehog.Internal.Property
+import           Test.Tasty
+import           Test.Tasty.Hedgehog
+import qualified Data.List.NonEmpty         as NE
+import qualified Data.Map                   as M
+import qualified Data.Map.NonEmpty          as NEM
+import qualified Data.Set                   as S
+import qualified Data.Set.NonEmpty          as NES
+import qualified Data.Text                  as T
+import qualified Hedgehog.Gen               as Gen
+import qualified Hedgehog.Range             as Range
+
+groupTree :: Group -> TestTree
+groupTree Group{..} = testGroup (unGroupName groupName)
+                                (map (uncurry go) groupProperties)
+  where
+    go :: PropertyName -> Property -> TestTree
+    go n = testProperty (mkName (unPropertyName n))
+    mkName = map deUnderscore . drop (length @[] @Char "prop_")
+    deUnderscore '_' = ' '
+    deUnderscore c   = c
 
 -- | test for stability
 data K a b = K { getKX :: !a, getKY :: !b }
