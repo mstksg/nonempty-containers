@@ -4,6 +4,51 @@
 {-# LANGUAGE TupleSections   #-}
 {-# LANGUAGE ViewPatterns    #-}
 
+-- |
+-- Module      : Data.IntMap.NonEmpty
+-- Copyright   : (c) Justin Le 2018
+-- License     : BSD3
+--
+-- Maintainer  : justin@jle.im
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- = Non-Empty Finite Integer-Indexed Maps (lazy interface)
+--
+-- The @'NEIntMap' v@ type represents a non-empty finite map (sometimes
+-- called a dictionary) from integer keys to values of type @v@.
+-- An 'NEIntMap' is strict in its keys but lazy in its values.
+--
+-- See documentation for 'NEIntMap' for information on how to convert and
+-- manipulate such non-empty maps.
+--
+-- This module essentially re-imports the API of "Data.IntMap.Lazy" and its
+-- 'IntMap' type, along with semantics and asymptotics.  In most
+-- situations, asymptotics are different only by a constant factor.  In
+-- some situations, asmyptotics are even better (constant-time instead of
+-- log-time).
+--
+-- Because 'NEIntMap' is implemented using 'IntMap', all of the caveats of using
+-- 'IntMap' apply (such as the limitation of the maximum size of maps).
+--
+-- All functions take non-empty maps as inputs.  In situations where their
+-- results can be guarunteed to also be non-empty, they also return
+-- non-empty maps.  In situations where their results could potentially be
+-- empty, 'IntMap' is returned instead.
+--
+-- Some variants of functions (like 'alter'', 'alterF'', 'adjustMin',
+-- 'adjustMax', 'adjustMinWithKey', 'adjustMaxWithKey') are provided in
+-- a way restructured to preserve guaruntees of non-empty maps being
+-- returned.
+--
+-- Some functions (like 'mapEither', 'partition', 'split')
+-- have modified return types to account for possible configurations of
+-- non-emptiness.
+--
+-- This module is intended to be imported qualified, to avoid name clashes with
+-- "Prelude" and "Data.IntMap" functions:
+--
+-- > import qualified Data.IntMap.NonEmpty as NEIM
 module Data.IntMap.NonEmpty (
   -- * Non-Empty IntMap Type
     NEIntMap
@@ -347,7 +392,7 @@ insertMapMin = NEIntMap
 -- keys in the original map must all be /strictly less than/ the new
 -- key.  /The precondition is not checked./
 --
--- At the current moment, this is identical simply 'insertIntSet'; however,
+-- At the current moment, this is identical simply 'insertMap'; however,
 -- it is left both for consistency and as a placeholder for a future
 -- version where optimizations are implemented to allow for a faster
 -- implementation.

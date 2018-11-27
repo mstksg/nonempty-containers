@@ -3,6 +3,44 @@
 {-# LANGUAGE TupleSections   #-}
 {-# LANGUAGE ViewPatterns    #-}
 
+-- |
+-- Module      : Data.IntSet.NonEmpty
+-- Copyright   : (c) Justin Le 2018
+-- License     : BSD3
+--
+-- Maintainer  : justin@jle.im
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- = Non-Empty Finite Integer Sets
+--
+-- The 'NEIntSet' type represents a non-empty set of integers.
+--
+-- See documentation for 'NEIntSet' for information on how to convert and
+-- manipulate such non-empty set.
+--
+-- This module essentially re-imports the API of "Data.IntSet" and its 'IntSet'
+-- type, along with semantics and asymptotics.  In most situations,
+-- asymptotics are different only by a constant factor.  In some
+-- situations, asmyptotics are even better (constant-time instead of
+-- log-time).
+--
+-- Because 'NEIntSet' is implemented using 'IntSet', all of the caveats of
+-- using 'IntSet' apply (such as the limitation of the maximum size of
+-- sets).
+--
+-- All functions take non-empty sets as inputs.  In situations where their
+-- results can be guarunteed to also be non-empty, they also return
+-- non-empty sets.  In situations where their results could potentially be
+-- empty, 'IntSet' is returned instead.
+--
+-- Some functions ('partition', 'split') have modified return types to
+-- account for possible configurations of non-emptiness.
+--
+-- This module is intended to be imported qualified, to avoid name clashes
+-- with "Prelude" and "Data.IntSet" functions:
+--
+-- > import qualified Data.IntSet.NonEmpty as NEIS
 module Data.IntSet.NonEmpty (
   -- * Non-Empty Set Type
     NEIntSet
@@ -580,7 +618,7 @@ split x n@(NEIntSet x0 s0) = case compare x x0 of
     (s1, s2) = S.split x s0
 {-# INLINABLE split #-}
 
--- | /O(log n)/. The expression (@'splitLookup' x set@) splits a set just
+-- | /O(log n)/. The expression (@'splitMember' x set@) splits a set just
 -- like 'split' but also returns @'member' x set@ (whether or not @x@ was
 -- in @set@)
 --

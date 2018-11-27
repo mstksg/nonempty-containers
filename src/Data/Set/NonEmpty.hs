@@ -538,8 +538,8 @@ intersection n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
 -- Example:
 --
 -- @
--- cartesianProduct (fromList (1:|[2])) (fromList ('a':|['b'])) =
---   fromList ((1,'a') :| [(1,'b'), (2,'a'), (2,'b')])
+-- cartesianProduct (fromList (1:|[2])) (fromList (\'a\':|[\'b\'])) =
+--   fromList ((1,\'a\') :| [(1,\'b\'), (2,\'a\'), (2,\'b\')])
 -- @
 
 -- TODO: can this be better?
@@ -736,7 +736,7 @@ split x n@(NESet x0 s0) = case compare x x0 of
     (s1, s2) = S.split x s0
 {-# INLINABLE split #-}
 
--- | /O(log n)/. The expression (@'splitLookup' x set@) splits a set just
+-- | /O(log n)/. The expression (@'splitMember' x set@) splits a set just
 -- like 'split' but also returns @'member' x set@ (whether or not @x@ was
 -- in @set@)
 --
