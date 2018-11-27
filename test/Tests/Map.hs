@@ -12,7 +12,7 @@ import           Data.Functor.Identity
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Hedgehog
-import           Tests.Map.Util
+import           Tests.Util
 import qualified Data.Map                   as M
 import qualified Data.Map.NonEmpty          as NEM
 import qualified Data.Map.NonEmpty.Internal as NEM
@@ -23,9 +23,6 @@ import qualified Hedgehog.Range             as Range
 mapTests :: Group
 mapTests = $$(discover)
 
-
-dummyKey :: KeyType
-dummyKey = K 0 "hello"
 
 
 
@@ -87,10 +84,13 @@ prop_toMapIso2 = property $ do
     tripping m0 (maybe M.empty NEM.toMap)
                 (Identity . NEM.nonEmptyMap)
 
+
+
+
 prop_insertMapWithKey :: Property
-prop_insertMapWithKey = ttProp (gf3 valGen :?> GTKey :-> GTVal :-> GTNEMap :-> TTNEMap)
+prop_insertMapWithKey = ttProp (gf3 valGen :?> GTKey :-> GTVal :-> GTMap :-> TTNEMap)
     M.insertWithKey
-    NEM.insertWithKey
+    NEM.insertMapWithKey
 
 prop_singleton :: Property
 prop_singleton = ttProp (GTKey :-> GTVal :-> TTNEMap)
@@ -563,12 +563,12 @@ prop_filterWithKey = ttProp (gf2 Gen.bool :?> GTNEMap :-> TTMap)
     NEM.filterWithKey
 
 prop_restrictKeys :: Property
-prop_restrictKeys = ttProp (GTNEMap :-> GTSet GTKey :-> TTMap)
+prop_restrictKeys = ttProp (GTNEMap :-> GTSet :-> TTMap)
     M.restrictKeys
     NEM.restrictKeys
 
 prop_withoutKeys :: Property
-prop_withoutKeys = ttProp (GTNEMap :-> GTSet GTKey :-> TTMap)
+prop_withoutKeys = ttProp (GTNEMap :-> GTSet :-> TTMap)
     M.withoutKeys
     NEM.withoutKeys
 
@@ -630,6 +630,8 @@ prop_lookupIndex = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTOther)
     M.lookupIndex
     NEM.lookupIndex
 
+  -- , findIndex
+  -- , elemAt
   -- , adjustAt
   -- , updateAt
   -- , deleteAt

@@ -255,7 +255,6 @@ import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Map                   (Map)
 import           Data.Map.NonEmpty.Internal
 import           Data.Maybe hiding          (mapMaybe)
-import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1)
 import           Data.Set.NonEmpty.Internal (NESet(..))
 import           Data.These

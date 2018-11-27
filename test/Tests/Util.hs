@@ -7,9 +7,10 @@
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
+{-# OPTIONS_GHC -Wno-orphans     #-}
 
-module Tests.Map.Util (
-    K(..), KeyType, overKX
+module Tests.Util (
+    K(..), KeyType, overKX, dummyKey
   , SortType(..)
   , GenFunc(..), gf1, gf2, gf3
   , GenType(..)
@@ -17,7 +18,7 @@ module Tests.Map.Util (
   , ttProp
   , Context(..)
   , Bazaar(..)
-  , keyGen, valGen, mapSize, mapGen, neMapGen
+  , keyGen, valGen, mapSize, mapGen, neMapGen, setGen, neSetGen
   ) where
 
 import           Control.Applicative
@@ -32,6 +33,8 @@ import           Data.List.NonEmpty       (NonEmpty(..))
 import           Data.Map                 (Map)
 import           Data.Map.NonEmpty        (NEMap)
 import           Data.Maybe
+import           Data.Set                 (Set)
+import           Data.Set.NonEmpty        (NESet)
 import           Data.These
 import           Hedgehog
 import           Hedgehog.Function hiding ((:*:))
@@ -39,6 +42,7 @@ import qualified Data.List.NonEmpty       as NE
 import qualified Data.Map                 as M
 import qualified Data.Map.NonEmpty        as NEM
 import qualified Data.Set                 as S
+import qualified Data.Set.NonEmpty        as NES
 import qualified Data.Text                as T
 import qualified Hedgehog.Gen             as Gen
 import qualified Hedgehog.Range           as Range
@@ -49,6 +53,9 @@ data K a b = K { getKX :: !a, getKY :: !b }
 
 withK :: (a -> b -> c) -> K a b -> c
 withK f (K x y) = f x y
+
+overKX :: (a -> c) -> K a b -> K c b
+overKX f (K x y) = K (f x) y
 
 instance Eq a => Eq (K a b) where
     (==) = (==) `on` getKX
@@ -61,8 +68,9 @@ instance (Arg a, Arg b) => Arg (K a b)
 
 type KeyType = K Int T.Text
 
-overKX :: (a -> c) -> K a b -> K c b
-overKX f (K x y) = K (f x) y
+dummyKey :: KeyType
+dummyKey = K 0 "hello"
+
 
 instance (Num a, Monoid b) => Num (K a b) where
     K x1 y1 + K x2 y2 = K (x1 + x2) (y1 <> y2)
@@ -96,25 +104,25 @@ data SortType :: Type -> Type where
     STDistinctDesc :: Ord a => SortType (a, b)
 
 data GenType :: Type -> Type -> Type where
-    GTNEMap  :: GenType (M.Map KeyType T.Text) (NEM.NEMap KeyType T.Text)
-    GTKey    :: GenType KeyType                KeyType
-    GTVal    :: GenType T.Text                 T.Text
+    GTNEMap  :: GenType (Map KeyType T.Text) (NEMap KeyType T.Text)
+    GTMap    :: GenType (Map KeyType T.Text) (Map KeyType T.Text)
+    GTNESet  :: GenType (Set KeyType       ) (NESet KeyType       )
+    GTKey    :: GenType KeyType              KeyType
+    GTVal    :: GenType T.Text               T.Text
     GTOther  :: Gen a
-             -> GenType a                      a
-    GTMaybe  :: GenType a                      b
-             -> GenType (Maybe a)              (Maybe b)
-    (:&:)    :: GenType a                      b
-             -> GenType c                      d
-             -> GenType (a, c)                 (b, d)
+             -> GenType a                    a
+    GTMaybe  :: GenType a                    b
+             -> GenType (Maybe a)            (Maybe b)
+    (:&:)    :: GenType a                    b
+             -> GenType c                    d
+             -> GenType (a, c)               (b, d)
     GTNEList :: Maybe (Range Int)
-             -> GenType a                      b
-             -> GenType [a]                    (NonEmpty b)
-    GTSet    :: (Ord a, Ord b)
-             => GenType a                      b
-             -> GenType (S.Set a)              (S.Set b)
+             -> GenType a                    b
+             -> GenType [a]                  (NonEmpty b)
+    GTSet    :: GenType (Set KeyType)        (Set KeyType)
     GTSorted :: SortType a
-             -> GenType [a]                    (NonEmpty a)
-             -> GenType [a]                    (NonEmpty a)
+             -> GenType [a]                  (NonEmpty a)
+             -> GenType [a]                  (NonEmpty a)
 
 data GenFunc :: Type -> Type -> Type -> Type where
     GF  :: (Show a, Arg a, Vary a, Show b)
@@ -140,47 +148,46 @@ gf3 = (`GF` (curry . curry))
 
 data TestType :: Type -> Type -> Type where
     TTNEMap  :: (Eq a, Show a)
-             => TestType (M.Map KeyType a) (NEM.NEMap KeyType a)
+             => TestType (Map KeyType a) (NEMap KeyType a  )
+    TTNESet  :: TestType (Set KeyType  ) (NESet KeyType    )
     TTMap    :: (Eq a, Show a)
-             => TestType (M.Map KeyType a) (M.Map     KeyType a)
-    TTKey    :: TestType KeyType           KeyType
-    TTVal    :: TestType T.Text            T.Text
+             => TestType (Map KeyType a) (Map    KeyType a )
+    TTSet    :: TestType (Set KeyType  ) (Set    KeyType   )
+    TTKey    :: TestType KeyType         KeyType
+    TTVal    :: TestType T.Text          T.Text
     TTOther  :: (Eq a, Show a)
-             => TestType a                 a
+             => TestType a               a
     TTThese  :: (Eq a, Show a, Monoid a, Eq c, Show c, Monoid c)
-             => TestType a                 b
-             -> TestType c                 d
-             -> TestType (a, c)            (These b d)
+             => TestType a               b
+             -> TestType c               d
+             -> TestType (a, c)          (These b d)
     TTMThese :: (Eq a, Show a, Monoid a, Eq c, Show c, Monoid c)
-             => TestType a                 b
-             -> TestType c                 d
-             -> TestType (a, c)            (Maybe (These b d))
-    TTMaybe  :: TestType a                 b
-             -> TestType (Maybe a)         (Maybe b)
-    TTNEList :: TestType a                 b
-             -> TestType [a]               (NonEmpty b)
-    TTCtx    :: TestType (c -> t)          (d -> u)
-             -> TestType a                 b
-             -> TestType (Context a c t)   (Context b d u)
+             => TestType a               b
+             -> TestType c               d
+             -> TestType (a, c)          (Maybe (These b d))
+    TTMaybe  :: TestType a               b
+             -> TestType (Maybe a)       (Maybe b)
+    TTNEList :: TestType a               b
+             -> TestType [a]             (NonEmpty b)
+    TTCtx    :: TestType (c -> t)        (d -> u)
+             -> TestType a               b
+             -> TestType (Context a c t) (Context b d u)
     TTBazaar :: (Show a, Show b, Show c, Show d)
-             => GenType  c                 d
-             -> TestType t                 u
-             -> TestType a                 b
-             -> TestType (Bazaar a c t)    (Bazaar b d u)
+             => GenType  c               d
+             -> TestType t               u
+             -> TestType a               b
+             -> TestType (Bazaar a c t)  (Bazaar b d u)
     (:*:)    :: (Eq a, Eq b, Eq c, Eq d, Show a, Show b, Show c, Show d)
-             => TestType a                 b
-             -> TestType c                 d
-             -> TestType (a, c)            (b, d)
-    (:?>)    :: GenFunc f   c             d
-             -> TestType    c             d
-             -> TestType    (f -> c)      (f -> d)
-             -- Gen b
-             -- -> TestType c                 d
-             -- -> TestType ((a -> b) -> c)   ((a -> b) -> d)
+             => TestType a               b
+             -> TestType c               d
+             -> TestType (a, c)          (b, d)
+    (:?>)    :: GenFunc f   c            d
+             -> TestType    c            d
+             -> TestType    (f -> c)     (f -> d)
     (:->)    :: (Show a, Show b)
-             => GenType  a                 b
-             -> TestType c                 d
-             -> TestType (a -> c)          (b -> d)
+             => GenType  a               b
+             -> TestType c               d
+             -> TestType (a -> c)        (b -> d)
 
 infixr 2 :&:
 infixr 1 :->
@@ -200,6 +207,9 @@ runSorter = \case
 runGT :: GenType a b -> Gen (a, b)
 runGT = \case
     GTNEMap    -> (\n -> (NEM.IsNonEmpty n, n)) <$> neMapGen
+    GTMap      -> join (,) <$> mapGen
+    GTNESet    -> (\n -> (NES.IsNonEmpty n, n)) <$> neSetGen
+    GTSet      -> join (,) <$> setGen
     GTKey      -> join (,) <$> keyGen
     GTVal      -> join (,) <$> valGen
     GTOther g  -> join (,) <$> g
@@ -211,19 +221,21 @@ runGT = \case
       pure ((x1,x2), (y1,y2))
     GTNEList r g -> first toList . NE.unzip <$>
         Gen.nonEmpty (fromMaybe mapSize r) (runGT g)
-    GTSet g -> bimap S.fromList S.fromList . unzip <$>
-        Gen.list mapSize (runGT g)
     GTSorted s g -> bimap (runSorter s) (fromJust . NE.nonEmpty . runSorter s . toList) <$>
                       runGT g
 
 runTT :: Monad m => TestType a b -> a -> b -> PropertyT m ()
 runTT = \case
     TTNEMap -> \x y -> do
-      annotate $ show y
       assert $ NEM.valid y
-      unK x === unK (NEM.IsNonEmpty y)
+      unKMap x === unKMap (NEM.IsNonEmpty y)
+    TTNESet -> \x y -> do
+      assert $ NES.valid y
+      unKSet x === unKSet (NES.IsNonEmpty y)
     TTMap   -> \x y ->
-      unK x === unK y
+      unKMap x === unKMap y
+    TTSet   -> \x y ->
+      unKSet x === unKSet y
     TTKey   -> \(K x1 y1) (K x2 y2) -> do
       x1 === x2
       y1 === y2
@@ -272,8 +284,10 @@ runTT = \case
       (x, y) <- forAll $ runGT gt
       runTT tt (f x) (g y)
   where
-    unK :: (Ord k, Ord j) => Map (K k j) c -> M.Map (k, j) c
-    unK = M.mapKeys (withK (,))
+    unKMap :: (Ord k, Ord j) => Map (K k j) c -> Map (k, j) c
+    unKMap = M.mapKeys (withK (,))
+    unKSet :: (Ord k, Ord j) => Set (K k j) -> Set (k, j)
+    unKSet = S.map (withK (,))
 
 -- testBazaar'
 --     :: forall a b c d t u m. (Show c, Show d, Monad m)
@@ -370,6 +384,12 @@ mapGen = Gen.map mapSize $ (,) <$> keyGen <*> valGen
 
 neMapGen :: MonadGen m => m (NEMap KeyType T.Text)
 neMapGen = Gen.just $ NEM.nonEmptyMap <$> mapGen
+
+setGen :: MonadGen m => m (Set KeyType)
+setGen = Gen.set mapSize keyGen
+
+neSetGen :: MonadGen m => m (NESet KeyType)
+neSetGen = Gen.just $ NES.nonEmptySet <$> setGen
 
 
 
