@@ -202,6 +202,13 @@ insertIntSetMin = NEIntSet
 -- it is left both for consistency and as a placeholder for a future
 -- version where optimizations are implemented to allow for a faster
 -- implementation.
+--
+-- > insertIntSetMin 7 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [5, 7])
+
+-- these currently are all valid, but shouldn't be
+-- > valid (insertIntSetMin 7 (Data.IntSet.fromList [5, 3])) == True
+-- > valid (insertIntSetMin 2 (Data.IntSet.fromList [5, 3])) == False
+-- > valid (insertIntSetMin 5 (Data.IntSet.fromList [5, 3])) == False
 insertIntSetMax :: Key -> IntSet -> NEIntSet
 insertIntSetMax x = withNEIntSet (singleton x) go
   where

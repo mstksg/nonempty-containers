@@ -164,7 +164,7 @@ module Data.Map.NonEmpty (
   , foldl
   , foldr1
   , foldl1
-  , foldrWithKey
+  , foldrWithKey            -- TODO: foldr1WithKey
   , foldlWithKey
   , foldMapWithKey
 
@@ -256,6 +256,7 @@ import           Data.Map                   (Map)
 import           Data.Map.NonEmpty.Internal
 import           Data.Maybe hiding          (mapMaybe)
 import           Data.Semigroup.Foldable    (Foldable1)
+import           Data.Set                   (Set)
 import           Data.Set.NonEmpty.Internal (NESet(..))
 import           Data.These
 import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map, take, drop, splitAt)
@@ -1586,12 +1587,10 @@ filterWithKey f (NEMap k v m)
 -- m \`restrictKeys\` s = 'filterWithKey' (\k _ -> k ``Set.member`` s) m
 -- m \`restrictKeys\` s = m ``intersection`` 'fromSet' (const ()) s
 -- @
-
--- TODO: rewrite with NonEmpty set?
 restrictKeys
     :: Ord k
     => NEMap k a
-    -> S.Set k
+    -> Set k
     -> Map k a
 restrictKeys n@(NEMap k v m) xs = case S.minView xs of
     Nothing      -> M.empty
@@ -1614,7 +1613,7 @@ restrictKeys n@(NEMap k v m) xs = case S.minView xs of
 withoutKeys
     :: Ord k
     => NEMap k a
-    -> S.Set k
+    -> Set k
     -> Map k a
 withoutKeys n@(NEMap k v m) xs = case S.minView xs of
     Nothing      -> toMap n
@@ -1990,8 +1989,6 @@ isProperSubmapOf = isProperSubmapOfBy (==)
 --  > isProperSubmapOfBy (==) (fromList ((1,1) :| [(2,2)])) (fromList ((1,1) :| [(2,2)]))
 --  > isProperSubmapOfBy (==) (fromList ((1,1) :| [(2,2)])) (singleton 1 1))
 --  > isProperSubmapOfBy (<)  (singleton 1 1)               (fromList ((1,1) :| [(2,2)]))
-
--- TODO: is there a better way to do this?
 isProperSubmapOfBy
     :: Ord k
     => (a -> b -> Bool)
