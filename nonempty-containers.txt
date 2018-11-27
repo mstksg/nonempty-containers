@@ -3183,15 +3183,15 @@ nonEmptySet :: Set a -> Maybe (NESet a)
 toSet :: NESet a -> Set a
 
 -- | <i>O(log n)</i>. A general continuation-based way to consume a
---   <a>Set</a> as if it were an <a>NESet</a>. <tt><a>withNESet</a> def
+--   <a>Set</a> as if it were an <a>NESet</a>. <tt><a>withNonEmpty</a> def
 --   f</tt> will take a <a>Set</a>. If set is empty, it will evaluate to
 --   <tt>def</tt>. Otherwise, a non-empty set <a>NESet</a> will be fed to
 --   the function <tt>f</tt> instead.
 --   
 --   <pre>
---   <a>nonEmptySet</a> == <a>withNESet</a> <a>Nothing</a> <a>Just</a>
+--   <a>nonEmptySet</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
 --   </pre>
-withNESet :: r -> (NESet a -> r) -> Set a -> r
+withNonEmpty :: r -> (NESet a -> r) -> Set a -> r
 
 -- | <i>O(log n)</i>. Convert a <a>Set</a> into an <a>NESet</a> by adding a
 --   value. Because of this, we know that the set must have at least one
