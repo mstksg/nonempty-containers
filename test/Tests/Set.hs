@@ -283,8 +283,8 @@ prop_map = ttProp (gf1 keyGen :?> GTNESet :-> TTNESet)
     S.map
     NES.map
 
-prop_mapKeysMonotonic :: Property
-prop_mapKeysMonotonic = ttProp (GF valGen go :?> GTNESet :-> TTNESet)
+prop_mapMonotonic :: Property
+prop_mapMonotonic = ttProp (GF valGen go :?> GTNESet :-> TTNESet)
     S.mapMonotonic
     NES.mapMonotonic
   where

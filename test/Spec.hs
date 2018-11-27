@@ -1,5 +1,6 @@
 import           Test.Tasty
 import           Test.Tasty.Hedgehog
+import           Tests.IntSet
 import           Tests.Map
 import           Tests.Set
 
@@ -11,5 +12,6 @@ main :: IO ()
 main = defaultMain . setOpts $
             testGroup "Tests" [ mapTests
                               , setTests
+                              , intSetTests
                               ]
 
