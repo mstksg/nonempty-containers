@@ -97,7 +97,7 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 3.  You can use the 'Data.IntMap.NonEmpty.IsNonEmpty' and
 --     'Data.IntMap.NonEmpty.IsEmpty' patterns to "pattern match" on a 'IntMap'
 --     to reveal it as either containing a 'NEIntMap' or an empty map.
--- 4.  'Data.IntMap.NonEmpty.withNEIntMap' offers a continuation-based interface
+-- 4.  'Data.IntMap.NonEmpty.withNonEmpty' offers a continuation-based interface
 --     for deconstructing a 'IntMap' and treating it as if it were an 'NEIntMap'.
 --
 -- You can convert an 'NEIntMap' into a 'IntMap' with 'toMap' or

@@ -52,7 +52,7 @@ module Data.Set.NonEmpty (
   , pattern IsEmpty
   , nonEmptySet
   , toSet
-  , withNESet
+  , withNonEmpty
   , insertSet
   , insertSetMin
   , insertSetMax
@@ -216,24 +216,24 @@ pattern IsEmpty <- (S.null->True)
 unsafeFromSet
     :: Set a
     -> NESet a
-unsafeFromSet = withNESet e id
+unsafeFromSet = withNonEmpty e id
   where
     e = errorWithoutStackTrace "NESet.unsafeFromSet: empty set"
 {-# INLINE unsafeFromSet #-}
 
 -- | /O(log n)/. A general continuation-based way to consume a 'Set' as if
--- it were an 'NESet'. @'withNESet' def f@ will take a 'Set'.  If set is
+-- it were an 'NESet'. @'withNonEmpty' def f@ will take a 'Set'.  If set is
 -- empty, it will evaluate to @def@.  Otherwise, a non-empty set 'NESet'
 -- will be fed to the function @f@ instead.
 --
--- @'nonEmptySet' == 'withNESet' 'Nothing' 'Just'@
-withNESet
+-- @'nonEmptySet' == 'withNonEmpty' 'Nothing' 'Just'@
+withNonEmpty
     :: r                  -- ^ value to return if set is empty
     -> (NESet a -> r)     -- ^ function to apply if set is not empty
     -> Set a
     -> r
-withNESet def f = maybe def f . nonEmptySet
-{-# INLINE withNESet #-}
+withNonEmpty def f = maybe def f . nonEmptySet
+{-# INLINE withNonEmpty #-}
 
 -- | /O(log n)/. Convert a 'Set' into an 'NESet' by adding a value.
 -- Because of this, we know that the set must have at least one
@@ -245,7 +245,7 @@ withNESet def f = maybe def f . nonEmptySet
 -- > insertSet 4 (Data.Set.fromList [5, 3]) == fromList (3 :| [4, 5])
 -- > insertSet 4 Data.Set.empty == singleton 4 "c"
 insertSet :: Ord a => a -> Set a -> NESet a
-insertSet x = withNESet (singleton x) (insert x)
+insertSet x = withNonEmpty (singleton x) (insert x)
 {-# INLINE insertSet #-}
 
 -- | /O(1)/ Convert a 'Set' into an 'NESet' by adding a value where the
@@ -275,7 +275,7 @@ insertSetMin = NESet
 -- > valid (insertSetMin 2 (Data.Set.fromList [5, 3])) == False
 -- > valid (insertSetMin 5 (Data.Set.fromList [5, 3])) == False
 insertSetMax :: a -> Set a -> NESet a
-insertSetMax x = withNESet (singleton x) go
+insertSetMax x = withNonEmpty (singleton x) go
   where
     go (NESet x0 s0) = NESet x0 . insertMaxSet x $ s0
 {-# INLINE insertSetMax #-}
@@ -347,7 +347,7 @@ powerSet (NESet x s0) = case nonEmptySet p1 of
     p0@(NESet _ p0s) = forSure $ S.powerSet s0
     p1 :: Set (NESet a)
     p1 = S.mapMonotonic forSure p0s  -- only minimal element is empty, so the rest aren't
-    forSure = withNESet (errorWithoutStackTrace "NESet.powerSet: internal error")
+    forSure = withNonEmpty (errorWithoutStackTrace "NESet.powerSet: internal error")
                         id
 {-# INLINABLE powerSet #-}
 

@@ -80,7 +80,7 @@ import qualified Data.Set.Internal       as S
 -- 3.  You can use the 'Data.Set.NonEmpty.IsNonEmpty' and
 --     'Data.Set.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Set'
 --     to reveal it as either containing a 'NESet' or an empty map.
--- 4.  'Data.Set.NonEmpty.withNESet' offers a continuation-based interface
+-- 4.  'Data.Set.NonEmpty.withNonEmpty' offers a continuation-based interface
 --     for deconstructing a 'Set' and treating it as if it were an 'NESet'.
 --
 -- You can convert an 'NESet' into a 'Set' with 'toSet' or

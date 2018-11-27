@@ -97,7 +97,7 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 3.  You can use the 'Data.Map.NonEmpty.IsNonEmpty' and
 --     'Data.Map.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Map'
 --     to reveal it as either containing a 'NEMap' or an empty map.
--- 4.  'Data.Map.NonEmpty.withNEMap' offers a continuation-based interface
+-- 4.  'Data.Map.NonEmpty.withNonEmpty' offers a continuation-based interface
 --     for deconstructing a 'Map' and treating it as if it were an 'NEMap'.
 --
 -- You can convert an 'NEMap' into a 'Map' with 'toMap' or

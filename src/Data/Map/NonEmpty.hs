@@ -58,7 +58,7 @@ module Data.Map.NonEmpty (
   , pattern IsEmpty
   , nonEmptyMap
   , toMap
-  , withNEMap
+  , withNonEmpty
   , insertMap
   , insertMapWith
   , insertMapWithKey
@@ -323,24 +323,24 @@ pattern IsEmpty <- (M.null->True)
 unsafeFromMap
     :: Map k a
     -> NEMap k a
-unsafeFromMap = withNEMap e id
+unsafeFromMap = withNonEmpty e id
   where
     e = errorWithoutStackTrace "NEMap.unsafeFromMap: empty map"
 {-# INLINE unsafeFromMap #-}
 
 -- | /O(log n)/. A general continuation-based way to consume a 'Map' as if
--- it were an 'NEMap'. @'withNEMap' def f@ will take a 'Map'.  If map is
+-- it were an 'NEMap'. @'withNonEmpty' def f@ will take a 'Map'.  If map is
 -- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NEMap'
 -- will be fed to the function @f@ instead.
 --
--- @'nonEmptyMap' == 'withNEMap' 'Nothing' 'Just'@
-withNEMap
+-- @'nonEmptyMap' == 'withNonEmpty' 'Nothing' 'Just'@
+withNonEmpty
     :: r                    -- ^ value to return if map is empty
     -> (NEMap k a -> r)     -- ^ function to apply if map is not empty
     -> Map k a
     -> r
-withNEMap def f = maybe def f . nonEmptyMap
-{-# INLINE withNEMap #-}
+withNonEmpty def f = maybe def f . nonEmptyMap
+{-# INLINE withNonEmpty #-}
 
 -- | /O(n)/. Build a non-empty map from a non-empty set of keys and
 -- a function which for each key computes its value.
@@ -806,7 +806,7 @@ toDescList (NEMap k0 v0 m) = M.foldlWithKey' go ((k0, v0) :| []) m
 -- > insertMap 4 "c" (Data.Map.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
 -- > insertMap 4 "c" Data.Map.empty == singleton 4 "c"
 insertMap :: Ord k => k -> a -> Map k a -> NEMap k a
-insertMap k v = withNEMap (singleton k v) (insert k v)
+insertMap k v = withNonEmpty (singleton k v) (insert k v)
 {-# INLINE insertMap #-}
 
 -- | /O(log n)/. Convert a 'Map' into an 'NEMap' by adding a key-value
@@ -823,7 +823,7 @@ insertMapWith
     -> a
     -> Map k a
     -> NEMap k a
-insertMapWith f k v = withNEMap (singleton k v) (insertWith f k v)
+insertMapWith f k v = withNonEmpty (singleton k v) (insertWith f k v)
 {-# INLINE insertMapWith #-}
 
 -- | /O(log n)/. Convert a 'Map' into an 'NEMap' by adding a key-value
@@ -843,7 +843,7 @@ insertMapWithKey
     -> a
     -> Map k a
     -> NEMap k a
-insertMapWithKey f k v = withNEMap (singleton k v) (insertWithKey f k v)
+insertMapWithKey f k v = withNonEmpty (singleton k v) (insertWithKey f k v)
 {-# INLINE insertMapWithKey #-}
 
 -- | /O(1)/ Convert a 'Map' into an 'NEMap' by adding a key-value pair
@@ -881,7 +881,7 @@ insertMapMax
     -> a
     -> Map k a
     -> NEMap k a
-insertMapMax k v = withNEMap (singleton k v) go
+insertMapMax k v = withNonEmpty (singleton k v) go
   where
     go (NEMap k0 v0 m0) = NEMap k0 v0 . insertMaxMap k v $ m0
 {-# INLINE insertMapMax #-}

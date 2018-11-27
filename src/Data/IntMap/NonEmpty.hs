@@ -14,7 +14,7 @@ module Data.IntMap.NonEmpty (
   , pattern IsEmpty
   , nonEmptyMap
   , toMap
-  , withNEIntMap
+  , withNonEmpty
   , insertMap
   , insertMapWith
   , insertMapWithKey
@@ -255,24 +255,24 @@ pattern IsEmpty <- (M.null->True)
 unsafeFromMap
     :: IntMap a
     -> NEIntMap a
-unsafeFromMap = withNEIntMap e id
+unsafeFromMap = withNonEmpty e id
   where
     e = errorWithoutStackTrace "NEIntMap.unsafeFromMap: empty map"
 {-# INLINE unsafeFromMap #-}
 
 -- | /O(log n)/. A general continuation-based way to consume a 'IntMap' as if
--- it were an 'NEIntMap'. @'withNEIntMap' def f@ will take a 'IntMap'.  If map is
+-- it were an 'NEIntMap'. @'withNonEmpty' def f@ will take a 'IntMap'.  If map is
 -- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NEIntMap'
 -- will be fed to the function @f@ instead.
 --
--- @'nonEmptyMap' == 'withNEIntMap' 'Nothing' 'Just'@
-withNEIntMap
+-- @'nonEmptyMap' == 'withNonEmpty' 'Nothing' 'Just'@
+withNonEmpty
     :: r                    -- ^ value to return if map is empty
     -> (NEIntMap a -> r)     -- ^ function to apply if map is not empty
     -> IntMap a
     -> r
-withNEIntMap def f = maybe def f . nonEmptyMap
-{-# INLINE withNEIntMap #-}
+withNonEmpty def f = maybe def f . nonEmptyMap
+{-# INLINE withNonEmpty #-}
 
 -- | /O(log n)/. Convert a 'IntMap' into an 'NEIntMap' by adding a key-value
 -- pair.  Because of this, we know that the map must have at least one
@@ -287,7 +287,7 @@ withNEIntMap def f = maybe def f . nonEmptyMap
 
 -- TODO: should this be called insertMap?
 insertMap :: Key -> a -> IntMap a -> NEIntMap a
-insertMap k v = withNEIntMap (singleton k v) (insert k v)
+insertMap k v = withNonEmpty (singleton k v) (insert k v)
 {-# INLINE insertMap #-}
 
 -- | /O(log n)/. Convert a 'IntMap' into an 'NEIntMap' by adding a key-value
@@ -303,7 +303,7 @@ insertMapWith
     -> a
     -> IntMap a
     -> NEIntMap a
-insertMapWith f k v = withNEIntMap (singleton k v) (insertWith f k v)
+insertMapWith f k v = withNonEmpty (singleton k v) (insertWith f k v)
 {-# INLINE insertMapWith #-}
 
 -- | /O(log n)/. Convert a 'IntMap' into an 'NEIntMap' by adding a key-value
@@ -322,7 +322,7 @@ insertMapWithKey
     -> a
     -> IntMap a
     -> NEIntMap a
-insertMapWithKey f k v = withNEIntMap (singleton k v) (insertWithKey f k v)
+insertMapWithKey f k v = withNonEmpty (singleton k v) (insertWithKey f k v)
 {-# INLINE insertMapWithKey #-}
 
 -- | /O(1)/ Convert a 'IntMap' into an 'NEIntMap' by adding a key-value pair
@@ -363,7 +363,7 @@ insertMapMax
     -> a
     -> IntMap a
     -> NEIntMap a
-insertMapMax k v = withNEIntMap (singleton k v) go
+insertMapMax k v = withNonEmpty (singleton k v) go
   where
     go (NEIntMap k0 v0 m0) = NEIntMap k0 v0 . insertMaxIntMap k v $ m0
 {-# INLINE insertMapMax #-}

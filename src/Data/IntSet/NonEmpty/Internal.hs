@@ -70,7 +70,7 @@ import qualified Data.Semigroup.Foldable as F1
 -- 3.  You can use the 'Data.IntSet.NonEmpty.IsNonEmpty' and
 --     'Data.IntSet.NonEmpty.IsEmpty' patterns to "pattern match" on a 'IntSet'
 --     to reveal it as either containing a 'NEIntSet' or an empty map.
--- 4.  'Data.IntSet.NonEmpty.withNEIntSet' offers a continuation-based interface
+-- 4.  'Data.IntSet.NonEmpty.withNonEmpty' offers a continuation-based interface
 --     for deconstructing a 'IntSet' and treating it as if it were an 'NEIntSet'.
 --
 -- You can convert an 'NEIntSet' into a 'IntSet' with 'toSet' or
