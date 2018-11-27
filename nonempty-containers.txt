@@ -2877,10 +2877,6 @@ findIndex :: Ord k => k -> NEMap k a -> Int
 --   </pre>
 elemAt :: Int -> NEMap k a -> (k, a)
 
--- | <i>O(log n)</i>. Variant of <a>updateAt</a> that disallows deletion.
---   Allows us to guarantee that the result is also a non-empty Map.
-adjustAt :: (k -> a -> a) -> Int -> NEMap k a -> NEMap k a
-
 -- | <i>O(log n)</i>. Update the element at <i>index</i>, i.e. by its
 --   zero-based index in the sequence sorted by keys. If the <i>index</i>
 --   is out of range (less than zero, greater or equal to <a>size</a> of
@@ -2902,6 +2898,10 @@ adjustAt :: (k -> a -> a) -> Int -> NEMap k a -> NEMap k a
 --   updateAt (\_ _  -&gt; Nothing)  (-1) (fromList ((5,"a") :| [(3,"b")]))    Error: index out of range
 --   </pre>
 updateAt :: (k -> a -> Maybe a) -> Int -> NEMap k a -> Map k a
+
+-- | <i>O(log n)</i>. Variant of <a>updateAt</a> that disallows deletion.
+--   Allows us to guarantee that the result is also a non-empty Map.
+adjustAt :: (k -> a -> a) -> Int -> NEMap k a -> NEMap k a
 
 -- | <i>O(log n)</i>. Delete the element at <i>index</i>, i.e. by its
 --   zero-based index in the sequence sorted by keys. If the <i>index</i>
