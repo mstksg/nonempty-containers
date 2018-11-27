@@ -167,6 +167,9 @@ data TestType :: Type -> Type -> Type where
              -> TestType (a, c)          (Maybe (These b d))
     TTMaybe  :: TestType a               b
              -> TestType (Maybe a)       (Maybe b)
+    TTEither :: TestType a               b
+             -> TestType c               d
+             -> TestType (Either a c)    (Either b d)
     TTNEList :: TestType a               b
              -> TestType [a]             (NonEmpty b)
     TTCtx    :: TestType (c -> t)        (d -> u)
@@ -267,6 +270,13 @@ runTT = \case
     TTMaybe tt -> \x y -> do
       isJust y === isJust y
       traverse_ (uncurry (runTT tt)) $ liftA2 (,) x y
+    TTEither tl tr -> \case
+      Left x  -> \case
+        Left y  -> runTT tl x y
+        Right _ -> annotate "Left -> Right" *> failure
+      Right x -> \case
+        Left _  -> annotate "Right -> Left" *> failure
+        Right y -> runTT tr x y
     TTNEList tt -> \xs ys -> do
       length xs === length ys
       zipWithM_ (runTT tt) xs (toList ys)

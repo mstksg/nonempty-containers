@@ -2,20 +2,15 @@
 
 module Tests.Set (setTests) where
 
-import           Control.Applicative
-import           Data.Coerce
-import           Data.Foldable
 import           Data.Functor.Identity
-import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Hedgehog
 import           Tests.Util
-import qualified Data.Set                      as S
-import qualified Data.Set.NonEmpty             as NES
-import qualified Data.Set.NonEmpty.Internal    as NES
-import qualified Data.Text                     as T
-import qualified Hedgehog.Gen                  as Gen
-import qualified Hedgehog.Range                as Range
+import qualified Data.Set                   as S
+import qualified Data.Set.NonEmpty          as NES
+import qualified Data.Set.NonEmpty.Internal as NES
+import qualified Hedgehog.Gen               as Gen
+import qualified Hedgehog.Range             as Range
 
 setTests :: Group
 setTests = $$(discover)
@@ -111,31 +106,15 @@ prop_fromList = ttProp (GTNEList Nothing GTKey :-> TTNESet)
     S.fromList
     NES.fromList
 
--- prop_powerSet :: Property
--- prop_powerSet = ttProp (GTNESet :-> TTCustom _)
---     S.powerSet
---     NES.powerSet
-
+prop_powerSet :: Property
+prop_powerSet = ttProp (GTNESet :-> TTNEList TTNESet)
+    (S.toList   . S.powerSet  )
+    (NES.toList . NES.powerSet)
 
 prop_insert :: Property
 prop_insert = ttProp (GTKey :-> GTNESet :-> TTNESet)
     S.insert
     NES.insert
-
-  -- -- * Deletion
-  -- , delete
-
-  -- -- * Query
-  -- , member
-  -- , notMember
-  -- , lookupLT
-  -- , lookupGT
-  -- , lookupLE
-  -- , lookupGE
-  -- , size
-  -- , isSubsetOf
-  -- , isProperSubsetOf
-  -- , disjoint
 
 prop_delete :: Property
 prop_delete = ttProp (GTKey :-> GTNESet :-> TTSet)
@@ -212,8 +191,15 @@ prop_intersection = ttProp (GTNESet :-> GTNESet :-> TTSet)
     S.intersection
     NES.intersection
 
-  -- , cartesianProduct
-  -- , disjointUnion
+prop_cartesianProduct :: Property
+prop_cartesianProduct = ttProp (GTNESet :-> GTNESet :-> TTNEList (TTKey :*: TTKey))
+    (\xs -> S.toList   . S.cartesianProduct   xs)
+    (\xs -> NES.toList . NES.cartesianProduct xs)
+
+prop_disjointUnion :: Property
+prop_disjointUnion = ttProp (GTNESet :-> GTNESet :-> TTNEList (TTEither TTKey TTKey))
+    (\xs -> S.toList   . S.disjointUnion   xs)
+    (\xs -> NES.toList . NES.disjointUnion xs)
 
 prop_filter :: Property
 prop_filter = ttProp (gf1 Gen.bool :?> GTNESet :-> TTSet)
