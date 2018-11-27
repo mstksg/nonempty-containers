@@ -13,6 +13,689 @@
 
 
 -- | Unsafe internal-use functions used in the implementation of
+--   <a>Data.IntSet.NonEmpty</a>. These functions can potentially be used
+--   to break the abstraction of <a>NEIntSet</a> and produce unsound sets,
+--   so be wary!
+module Data.IntSet.NonEmpty.Internal
+
+-- | A non-empty set of values <tt>a</tt>. At least one value exists in an
+--   <tt><a>NEIntSet</a> a</tt> at all times.
+--   
+--   Functions that <i>take</i> an <a>NEIntSet</a> can safely operate on it
+--   with the assumption that it has at least one item.
+--   
+--   Functions that <i>return</i> an <a>NEIntSet</a> provide an assurance
+--   that the result has at least one item.
+--   
+--   <a>Data.IntSet.NonEmpty</a> re-exports the API of <a>Data.IntSet</a>,
+--   faithfully reproducing asymptotics, typeclass constraints, and
+--   semantics. Functions that ensure that input and output sets are both
+--   non-empty (like <a>insert</a>) return <a>NEIntSet</a>, but functions
+--   that might potentially return an empty map (like <a>delete</a>) return
+--   a <a>IntSet</a> instead.
+--   
+--   You can directly construct an <a>NEIntSet</a> with the API from
+--   <a>Data.IntSet.NonEmpty</a>; it's more or less the same as
+--   constructing a normal <a>IntSet</a>, except you don't have access to
+--   <a>empty</a>. There are also a few ways to construct an
+--   <a>NEIntSet</a> from a <a>IntSet</a>:
+--   
+--   <ol>
+--   <li>The <a>nonEmptyIntSet</a> smart constructor will convert a
+--   <tt><a>IntSet</a> a</tt> into a <tt><a>Maybe</a> (<a>NEIntSet</a>
+--   a)</tt>, returning <a>Nothing</a> if the original <a>IntSet</a> was
+--   empty.</li>
+--   <li>You can use the <a>insertIntSet</a> family of functions to insert
+--   a value into a <a>IntSet</a> to create a guarunteed
+--   <a>NEIntSet</a>.</li>
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>IntSet</a> to reveal it as either containing a
+--   <a>NEIntSet</a> or an empty map.</li>
+--   <li><a>withNEIntSet</a> offers a continuation-based interface for
+--   deconstructing a <a>IntSet</a> and treating it as if it were an
+--   <a>NEIntSet</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NEIntSet</a> into a <a>IntSet</a> with
+--   <a>toIntSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   non-empty property from the type.
+data NEIntSet
+NEIntSet :: !Key -> !IntSet -> NEIntSet
+
+-- | invariant: must be smaller than smallest value in set
+[neisV0] :: NEIntSet -> !Key
+[neisIntSet] :: NEIntSet -> !IntSet
+type Key = Int
+
+-- | <i>O(log n)</i>. Smart constructor for an <a>NEIntSet</a> from a
+--   <a>IntSet</a>. Returns <a>Nothing</a> if the <a>IntSet</a> was
+--   originally actually empty, and <tt><a>Just</a> n</tt> with an
+--   <a>NEIntSet</a>, if the <a>IntSet</a> was not empty.
+--   
+--   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
+--   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
+--   
+--   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
+--   the possiblity of a <a>IntSet</a> being an <a>NEIntSet</a>.
+--   
+--   <pre>
+--   nonEmptyIntSet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+--   </pre>
+nonEmptyIntSet :: IntSet -> Maybe NEIntSet
+
+-- | <i>O(log n)</i>. Convert a non-empty set back into a normal
+--   possibly-empty map, for usage with functions that expect
+--   <a>IntSet</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the set in its
+--   type. See the <a>IsNotEmpty</a> pattern.
+--   
+--   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
+--   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
+--   
+--   <pre>
+--   toIntSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
+--   </pre>
+toIntSet :: NEIntSet -> IntSet
+
+-- | <i>O(1)</i>. Create a singleton set.
+singleton :: Key -> NEIntSet
+
+-- | <i>O(n*log n)</i>. Create a set from a list of elements.
+fromList :: NonEmpty Key -> NEIntSet
+
+-- | <i>O(n)</i>. Convert the set to a non-empty list of elements.
+toList :: NEIntSet -> NonEmpty Key
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The union of two sets, preferring
+--   the first set when equal elements are encountered.
+union :: NEIntSet -> NEIntSet -> NEIntSet
+
+-- | The union of a non-empty list of sets
+unions :: Foldable1 f => f NEIntSet -> NEIntSet
+
+-- | <i>O(n)</i>. Test if the internal set structure is valid.
+valid :: NEIntSet -> Bool
+
+-- | <i>O(log n)</i>. Insert new value into a set where values are
+--   <i>strictly greater than</i> the new values That is, the new value
+--   must be <i>strictly less than</i> all values present in the
+--   <a>IntSet</a>. /The precondition is not checked./
+--   
+--   While this has the same asymptotics as <tt>Data.IntSet.insert</tt>, it
+--   saves a constant factor for value comparison (so may be helpful if
+--   comparison is expensive) and also does not require an <a>Ord</a>
+--   instance for the value type.
+insertMinIntSet :: Key -> IntSet -> IntSet
+
+-- | <i>O(log n)</i>. Insert new value into a set where values are
+--   /strictly less than<i> the new value. That is, the new value must be
+--   </i>strictly greater than<i> all values present in the <a>IntSet</a>.
+--   </i>The precondition is not checked./
+--   
+--   While this has the same asymptotics as <tt>Data.IntSet.insert</tt>, it
+--   saves a constant factor for value comparison (so may be helpful if
+--   comparison is expensive) and also does not require an <a>Ord</a>
+--   instance for the value type.
+insertMaxIntSet :: Key -> IntSet -> IntSet
+instance GHC.Classes.Eq Data.IntSet.NonEmpty.Internal.NEIntSet
+instance GHC.Classes.Ord Data.IntSet.NonEmpty.Internal.NEIntSet
+instance GHC.Show.Show Data.IntSet.NonEmpty.Internal.NEIntSet
+instance GHC.Read.Read Data.IntSet.NonEmpty.Internal.NEIntSet
+instance Control.DeepSeq.NFData Data.IntSet.NonEmpty.Internal.NEIntSet
+instance Data.Data.Data Data.IntSet.NonEmpty.Internal.NEIntSet
+instance GHC.Base.Semigroup Data.IntSet.NonEmpty.Internal.NEIntSet
+
+module Data.IntSet.NonEmpty
+
+-- | A non-empty set of values <tt>a</tt>. At least one value exists in an
+--   <tt><a>NEIntSet</a> a</tt> at all times.
+--   
+--   Functions that <i>take</i> an <a>NEIntSet</a> can safely operate on it
+--   with the assumption that it has at least one item.
+--   
+--   Functions that <i>return</i> an <a>NEIntSet</a> provide an assurance
+--   that the result has at least one item.
+--   
+--   <a>Data.IntSet.NonEmpty</a> re-exports the API of <a>Data.IntSet</a>,
+--   faithfully reproducing asymptotics, typeclass constraints, and
+--   semantics. Functions that ensure that input and output sets are both
+--   non-empty (like <a>insert</a>) return <a>NEIntSet</a>, but functions
+--   that might potentially return an empty map (like <a>delete</a>) return
+--   a <a>IntSet</a> instead.
+--   
+--   You can directly construct an <a>NEIntSet</a> with the API from
+--   <a>Data.IntSet.NonEmpty</a>; it's more or less the same as
+--   constructing a normal <a>IntSet</a>, except you don't have access to
+--   <a>empty</a>. There are also a few ways to construct an
+--   <a>NEIntSet</a> from a <a>IntSet</a>:
+--   
+--   <ol>
+--   <li>The <a>nonEmptyIntSet</a> smart constructor will convert a
+--   <tt><a>IntSet</a> a</tt> into a <tt><a>Maybe</a> (<a>NEIntSet</a>
+--   a)</tt>, returning <a>Nothing</a> if the original <a>IntSet</a> was
+--   empty.</li>
+--   <li>You can use the <a>insertIntSet</a> family of functions to insert
+--   a value into a <a>IntSet</a> to create a guarunteed
+--   <a>NEIntSet</a>.</li>
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>IntSet</a> to reveal it as either containing a
+--   <a>NEIntSet</a> or an empty map.</li>
+--   <li><a>withNEIntSet</a> offers a continuation-based interface for
+--   deconstructing a <a>IntSet</a> and treating it as if it were an
+--   <a>NEIntSet</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NEIntSet</a> into a <a>IntSet</a> with
+--   <a>toIntSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   non-empty property from the type.
+data NEIntSet
+type Key = Int
+
+-- | <i>O(1)</i> match, <i>O(log n)</i> usage of contents. The
+--   <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow you to treat a
+--   <a>IntSet</a> as if it were either a <tt><a>IsNonEmpty</a> n</tt>
+--   (where <tt>n</tt> is a <a>NEIntSet</a>) or an <a>IsEmpty</a>.
+--   
+--   For example, you can pattern match on a <a>IntSet</a>:
+--   
+--   <pre>
+--   myFunc :: <a>IntSet</a> X -&gt; Y
+--   myFunc (<a>IsNonEmpty</a> n) =  -- here, the user provided a non-empty set, and <tt>n</tt> is the <a>NEIntSet</a>
+--   myFunc <a>IsEmpty</a>        =  -- here, the user provided an empty set
+--   </pre>
+--   
+--   Matching on <tt><a>IsNonEmpty</a> n</tt> means that the original
+--   <a>IntSet</a> was <i>not</i> empty, and you have a verified-non-empty
+--   <a>NEIntSet</a> <tt>n</tt> to use.
+--   
+--   Note that patching on this pattern is <i>O(1)</i>. However, using the
+--   contents requires a <i>O(log n)</i> cost that is deferred until after
+--   the pattern is matched on (and is not incurred at all if the contents
+--   are never used).
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
+--   convert a <a>NEIntSet</a> back into a <a>IntSet</a>, obscuring its
+--   non-emptiness (see <a>toIntSet</a>).
+pattern IsNonEmpty :: NEIntSet -> IntSet
+
+-- | <i>O(1)</i>. The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow
+--   you to treat a <a>IntSet</a> as if it were either a
+--   <tt><a>IsNonEmpty</a> n</tt> (where <tt>n</tt> is a <a>NEIntSet</a>)
+--   or an <a>IsEmpty</a>.
+--   
+--   Matching on <a>IsEmpty</a> means that the original <a>IntSet</a> was
+--   empty.
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsEmpty</a> as an
+--   expression, and it will be interpreted as <a>empty</a>.
+--   
+--   See <a>IsNonEmpty</a> for more information.
+pattern IsEmpty :: IntSet
+
+-- | <i>O(log n)</i>. Smart constructor for an <a>NEIntSet</a> from a
+--   <a>IntSet</a>. Returns <a>Nothing</a> if the <a>IntSet</a> was
+--   originally actually empty, and <tt><a>Just</a> n</tt> with an
+--   <a>NEIntSet</a>, if the <a>IntSet</a> was not empty.
+--   
+--   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
+--   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
+--   
+--   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
+--   the possiblity of a <a>IntSet</a> being an <a>NEIntSet</a>.
+--   
+--   <pre>
+--   nonEmptyIntSet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+--   </pre>
+nonEmptyIntSet :: IntSet -> Maybe NEIntSet
+
+-- | <i>O(log n)</i>. Convert a non-empty set back into a normal
+--   possibly-empty map, for usage with functions that expect
+--   <a>IntSet</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the set in its
+--   type. See the <a>IsNotEmpty</a> pattern.
+--   
+--   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
+--   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
+--   
+--   <pre>
+--   toIntSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
+--   </pre>
+toIntSet :: NEIntSet -> IntSet
+
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>IntSet</a> as if it were an <a>NEIntSet</a>.
+--   <tt><a>withNEIntSet</a> def f</tt> will take a <a>IntSet</a>. If set
+--   is empty, it will evaluate to <tt>def</tt>. Otherwise, a non-empty set
+--   <a>NEIntSet</a> will be fed to the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptyIntSet</a> == <a>withNEIntSet</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
+withNEIntSet :: r -> (NEIntSet -> r) -> IntSet -> r
+
+-- | <i>O(log n)</i>. Convert a <a>IntSet</a> into an <a>NEIntSet</a> by
+--   adding a value. Because of this, we know that the set must have at
+--   least one element, and so therefore cannot be empty.
+--   
+--   See <a>insertIntSetMin</a> for a version that is constant-time if the
+--   new value is <i>strictly smaller than</i> all values in the original
+--   set
+--   
+--   <pre>
+--   insertIntSet 4 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [4, 5])
+--   insertIntSet 4 Data.IntSet.empty == singleton 4 "c"
+--   </pre>
+insertIntSet :: Key -> IntSet -> NEIntSet
+
+-- | <i>O(1)</i> Convert a <a>IntSet</a> into an <a>NEIntSet</a> by adding
+--   a value where the value is <i>strictly less than</i> all values in the
+--   input set The values in the original map must all be <i>strictly
+--   greater than</i> the new value. <i>The precondition is not
+--   checked.</i>
+--   
+--   <pre>
+--   insertIntSetMin 2 (Data.IntSet.fromList [5, 3]) == fromList (2 :| [3, 5])
+--   valid (insertIntSetMin 2 (Data.IntSet.fromList [5, 3])) == True
+--   valid (insertIntSetMin 7 (Data.IntSet.fromList [5, 3])) == False
+--   valid (insertIntSetMin 3 (Data.IntSet.fromList [5, 3])) == False
+--   </pre>
+insertIntSetMin :: Key -> IntSet -> NEIntSet
+
+-- | <i>O(1)</i> Convert a <a>IntSet</a> into an <a>NEIntSet</a> by adding
+--   a value where the value is <i>strictly less than</i> all values in the
+--   input set The values in the original map must all be <i>strictly
+--   greater than</i> the new value. <i>The precondition is not
+--   checked.</i>
+--   
+--   While this has the same asymptotics as <a>insertIntSet</a>, it saves a
+--   constant factor for key comparison (so may be helpful if comparison is
+--   expensive) and also does not require an <a>Ord</a> instance for the
+--   key type.
+--   
+--   <pre>
+--   insertIntSetMin 7 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [5, 7])
+--   valid (insertIntSetMin 7 (Data.IntSet.fromList [5, 3])) == True
+--   valid (insertIntSetMin 2 (Data.IntSet.fromList [5, 3])) == False
+--   valid (insertIntSetMin 5 (Data.IntSet.fromList [5, 3])) == False
+--   </pre>
+insertIntSetMax :: Key -> IntSet -> NEIntSet
+
+-- | <i>O(log n)</i>. Unsafe version of <a>nonEmptyIntSet</a>. Coerces a
+--   <a>IntSet</a> into an <a>NEIntSet</a>, but is undefined (throws a
+--   runtime exception when evaluation is attempted) for an empty
+--   <a>IntSet</a>.
+unsafeFromIntSet :: IntSet -> NEIntSet
+
+-- | <i>O(1)</i>. Create a singleton set.
+singleton :: Key -> NEIntSet
+
+-- | <i>O(n*log n)</i>. Create a set from a list of elements.
+fromList :: NonEmpty Key -> NEIntSet
+
+-- | <i>O(n)</i>. Build a set from an ascending list in linear time. /The
+--   precondition (input list is ascending) is not checked./
+fromAscList :: NonEmpty Key -> NEIntSet
+
+-- | <i>O(n)</i>. Build a set from an ascending list of distinct elements
+--   in linear time. <i>The precondition (input list is strictly ascending)
+--   is not checked.</i>
+fromDistinctAscList :: NonEmpty Key -> NEIntSet
+
+-- | <i>O(log n)</i>. Insert an element in a set. If the set already
+--   contains an element equal to the given value, it is replaced with the
+--   new value.
+insert :: Key -> NEIntSet -> NEIntSet
+
+-- | <i>O(log n)</i>. Delete an element from a set.
+delete :: Key -> NEIntSet -> IntSet
+
+-- | <i>O(log n)</i>. Is the element in the set?
+member :: Key -> NEIntSet -> Bool
+
+-- | <i>O(log n)</i>. Is the element not in the set?
+notMember :: Key -> NEIntSet -> Bool
+
+-- | <i>O(log n)</i>. Find largest element smaller than the given one.
+--   
+--   <pre>
+--   lookupLT 3 (fromList (3 :| [5])) == Nothing
+--   lookupLT 5 (fromList (3 :| [5])) == Just 3
+--   </pre>
+lookupLT :: Key -> NEIntSet -> Maybe Key
+
+-- | <i>O(log n)</i>. Find smallest element greater than the given one.
+--   
+--   <pre>
+--   lookupLT 4 (fromList (3 :| [5])) == Just 5
+--   lookupLT 5 (fromList (3 :| [5])) == Nothing
+--   </pre>
+lookupGT :: Key -> NEIntSet -> Maybe Key
+
+-- | <i>O(log n)</i>. Find largest element smaller or equal to the given
+--   one.
+--   
+--   <pre>
+--   lookupLT 2 (fromList (3 :| [5])) == Nothing
+--   lookupLT 4 (fromList (3 :| [5])) == Just 3
+--   lookupLT 5 (fromList (3 :| [5])) == Just 5
+--   </pre>
+lookupLE :: Key -> NEIntSet -> Maybe Key
+
+-- | <i>O(log n)</i>. Find smallest element greater or equal to the given
+--   one.
+--   
+--   <pre>
+--   lookupLT 3 (fromList (3 :| [5])) == Just 3
+--   lookupLT 4 (fromList (3 :| [5])) == Just 5
+--   lookupLT 6 (fromList (3 :| [5])) == Nothing
+--   </pre>
+lookupGE :: Key -> NEIntSet -> Maybe Key
+
+-- | <i>O(1)</i>. The number of elements in the set. Guaranteed to be
+--   greater than zero.
+size :: NEIntSet -> Int
+
+-- | <i>O(n+m)</i>. Is this a subset? <tt>(s1 `isSubsetOf` s2)</tt> tells
+--   whether <tt>s1</tt> is a subset of <tt>s2</tt>.
+isSubsetOf :: NEIntSet -> NEIntSet -> Bool
+
+-- | <i>O(n+m)</i>. Is this a proper subset? (ie. a subset but not equal).
+isProperSubsetOf :: NEIntSet -> NEIntSet -> Bool
+
+-- | <i>O(n+m)</i>. Check whether two sets are disjoint (i.e. their
+--   intersection is empty).
+--   
+--   <pre>
+--   disjoint (fromList (2:|[4,6]))   (fromList (1:|[3]))     == True
+--   disjoint (fromList (2:|[4,6,8])) (fromList (2:|[3,5,7])) == False
+--   disjoint (fromList (1:|[2]))     (fromList (1:|[2,3,4])) == False
+--   </pre>
+disjoint :: NEIntSet -> NEIntSet -> Bool
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The union of two sets, preferring
+--   the first set when equal elements are encountered.
+union :: NEIntSet -> NEIntSet -> NEIntSet
+
+-- | The union of a non-empty list of sets
+unions :: Foldable1 f => f NEIntSet -> NEIntSet
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. Difference of two sets.
+--   
+--   Returns a potentially empty set (<a>IntSet</a>) because the first set
+--   might be a subset of the second set, and therefore have all of its
+--   elements removed.
+difference :: NEIntSet -> NEIntSet -> IntSet
+
+-- | Same as <a>difference</a>.
+(\\) :: NEIntSet -> NEIntSet -> IntSet
+
+-- | <i>O(m*log(n/m + 1)), m &lt;= n</i>. The intersection of two sets.
+--   
+--   Returns a potentially empty set (<a>IntSet</a>), because the two sets
+--   might have an empty intersection.
+--   
+--   Elements of the result come from the first set, so for example
+--   
+--   <pre>
+--   import qualified Data.IntSet.NonEmpty as NES
+--   data AB = A | B deriving Show
+--   instance Ord AB where compare _ _ = EQ
+--   instance Eq AB where _ == _ = True
+--   main = print (NES.singleton A `NES.intersection` NES.singleton B,
+--                 NES.singleton B `NES.intersection` NES.singleton A)
+--   </pre>
+--   
+--   prints <tt>(fromList (A:|[]),fromList (B:|[]))</tt>.
+intersection :: NEIntSet -> NEIntSet -> IntSet
+
+-- | <i>O(n)</i>. Filter all elements that satisfy the predicate.
+--   
+--   Returns a potentially empty set (<a>IntSet</a>) because the predicate
+--   might filter out all items in the original non-empty set.
+filter :: (Key -> Bool) -> NEIntSet -> IntSet
+
+-- | <i>O(n)</i>. Partition the map according to a predicate.
+--   
+--   Returns a <a>These</a> with potentially two non-empty sets:
+--   
+--   <ul>
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
+--   items.</li>
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
+--   items.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   that were true for the predicate) and <tt>n2</tt> (all of the items
+--   that were false for the predicate).</li>
+--   </ul>
+--   
+--   See also <a>split</a>.
+--   
+--   <pre>
+--   partition (&gt; 3) (fromList (5 :| [3])) == These (singleton 5) (singleton 3)
+--   partition (&lt; 7) (fromList (5 :| [3])) == This  (fromList (3 :| [5]))
+--   partition (&gt; 7) (fromList (5 :| [3])) == That  (fromList (3 :| [5]))
+--   </pre>
+partition :: (Key -> Bool) -> NEIntSet -> These NEIntSet NEIntSet
+
+-- | <i>O(log n)</i>. The expression (<tt><a>split</a> x set</tt>) is
+--   potentially a <a>These</a> containing up to two <a>NEIntSet</a>s based
+--   on splitting the set into sets containing items before and after the
+--   value <tt>x</tt>. It will never return a set that contains <tt>x</tt>
+--   itself.
+--   
+--   <ul>
+--   <li><a>Nothing</a> means that <tt>x</tt> was the only value in the the
+--   original set, and so there are no items before or after it.</li>
+--   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>x</tt> was larger
+--   than or equal to all items in the set, and <tt>n1</tt> is the entire
+--   original set (minus <tt>x</tt>, if it was present)</li>
+--   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>x</tt> was smaller
+--   than or equal to all items in the set, and <tt>n2</tt> is the entire
+--   original set (minus <tt>x</tt>, if it was present)</li>
+--   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
+--   set of all values from the original set less than <tt>x</tt>) and
+--   <tt>n2</tt> (the set of all values from the original set greater than
+--   <tt>x</tt>).</li>
+--   </ul>
+--   
+--   <pre>
+--   split 2 (fromList (5 :| [3])) == Just (That  (fromList (3 :| [5]))      )
+--   split 3 (fromList (5 :| [3])) == Just (That  (singleton 5)              )
+--   split 4 (fromList (5 :| [3])) == Just (These (singleton 3) (singleton 5))
+--   split 5 (fromList (5 :| [3])) == Just (This  (singleton 3)              )
+--   split 6 (fromList (5 :| [3])) == Just (This  (fromList (3 :| [5]))      )
+--   split 5 (singleton 5)         == Nothing
+--   </pre>
+split :: Key -> NEIntSet -> Maybe (These NEIntSet NEIntSet)
+
+-- | <i>O(log n)</i>. The expression (<tt><tt>splitLookup</tt> x set</tt>)
+--   splits a set just like <a>split</a> but also returns <tt><a>member</a>
+--   x set</tt> (whether or not <tt>x</tt> was in <tt>set</tt>)
+--   
+--   <pre>
+--   splitMember 2 (fromList (5 :| [3])) == (False, Just (That  (fromList (3 :| [5)]))))
+--   splitMember 3 (fromList (5 :| [3])) == (True , Just (That  (singleton 5)))
+--   splitMember 4 (fromList (5 :| [3])) == (False, Just (These (singleton 3) (singleton 5)))
+--   splitMember 5 (fromList (5 :| [3])) == (True , Just (This  (singleton 3))
+--   splitMember 6 (fromList (5 :| [3])) == (False, Just (This  (fromList (3 :| [5])))
+--   splitMember 5 (singleton 5)         == (True , Nothing)
+--   </pre>
+splitMember :: Key -> NEIntSet -> (Bool, Maybe (These NEIntSet NEIntSet))
+
+-- | <i>O(1)</i>. Decompose a set into pieces based on the structure of the
+--   underlying tree. This function is useful for consuming a set in
+--   parallel.
+--   
+--   No guarantee is made as to the sizes of the pieces; an internal, but
+--   deterministic process determines this. However, it is guaranteed that
+--   the pieces returned will be in ascending order (all elements in the
+--   first subset less than all elements in the second, and so on).
+--   
+--   Note that the current implementation does not return more than four
+--   subsets, but you should not depend on this behaviour because it can
+--   change in the future without notice.
+splitRoot :: NEIntSet -> NonEmpty NEIntSet
+
+-- | <i>O(n*log n)</i>. <tt><a>map</a> f s</tt> is the set obtained by
+--   applying <tt>f</tt> to each element of <tt>s</tt>.
+--   
+--   It's worth noting that the size of the result may be smaller if, for
+--   some <tt>(x,y)</tt>, <tt>x /= y &amp;&amp; f x == f y</tt>
+map :: (Key -> Key) -> NEIntSet -> NEIntSet
+
+-- | <i>O(n)</i>. Fold the elements in the set using the given
+--   right-associative binary operator, such that <tt><a>foldr</a> f z ==
+--   <a>foldr</a> f z . <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   elemsList set = foldr (:) [] set
+--   </pre>
+foldr :: (Key -> b -> b) -> b -> NEIntSet -> b
+
+-- | <i>O(n)</i>. Fold the elements in the set using the given
+--   left-associative binary operator, such that <tt><a>foldl</a> f z ==
+--   <a>foldl</a> f z . <a>toAscList</a></tt>.
+--   
+--   For example,
+--   
+--   <pre>
+--   descElemsList set = foldl (flip (:)) [] set
+--   </pre>
+foldl :: (a -> Key -> a) -> a -> NEIntSet -> a
+
+-- | <i>O(n)</i>. A version of <a>foldr</a> that uses the value at the
+--   maximal value in the set as the starting value.
+--   
+--   Note that, unlike <a>foldr1</a> for <a>IntSet</a>, this function is
+--   total if the input function is total.
+foldr1 :: (Key -> Key -> Key) -> NEIntSet -> Key
+
+-- | <i>O(n)</i>. A version of <a>foldl</a> that uses the value at the
+--   minimal value in the set as the starting value.
+--   
+--   Note that, unlike <a>foldl1</a> for <a>IntSet</a>, this function is
+--   total if the input function is total.
+foldl1 :: (Key -> Key -> Key) -> NEIntSet -> Key
+
+-- | <i>O(n)</i>. A strict version of <a>foldr</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
+foldr' :: (Key -> b -> b) -> b -> NEIntSet -> b
+
+-- | <i>O(n)</i>. A strict version of <a>foldl</a>. Each application of the
+--   operator is evaluated before using the result in the next application.
+--   This function is strict in the starting value.
+foldl' :: (a -> Key -> a) -> a -> NEIntSet -> a
+
+-- | <i>O(n)</i>. A strict version of <a>foldr1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
+foldr1' :: (Key -> Key -> Key) -> NEIntSet -> Key
+
+-- | <i>O(n)</i>. A strict version of <a>foldl1</a>. Each application of
+--   the operator is evaluated before using the result in the next
+--   application. This function is strict in the starting value.
+foldl1' :: (Key -> Key -> Key) -> NEIntSet -> Key
+
+-- | <i>O(1)</i>. The minimal element of a set. Note that this is total,
+--   making <a>lookupMin</a> obsolete. It is constant-time, so has better
+--   asymptotics than <tt>Data.IntSet.lookupMin</tt> and
+--   <tt>Data.Map.findMin</tt> as well.
+--   
+--   <pre>
+--   findMin (fromList (5 :| [3])) == 3
+--   </pre>
+findMin :: NEIntSet -> Key
+
+-- | <i>O(log n)</i>. The maximal key of a set Note that this is total,
+--   making <a>lookupMin</a> obsolete.
+--   
+--   <pre>
+--   findMax (fromList (5 :| [3])) == 5
+--   </pre>
+findMax :: NEIntSet -> Key
+
+-- | <i>O(1)</i>. Delete the minimal element. Returns a potentially empty
+--   set (<a>IntSet</a>), because we might delete the final item in a
+--   singleton set. It is constant-time, so has better asymptotics than
+--   <tt>Data.IntSet.deleteMin</tt>.
+--   
+--   <pre>
+--   deleteMin (fromList (5 :| [3, 7])) == Data.IntSet.fromList [5, 7]
+--   deleteMin (singleton 5) == Data.IntSet.empty
+--   </pre>
+deleteMin :: NEIntSet -> IntSet
+
+-- | <i>O(log n)</i>. Delete the maximal element. Returns a potentially
+--   empty set (<a>IntSet</a>), because we might delete the final item in a
+--   singleton set.
+--   
+--   <pre>
+--   deleteMax (fromList (5 :| [3, 7])) == Data.IntSet.fromList [3, 5]
+--   deleteMax (singleton 5) == Data.IntSet.empty
+--   </pre>
+deleteMax :: NEIntSet -> IntSet
+
+-- | <i>O(1)</i>. Delete and find the minimal element. It is constant-time,
+--   so has better asymptotics that <tt>Data.IntSet.minView</tt> for
+--   <a>IntSet</a>.
+--   
+--   Note that unlike <tt>Data.IntSet.deleteFindMin</tt> for <a>IntSet</a>,
+--   this cannot ever fail, and so is a total function. However, the result
+--   <a>IntSet</a> is potentially empty, since the original set might have
+--   contained just a single item.
+--   
+--   <pre>
+--   deleteFindMin (fromList (5 :| [3, 10])) == (3, Data.IntSet.fromList [5, 10])
+--   </pre>
+deleteFindMin :: NEIntSet -> (Key, IntSet)
+
+-- | <i>O(log n)</i>. Delete and find the minimal element.
+--   
+--   Note that unlike <tt>Data.IntSet.deleteFindMax</tt> for <a>IntSet</a>,
+--   this cannot ever fail, and so is a total function. However, the result
+--   <a>IntSet</a> is potentially empty, since the original set might have
+--   contained just a single item.
+--   
+--   <pre>
+--   deleteFindMax (fromList (5 :| [3, 10])) == (10, Data.IntSet.fromList [3, 5])
+--   </pre>
+deleteFindMax :: NEIntSet -> (Key, IntSet)
+
+-- | <i>O(n)</i>. An alias of <a>toAscList</a>. The elements of a set in
+--   ascending order.
+elems :: NEIntSet -> NonEmpty Key
+
+-- | <i>O(n)</i>. Convert the set to a non-empty list of elements.
+toList :: NEIntSet -> NonEmpty Key
+
+-- | <i>O(n)</i>. Convert the set to an ascending non-empty list of
+--   elements.
+toAscList :: NEIntSet -> NonEmpty Key
+
+-- | <i>O(n)</i>. Convert the set to a descending non-empty list of
+--   elements.
+toDescList :: NEIntSet -> NonEmpty Key
+
+-- | <i>O(n)</i>. Test if the internal set structure is valid.
+valid :: NEIntSet -> Bool
+
+
+-- | Unsafe internal-use functions used in the implementation of
 --   <a>Data.Map.NonEmpty</a>. These functions can potentially be used to
 --   break the abstraction of <a>NEMap</a> and produce unsound sets, so be
 --   wary!
@@ -406,11 +1089,6 @@ toSet :: NESet a -> Set a
 
 -- | <i>O(1)</i>. Create a singleton set.
 singleton :: a -> NESet a
-
--- | <i>O(log n)</i>. Insert an element in a set. If the set already
---   contains an element equal to the given value, it is replaced with the
---   new value.
-insert :: Ord a => a -> NESet a -> NESet a
 
 -- | <i>O(n*log n)</i>. Create a set from a list of elements.
 fromList :: Ord a => NonEmpty a -> NESet a
