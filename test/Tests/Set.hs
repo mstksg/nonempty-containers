@@ -71,6 +71,16 @@ prop_toSetIso2 = property $ do
     tripping m0 (maybe S.empty NES.toSet)
                 (Identity . NES.nonEmptySet)
 
+prop_splitRoot :: Property
+prop_splitRoot = property $ do
+    n <- forAll neSetGen
+    let rs = NES.splitRoot n
+        n' = foldl1 NES.merge rs
+    assert $ NES.valid n'
+    mapM_ (assert . (`NES.isSubsetOf` n)) rs
+    n === n'
+
+
 
 
 prop_insertSet :: Property
@@ -238,16 +248,20 @@ prop_splitMember = ttProp (GTKey :-> GTNESet :-> TTOther :*: TTMThese TTNESet TT
     (\k -> (\(x,y,z) -> (y,(x,z))) . S.splitMember k)
     NES.splitMember
 
-  -- , splitRoot
-
 prop_lookupIndex :: Property
 prop_lookupIndex = ttProp (GTKey :-> GTNESet :-> TTMaybe TTOther)
     S.lookupIndex
     NES.lookupIndex
 
-  -- , findIndex
-  -- , elemAt
-  -- , deleteAt
+prop_elemAt :: Property
+prop_elemAt = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTKey)
+    (\i m -> S.elemAt   (i `mod` S.size   m) m)
+    (\i m -> NES.elemAt (i `mod` NES.size m) m)
+
+prop_deleteAt :: Property
+prop_deleteAt = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTSet)
+    (\i m -> S.deleteAt   (i `mod` S.size   m) m)
+    (\i m -> NES.deleteAt (i `mod` NES.size m) m)
 
 prop_take :: Property
 prop_take = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTSet)

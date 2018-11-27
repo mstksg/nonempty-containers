@@ -217,8 +217,8 @@ module Data.Map.NonEmpty (
   , lookupIndex
   , findIndex
   , elemAt
-  , adjustAt
   , updateAt
+  , adjustAt
   , deleteAt
   , take
   , drop

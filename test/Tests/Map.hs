@@ -8,11 +8,13 @@ import           Control.Applicative
 import           Data.Coerce
 import           Data.Foldable
 import           Data.Functor.Identity
+import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
+import qualified Data.List.NonEmpty         as NE
 import qualified Data.Map                   as M
 import qualified Data.Map.NonEmpty          as NEM
 import qualified Data.Map.NonEmpty.Internal as NEM
@@ -83,6 +85,24 @@ prop_toMapIso2 = property $ do
     tripping m0 (maybe M.empty NEM.toMap)
                 (Identity . NEM.nonEmptyMap)
 
+prop_splitRoot :: Property
+prop_splitRoot = property $ do
+    n <- forAll neMapGen
+    let rs = NEM.splitRoot n
+        allItems = foldMap1 NEM.keys rs
+        n' = NEM.unions rs
+    assert $ ascending allItems
+    mapM_ (assert . (`NEM.isSubmapOf` n)) rs
+    length allItems === length n'
+    n === n'
+  where
+    ascending (x :| xs) = case NE.nonEmpty xs of
+      Nothing          -> True
+      Just ys@(y :| _) -> x < y && ascending ys
+
+
+
+
 
 
 
@@ -95,6 +115,11 @@ prop_singleton :: Property
 prop_singleton = ttProp (GTKey :-> GTVal :-> TTNEMap)
     M.singleton
     NEM.singleton
+
+prop_fromSet :: Property
+prop_fromSet = ttProp (gf1 valGen :?> GTNESet :-> TTNEMap)
+    M.fromSet
+    NEM.fromSet
 
 prop_fromAscList :: Property
 prop_fromAscList = ttProp (GTSorted STAsc (GTNEList Nothing (GTKey :&: GTVal)) :-> TTNEMap)
@@ -541,6 +566,11 @@ prop_assocs = ttProp (GTNEMap :-> TTNEList (TTKey :*: TTVal))
     M.assocs
     NEM.assocs
 
+prop_keysSet :: Property
+prop_keysSet = ttProp (GTNEMap :-> TTNESet)
+    M.keysSet
+    NEM.keysSet
+
 prop_toList :: Property
 prop_toList = ttProp (GTNEMap :-> TTNEList (TTKey :*: TTVal))
     M.toList
@@ -629,11 +659,25 @@ prop_lookupIndex = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTOther)
     M.lookupIndex
     NEM.lookupIndex
 
-  -- , findIndex
-  -- , elemAt
-  -- , adjustAt
-  -- , updateAt
-  -- , deleteAt
+prop_elemAt :: Property
+prop_elemAt = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTKey :*: TTVal)
+    (\i m -> M.elemAt   (i `mod` M.size   m) m)
+    (\i m -> NEM.elemAt (i `mod` NEM.size m) m)
+
+prop_adjustAt :: Property
+prop_adjustAt = ttProp (gf2 valGen :?> GTOther (Gen.int mapSize) :-> GTNEMap :-> TTNEMap)
+    (\f i m -> M.updateAt   (\k -> Just . f k) (i `mod` M.size   m) m)
+    (\f i m -> NEM.adjustAt f                  (i `mod` NEM.size m) m)
+
+prop_updateAt :: Property
+prop_updateAt = ttProp (gf2 (Gen.maybe valGen) :?> GTOther (Gen.int mapSize) :-> GTNEMap :-> TTMap)
+    (\f i m -> M.updateAt   f (i `mod` M.size   m) m)
+    (\f i m -> NEM.updateAt f (i `mod` NEM.size m) m)
+
+prop_deleteAt :: Property
+prop_deleteAt = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTMap)
+    (\i m -> M.deleteAt   (i `mod` M.size   m) m)
+    (\i m -> NEM.deleteAt (i `mod` NEM.size m) m)
 
 prop_take :: Property
 prop_take = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTMap)
