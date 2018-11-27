@@ -12,6 +12,7 @@ main :: IO ()
 main = defaultMain . setOpts $
             testGroup "Tests" [ mapTests
                               , setTests
+                              , intMapTests
                               , intSetTests
                               ]
 

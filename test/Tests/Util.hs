@@ -21,7 +21,7 @@ module Tests.Util (
   , Context(..)
   , Bazaar(..)
   , keyGen, valGen, mapSize, mapGen, neMapGen, setGen, neSetGen
-  , intKeyGen, intSetGen, neIntSetGen
+  , intKeyGen, intMapGen, neIntMapGen, intSetGen, neIntSetGen
   ) where
 
 import           Control.Applicative
@@ -31,6 +31,8 @@ import           Data.Char
 import           Data.Foldable
 import           Data.Function
 import           Data.Functor.Apply
+import           Data.IntMap                (IntMap)
+import           Data.IntMap.NonEmpty       (NEIntMap)
 import           Data.IntSet                (IntSet, Key)
 import           Data.IntSet.NonEmpty       (NEIntSet)
 import           Data.Kind
@@ -46,6 +48,8 @@ import           Hedgehog.Function hiding   ((:*:))
 import           Hedgehog.Internal.Property
 import           Test.Tasty
 import           Test.Tasty.Hedgehog
+import qualified Data.IntMap                as IM
+import qualified Data.IntMap.NonEmpty       as NEIM
 import qualified Data.IntSet                as IS
 import qualified Data.IntSet.NonEmpty       as NEIS
 import qualified Data.List.NonEmpty         as NE
@@ -125,9 +129,11 @@ data SortType :: Type -> Type where
 
 data GenType :: Type -> Type -> Type where
     GTNEMap    :: GenType (Map KeyType T.Text) (NEMap KeyType T.Text)
-    GTMap      :: GenType (Map KeyType T.Text) (Map KeyType T.Text)
+    GTMap      :: GenType (Map KeyType T.Text) (Map KeyType T.Text  )
     GTNESet    :: GenType (Set KeyType       ) (NESet KeyType       )
+    GTNEIntMap :: GenType (IntMap T.Text)      (NEIntMap T.Text)
     GTNEIntSet :: GenType IntSet               NEIntSet
+    GTIntMap   :: GenType (IntMap T.Text)      (IntMap T.Text)
     GTKey      :: GenType KeyType              KeyType
     GTIntKey   :: GenType Int                  Int
     GTVal      :: GenType T.Text               T.Text
@@ -172,6 +178,8 @@ gf3 = (`GF` (curry . curry))
 data TestType :: Type -> Type -> Type where
     TTNEMap    :: (Eq a, Show a)
                => TestType (Map KeyType a) (NEMap KeyType a  )
+    TTNEIntMap :: (Eq a, Show a)
+               => TestType (IntMap a     ) (NEIntMap a       )
     TTNESet    :: TestType (Set KeyType  ) (NESet KeyType    )
     TTNEIntSet :: TestType IntSet          NEIntSet
     TTMap      :: (Eq a, Show a)
@@ -236,7 +244,9 @@ runGT = \case
     GTNEMap    -> (\n -> (NEM.IsNonEmpty n, n)) <$> neMapGen
     GTMap      -> join (,) <$> mapGen
     GTNESet    -> (\n -> (NES.IsNonEmpty  n, n)) <$> neSetGen
+    GTNEIntMap -> (\n -> (NEIM.IsNonEmpty n, n)) <$> neIntMapGen
     GTNEIntSet -> (\n -> (NEIS.IsNonEmpty n, n)) <$> neIntSetGen
+    GTIntMap   -> join (,) <$> intMapGen
     GTSet      -> join (,) <$> setGen
     GTIntSet   -> join (,) <$> intSetGen
     GTKey      -> join (,) <$> keyGen
@@ -259,6 +269,9 @@ runTT = \case
     TTNEMap -> \x y -> do
       assert $ NEM.valid y
       unKMap x === unKMap (NEM.IsNonEmpty y)
+    TTNEIntMap -> \x y -> do
+      assert $ NEIM.valid y
+      x === NEIM.IsNonEmpty y
     TTNESet -> \x y -> do
       assert $ NES.valid y
       unKSet x === unKSet (NES.IsNonEmpty y)
@@ -434,11 +447,17 @@ neSetGen = Gen.just $ NES.nonEmptySet <$> setGen
 intKeyGen :: MonadGen m => m Key
 intKeyGen = Gen.int (Range.linear (-100) 100)
 
+intMapGen :: MonadGen m => m (IntMap T.Text)
+intMapGen = IM.fromAscList . M.toList <$> Gen.map mapSize ((,) <$> intKeyGen <*> valGen)
+
+neIntMapGen :: MonadGen m => m (NEIntMap T.Text)
+neIntMapGen = Gen.just $ NEIM.nonEmptyMap <$> intMapGen
+
 intSetGen :: MonadGen m => m IntSet
 intSetGen = IS.fromAscList . S.toList <$> Gen.set mapSize intKeyGen
 
 neIntSetGen :: MonadGen m => m NEIntSet
-neIntSetGen = Gen.just $ NEIS.nonEmptyIntSet <$> intSetGen
+neIntSetGen = Gen.just $ NEIS.nonEmptySet <$> intSetGen
 
 
 

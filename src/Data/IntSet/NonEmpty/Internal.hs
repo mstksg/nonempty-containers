@@ -16,7 +16,7 @@
 module Data.IntSet.NonEmpty.Internal (
     NEIntSet(..)
   , S.Key
-  , nonEmptyIntSet
+  , nonEmptySet
   , toSet
   , singleton
   , fromList
@@ -62,7 +62,7 @@ import qualified Data.Semigroup.Foldable as F1
 -- 'IntSet', except you don't have access to 'Data.IntSet.empty'.  There are also
 -- a few ways to construct an 'NEIntSet' from a 'IntSet':
 --
--- 1.  The 'nonEmptyIntSet' smart constructor will convert a @'IntSet' a@ into
+-- 1.  The 'nonEmptySet' smart constructor will convert a @'IntSet' a@ into
 --     a @'Maybe' ('NEIntSet' a)@, returning 'Nothing' if the original 'IntSet'
 --     was empty.
 -- 2.  You can use the 'Data.IntSet.NonEmpty.insertIntSet' family of functions to
@@ -134,17 +134,17 @@ intSetDataType = mkDataType "Data.IntSet.Internal.IntSet" [fromListConstr]
 -- 'Nothing' if the 'IntSet' was originally actually empty, and @'Just' n@
 -- with an 'NEIntSet', if the 'IntSet' was not empty.
 --
--- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an
+-- 'nonEmptySet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an
 -- isomorphism: they are perfect structure-preserving inverses of
 -- eachother.
 --
 -- See 'Data.IntSet.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
 -- "match on" the possiblity of a 'IntSet' being an 'NEIntSet'.
 --
--- > nonEmptyIntSet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
-nonEmptyIntSet :: IntSet -> Maybe NEIntSet
-nonEmptyIntSet = (fmap . uncurry) NEIntSet . S.minView
-{-# INLINE nonEmptyIntSet #-}
+-- > nonEmptySet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+nonEmptySet :: IntSet -> Maybe NEIntSet
+nonEmptySet = (fmap . uncurry) NEIntSet . S.minView
+{-# INLINE nonEmptySet #-}
 
 -- | /O(log n)/.
 -- Convert a non-empty set back into a normal possibly-empty map, for usage
@@ -153,7 +153,7 @@ nonEmptyIntSet = (fmap . uncurry) NEIntSet . S.minView
 -- Can be thought of as "obscuring" the non-emptiness of the set in its
 -- type.  See the 'Data.IntSet.NonEmpty.IsNotEmpty' pattern.
 --
--- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an
+-- 'nonEmptySet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an
 -- isomorphism: they are perfect structure-preserving inverses of
 -- eachother.
 --
@@ -174,7 +174,7 @@ singleton x = NEIntSet x S.empty
 -- 'S.fromList'.
 fromList :: NonEmpty Key -> NEIntSet
 fromList (x :| s) = maybe (singleton x) (<> singleton x)
-                  . nonEmptyIntSet
+                  . nonEmptySet
                   $ S.fromList s
 {-# INLINE fromList #-}
 

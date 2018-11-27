@@ -20,7 +20,7 @@ module Data.IntMap.NonEmpty.Internal (
     NEIntMap(..)
   , Key
   , singleton
-  , nonEmptyIntMap
+  , nonEmptyMap
   , fromList
   , toList
   , map
@@ -89,7 +89,7 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 'IntMap', except you don't have access to 'Data.IntMap.empty'.  There are also
 -- a few ways to construct an 'NEIntMap' from a 'IntMap':
 --
--- 1.  The 'nonEmptyIntMap' smart constructor will convert a @'IntMap' k a@ into
+-- 1.  The 'nonEmptyMap' smart constructor will convert a @'IntMap' k a@ into
 --     a @'Maybe' ('NEIntMap' k a)@, returning 'Nothing' if the original 'IntMap'
 --     was empty.
 -- 2.  You can use the 'Data.IntMap.NonEmpty.insertIntMap' family of functions to
@@ -324,7 +324,7 @@ size (NEIntMap _ _ m) = 1 + M.size m
 -- Can be thought of as "obscuring" the non-emptiness of the map in its
 -- type.  See the 'Data.IntMap.NonEmpty.IsNotEmpty' pattern.
 --
--- 'nonEmptyIntMap' and @'maybe' 'Data.IntMap.empty' 'toMap'@ form an isomorphism: they
+-- 'nonEmptyMap' and @'maybe' 'Data.IntMap.empty' 'toMap'@ form an isomorphism: they
 -- are perfect structure-preserving inverses of eachother.
 --
 -- > toMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
@@ -386,17 +386,17 @@ toList (NEIntMap k v m) = (k,v) :| M.toList m
 -- 'Nothing' if the 'IntMap' was originally actually empty, and @'Just' n@
 -- with an 'NEIntMap', if the 'IntMap' was not empty.
 --
--- 'nonEmptyIntMap' and @'maybe' 'Data.IntMap.empty' 'toMap'@ form an
+-- 'nonEmptyMap' and @'maybe' 'Data.IntMap.empty' 'toMap'@ form an
 -- isomorphism: they are perfect structure-preserving inverses of
 -- eachother.
 --
 -- See 'Data.IntMap.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
 -- "match on" the possiblity of a 'IntMap' being an 'NEIntMap'.
 --
--- > nonEmptyIntMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
-nonEmptyIntMap :: IntMap a -> Maybe (NEIntMap a)
-nonEmptyIntMap = (fmap . uncurry . uncurry) NEIntMap . M.minViewWithKey
-{-# INLINE nonEmptyIntMap #-}
+-- > nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+nonEmptyMap :: IntMap a -> Maybe (NEIntMap a)
+nonEmptyMap = (fmap . uncurry . uncurry) NEIntMap . M.minViewWithKey
+{-# INLINE nonEmptyMap #-}
 
 -- | /O(n*log n)/. Build a non-empty map from a non-empty list of
 -- key\/value pairs. See also 'Data.IntMap.NonEmpty.fromAscList'. If the list
@@ -411,7 +411,7 @@ nonEmptyIntMap = (fmap . uncurry . uncurry) NEIntMap . M.minViewWithKey
 -- 'M.fromList'.
 fromList :: NonEmpty (Key, a) -> NEIntMap a
 fromList ((k, v) :| xs) = maybe (singleton k v) (insertWith (const id) k v)
-                        . nonEmptyIntMap
+                        . nonEmptyMap
                         $ M.fromList xs
 {-# INLINE fromList #-}
 

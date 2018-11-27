@@ -12,7 +12,7 @@ module Data.IntMap.NonEmpty (
   -- ** Conversions between empty and non-empty maps
   , pattern IsNonEmpty
   , pattern IsEmpty
-  , nonEmptyIntMap
+  , nonEmptyMap
   , toMap
   , withNEIntMap
   , insertMap
@@ -225,7 +225,7 @@ import qualified Data.Semigroup.Foldable       as F1
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
 -- a 'NEIntMap' back into a 'IntMap', obscuring its non-emptiness (see 'toMap').
 pattern IsNonEmpty :: NEIntMap a -> IntMap a
-pattern IsNonEmpty n <- (nonEmptyIntMap->Just n)
+pattern IsNonEmpty n <- (nonEmptyMap->Just n)
   where
     IsNonEmpty n = toMap n
 
@@ -249,7 +249,7 @@ pattern IsEmpty <- (M.null->True)
 
 {-# COMPLETE IsNonEmpty, IsEmpty #-}
 
--- | /O(log n)/. Unsafe version of 'nonEmptyIntMap'.  Coerces a 'IntMap' into an
+-- | /O(log n)/. Unsafe version of 'nonEmptyMap'.  Coerces a 'IntMap' into an
 -- 'NEIntMap', but is undefined (throws a runtime exception when evaluation is
 -- attempted) for an empty 'IntMap'.
 unsafeFromMap
@@ -265,13 +265,13 @@ unsafeFromMap = withNEIntMap e id
 -- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NEIntMap'
 -- will be fed to the function @f@ instead.
 --
--- @'nonEmptyIntMap' == 'withNEIntMap' 'Nothing' 'Just'@
+-- @'nonEmptyMap' == 'withNEIntMap' 'Nothing' 'Just'@
 withNEIntMap
     :: r                    -- ^ value to return if map is empty
     -> (NEIntMap a -> r)     -- ^ function to apply if map is not empty
     -> IntMap a
     -> r
-withNEIntMap def f = maybe def f . nonEmptyIntMap
+withNEIntMap def f = maybe def f . nonEmptyMap
 {-# INLINE withNEIntMap #-}
 
 -- | /O(log n)/. Convert a 'IntMap' into an 'NEIntMap' by adding a key-value
@@ -1468,7 +1468,7 @@ partitionWithKey
     :: (Key -> a -> Bool)
     -> NEIntMap a
     -> These (NEIntMap a) (NEIntMap a)
-partitionWithKey f n@(NEIntMap k v m0) = case (nonEmptyIntMap m1, nonEmptyIntMap m2) of
+partitionWithKey f n@(NEIntMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
     (Nothing, Nothing)
       | f k v     -> This  n
       | otherwise -> That                        n
@@ -1556,7 +1556,7 @@ mapEitherWithKey
     :: (Key -> a -> Either b c)
     -> NEIntMap a
     -> These (NEIntMap b) (NEIntMap c)
-mapEitherWithKey f (NEIntMap k v m0) = case (nonEmptyIntMap m1, nonEmptyIntMap m2) of
+mapEitherWithKey f (NEIntMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
     (Nothing, Nothing) -> case f k v of
       Left  v' -> This  (singleton k v')
       Right v' -> That                         (singleton k v')
@@ -1602,8 +1602,8 @@ split
     -> Maybe (These (NEIntMap a) (NEIntMap a))
 split k n@(NEIntMap k0 v m0) = case compare k k0 of
     LT -> Just $ That n
-    EQ -> That <$> nonEmptyIntMap m0
-    GT -> case (nonEmptyIntMap m1, nonEmptyIntMap m2) of
+    EQ -> That <$> nonEmptyMap m0
+    GT -> case (nonEmptyMap m1, nonEmptyMap m2) of
       (Nothing, Nothing) -> Just $ This  (singleton k0 v)
       (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v m1)
       (Nothing, Just n2) -> Just $ These (singleton k0 v)       n2
@@ -1627,8 +1627,8 @@ splitLookup
     -> (Maybe a, Maybe (These (NEIntMap a) (NEIntMap a)))
 splitLookup k n@(NEIntMap k0 v0 m0) = case compare k k0 of
     LT -> (Nothing, Just $ That n)
-    EQ -> (Just v0, That <$> nonEmptyIntMap m0)
-    GT -> (v      ,) $ case (nonEmptyIntMap m1, nonEmptyIntMap m2) of
+    EQ -> (Just v0, That <$> nonEmptyMap m0)
+    GT -> (v      ,) $ case (nonEmptyMap m1, nonEmptyMap m2) of
       (Nothing, Nothing) -> Just $ This  (singleton k0 v0)
       (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v0 m1)
       (Nothing, Just n2) -> Just $ These (singleton k0 v0)       n2
@@ -1653,7 +1653,7 @@ splitRoot
     :: NEIntMap a
     -> NonEmpty (NEIntMap a)
 splitRoot (NEIntMap k v m) = singleton k v
-                       :| Maybe.mapMaybe nonEmptyIntMap (M.splitRoot m)
+                       :| Maybe.mapMaybe nonEmptyMap (M.splitRoot m)
 {-# INLINE splitRoot #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/.

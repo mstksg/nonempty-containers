@@ -11,7 +11,7 @@ module Data.IntSet.NonEmpty (
   -- ** Conversions between empty and non-empty maps
   , pattern IsNonEmpty
   , pattern IsEmpty
-  , nonEmptyIntSet
+  , nonEmptySet
   , toSet
   , withNEIntSet
   , insertSet
@@ -129,7 +129,7 @@ import qualified Data.List.NonEmpty            as NE
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
 -- a 'NEIntSet' back into a 'IntSet', obscuring its non-emptiness (see 'toSet').
 pattern IsNonEmpty :: NEIntSet -> IntSet
-pattern IsNonEmpty n <- (nonEmptyIntSet->Just n)
+pattern IsNonEmpty n <- (nonEmptySet->Just n)
   where
     IsNonEmpty n = toSet n
 
@@ -158,13 +158,13 @@ pattern IsEmpty <- (S.null->True)
 -- empty, it will evaluate to @def@.  Otherwise, a non-empty set 'NEIntSet'
 -- will be fed to the function @f@ instead.
 --
--- @'nonEmptyIntSet' == 'withNEIntSet' 'Nothing' 'Just'@
+-- @'nonEmptySet' == 'withNEIntSet' 'Nothing' 'Just'@
 withNEIntSet
     :: r                   -- ^ value to return if set is empty
     -> (NEIntSet -> r)     -- ^ function to apply if set is not empty
     -> IntSet
     -> r
-withNEIntSet def f = maybe def f . nonEmptyIntSet
+withNEIntSet def f = maybe def f . nonEmptySet
 {-# INLINE withNEIntSet #-}
 
 -- | /O(log n)/. Convert a 'IntSet' into an 'NEIntSet' by adding a value.
@@ -215,7 +215,7 @@ insertSetMax x = withNEIntSet (singleton x) go
     go (NEIntSet x0 s0) = NEIntSet x0 . insertMaxIntSet x $ s0
 {-# INLINE insertSetMax #-}
 
--- | /O(log n)/. Unsafe version of 'nonEmptyIntSet'.  Coerces a 'IntSet'
+-- | /O(log n)/. Unsafe version of 'nonEmptySet'.  Coerces a 'IntSet'
 -- into an 'NEIntSet', but is undefined (throws a runtime exception when
 -- evaluation is attempted) for an empty 'IntSet'.
 unsafeFromSet
@@ -524,7 +524,7 @@ partition
     :: (Key -> Bool)
     -> NEIntSet
     -> These NEIntSet NEIntSet
-partition f n@(NEIntSet x s0) = case (nonEmptyIntSet s1, nonEmptyIntSet s2) of
+partition f n@(NEIntSet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
     (Nothing, Nothing)
       | f x       -> This  n
       | otherwise -> That                      n
@@ -570,8 +570,8 @@ split
     -> Maybe (These NEIntSet NEIntSet)
 split x n@(NEIntSet x0 s0) = case compare x x0 of
     LT -> Just $ That n
-    EQ -> That <$> nonEmptyIntSet s0
-    GT -> case (nonEmptyIntSet s1, nonEmptyIntSet s2) of
+    EQ -> That <$> nonEmptySet s0
+    GT -> case (nonEmptySet s1, nonEmptySet s2) of
       (Nothing, Nothing) -> Just $ This  (singleton x0)
       (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
       (Nothing, Just n2) -> Just $ These (singleton x0)       n2
@@ -596,8 +596,8 @@ splitMember
     -> (Bool, Maybe (These NEIntSet NEIntSet))
 splitMember x n@(NEIntSet x0 s0) = case compare x x0 of
     LT -> (False, Just $ That n)
-    EQ -> (True , That <$> nonEmptyIntSet s0)
-    GT -> (mem  ,) $ case (nonEmptyIntSet s1, nonEmptyIntSet s2) of
+    EQ -> (True , That <$> nonEmptySet s0)
+    GT -> (mem  ,) $ case (nonEmptySet s1, nonEmptySet s2) of
       (Nothing, Nothing) -> Just $ This  (singleton x0)
       (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
       (Nothing, Just n2) -> Just $ These (singleton x0)       n2
@@ -621,7 +621,7 @@ splitRoot
     :: NEIntSet
     -> NonEmpty NEIntSet
 splitRoot (NEIntSet x s) = singleton x
-                     :| mapMaybe nonEmptyIntSet (S.splitRoot s)
+                     :| mapMaybe nonEmptySet (S.splitRoot s)
 {-# INLINE splitRoot #-}
 
 -- | /O(n*log n)/.

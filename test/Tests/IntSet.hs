@@ -66,14 +66,14 @@ prop_valid_insertSetMax = property $ do
 prop_toSetIso1 :: Property
 prop_toSetIso1 = property $ do
     m0 <- forAll intSetGen
-    tripping m0 NES.nonEmptyIntSet
+    tripping m0 NES.nonEmptySet
                 (Identity . maybe S.empty NES.toSet)
 
 prop_toSetIso2 :: Property
 prop_toSetIso2 = property $ do
     m0 <- forAll $ Gen.maybe neIntSetGen
     tripping m0 (maybe S.empty NES.toSet)
-                (Identity . NES.nonEmptyIntSet)
+                (Identity . NES.nonEmptySet)
 
 prop_splitRoot :: Property
 prop_splitRoot = property $ do
