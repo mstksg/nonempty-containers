@@ -42,7 +42,7 @@ module Data.IntMap.NonEmpty.Internal
 --   <a>NEIntMap</a> from a <a>IntMap</a>:
 --   
 --   <ol>
---   <li>The <a>nonEmptyIntMap</a> smart constructor will convert a
+--   <li>The <a>nonEmptyMap</a> smart constructor will convert a
 --   <tt><a>IntMap</a> k a</tt> into a <tt><a>Maybe</a> (<a>NEIntMap</a> k
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntMap</a> was
 --   empty.</li>
@@ -82,17 +82,17 @@ singleton :: Key -> a -> NEIntMap a
 --   originally actually empty, and <tt><a>Just</a> n</tt> with an
 --   <a>NEIntMap</a>, if the <a>IntMap</a> was not empty.
 --   
---   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toMap</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptyMap</a> and <tt><a>maybe</a> <a>empty</a> <a>toMap</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>IntMap</a> being an <a>NEIntMap</a>.
 --   
 --   <pre>
---   nonEmptyIntMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+--   nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
 --   </pre>
-nonEmptyIntMap :: IntMap a -> Maybe (NEIntMap a)
+nonEmptyMap :: IntMap a -> Maybe (NEIntMap a)
 
 -- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
 --   key/value pairs. See also <a>fromAscList</a>. If the list contains
@@ -179,9 +179,9 @@ size :: NEIntMap a -> Int
 --   Can be thought of as "obscuring" the non-emptiness of the map in its
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
---   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toMap</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptyMap</a> and <tt><a>maybe</a> <a>empty</a> <a>toMap</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   <pre>
 --   toMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
@@ -349,7 +349,7 @@ module Data.IntSet.NonEmpty.Internal
 --   <a>NEIntSet</a> from a <a>IntSet</a>:
 --   
 --   <ol>
---   <li>The <a>nonEmptyIntSet</a> smart constructor will convert a
+--   <li>The <a>nonEmptySet</a> smart constructor will convert a
 --   <tt><a>IntSet</a> a</tt> into a <tt><a>Maybe</a> (<a>NEIntSet</a>
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntSet</a> was
 --   empty.</li>
@@ -380,17 +380,17 @@ type Key = Int
 --   originally actually empty, and <tt><a>Just</a> n</tt> with an
 --   <a>NEIntSet</a>, if the <a>IntSet</a> was not empty.
 --   
---   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toSet</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>IntSet</a> being an <a>NEIntSet</a>.
 --   
 --   <pre>
---   nonEmptyIntSet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+--   nonEmptySet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
 --   </pre>
-nonEmptyIntSet :: IntSet -> Maybe NEIntSet
+nonEmptySet :: IntSet -> Maybe NEIntSet
 
 -- | <i>O(log n)</i>. Convert a non-empty set back into a normal
 --   possibly-empty map, for usage with functions that expect
@@ -399,9 +399,9 @@ nonEmptyIntSet :: IntSet -> Maybe NEIntSet
 --   Can be thought of as "obscuring" the non-emptiness of the set in its
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
---   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toSet</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   <pre>
 --   toSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
@@ -479,7 +479,7 @@ module Data.IntSet.NonEmpty
 --   <a>NEIntSet</a> from a <a>IntSet</a>:
 --   
 --   <ol>
---   <li>The <a>nonEmptyIntSet</a> smart constructor will convert a
+--   <li>The <a>nonEmptySet</a> smart constructor will convert a
 --   <tt><a>IntSet</a> a</tt> into a <tt><a>Maybe</a> (<a>NEIntSet</a>
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntSet</a> was
 --   empty.</li>
@@ -552,17 +552,17 @@ pattern IsEmpty :: IntSet
 --   originally actually empty, and <tt><a>Just</a> n</tt> with an
 --   <a>NEIntSet</a>, if the <a>IntSet</a> was not empty.
 --   
---   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toSet</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>IntSet</a> being an <a>NEIntSet</a>.
 --   
 --   <pre>
---   nonEmptyIntSet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+--   nonEmptySet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
 --   </pre>
-nonEmptyIntSet :: IntSet -> Maybe NEIntSet
+nonEmptySet :: IntSet -> Maybe NEIntSet
 
 -- | <i>O(log n)</i>. Convert a non-empty set back into a normal
 --   possibly-empty map, for usage with functions that expect
@@ -571,9 +571,9 @@ nonEmptyIntSet :: IntSet -> Maybe NEIntSet
 --   Can be thought of as "obscuring" the non-emptiness of the set in its
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
---   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toSet</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySet</a> and <tt><a>maybe</a> <a>empty</a> <a>toSet</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   <pre>
 --   toSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
@@ -587,7 +587,7 @@ toSet :: NEIntSet -> IntSet
 --   <a>NEIntSet</a> will be fed to the function <tt>f</tt> instead.
 --   
 --   <pre>
---   <a>nonEmptyIntSet</a> == <a>withNEIntSet</a> <a>Nothing</a> <a>Just</a>
+--   <a>nonEmptySet</a> == <a>withNEIntSet</a> <a>Nothing</a> <a>Just</a>
 --   </pre>
 withNEIntSet :: r -> (NEIntSet -> r) -> IntSet -> r
 
@@ -634,7 +634,7 @@ insertSetMin :: Key -> IntSet -> NEIntSet
 --   </pre>
 insertSetMax :: Key -> IntSet -> NEIntSet
 
--- | <i>O(log n)</i>. Unsafe version of <a>nonEmptyIntSet</a>. Coerces a
+-- | <i>O(log n)</i>. Unsafe version of <a>nonEmptySet</a>. Coerces a
 --   <a>IntSet</a> into an <a>NEIntSet</a>, but is undefined (throws a
 --   runtime exception when evaluation is attempted) for an empty
 --   <a>IntSet</a>.
@@ -1022,7 +1022,7 @@ module Data.IntMap.NonEmpty
 --   <a>NEIntMap</a> from a <a>IntMap</a>:
 --   
 --   <ol>
---   <li>The <a>nonEmptyIntMap</a> smart constructor will convert a
+--   <li>The <a>nonEmptyMap</a> smart constructor will convert a
 --   <tt><a>IntMap</a> k a</tt> into a <tt><a>Maybe</a> (<a>NEIntMap</a> k
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntMap</a> was
 --   empty.</li>
@@ -1095,17 +1095,17 @@ pattern IsEmpty :: IntMap a
 --   originally actually empty, and <tt><a>Just</a> n</tt> with an
 --   <a>NEIntMap</a>, if the <a>IntMap</a> was not empty.
 --   
---   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toMap</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptyMap</a> and <tt><a>maybe</a> <a>empty</a> <a>toMap</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
 --   the possiblity of a <a>IntMap</a> being an <a>NEIntMap</a>.
 --   
 --   <pre>
---   nonEmptyIntMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+--   nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
 --   </pre>
-nonEmptyIntMap :: IntMap a -> Maybe (NEIntMap a)
+nonEmptyMap :: IntMap a -> Maybe (NEIntMap a)
 
 -- | <i>O(log n)</i>. Convert a non-empty map back into a normal
 --   possibly-empty map, for usage with functions that expect
@@ -1114,9 +1114,9 @@ nonEmptyIntMap :: IntMap a -> Maybe (NEIntMap a)
 --   Can be thought of as "obscuring" the non-emptiness of the map in its
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
---   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toMap</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptyMap</a> and <tt><a>maybe</a> <a>empty</a> <a>toMap</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 --   
 --   <pre>
 --   toMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
@@ -1130,7 +1130,7 @@ toMap :: NEIntMap a -> IntMap a
 --   <a>NEIntMap</a> will be fed to the function <tt>f</tt> instead.
 --   
 --   <pre>
---   <a>nonEmptyIntMap</a> == <a>withNEIntMap</a> <a>Nothing</a> <a>Just</a>
+--   <a>nonEmptyMap</a> == <a>withNEIntMap</a> <a>Nothing</a> <a>Just</a>
 --   </pre>
 withNEIntMap :: r -> (NEIntMap a -> r) -> IntMap a -> r
 
@@ -1203,7 +1203,7 @@ insertMapMin :: Key -> a -> IntMap a -> NEIntMap a
 --   </pre>
 insertMapMax :: Key -> a -> IntMap a -> NEIntMap a
 
--- | <i>O(log n)</i>. Unsafe version of <a>nonEmptyIntMap</a>. Coerces a
+-- | <i>O(log n)</i>. Unsafe version of <a>nonEmptyMap</a>. Coerces a
 --   <a>IntMap</a> into an <a>NEIntMap</a>, but is undefined (throws a
 --   runtime exception when evaluation is attempted) for an empty
 --   <a>IntMap</a>.

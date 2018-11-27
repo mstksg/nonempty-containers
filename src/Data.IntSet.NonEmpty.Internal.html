@@ -16,7 +16,7 @@
 </span><a name="line-16"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Data.IntSet.NonEmpty.Internal</span><span> </span><span class="hs-special">(</span><span>
 </span><a name="line-17"></a><span>    </span><a href="Data.IntSet.NonEmpty.Internal.html#NEIntSet"><span class="hs-identifier hs-type">NEIntSet</span></a><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
 </span><a name="line-18"></a><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-type">S.Key</span><span>
-</span><a name="line-19"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#nonEmptyIntSet"><span class="hs-identifier hs-var">nonEmptyIntSet</span></a><span>
+</span><a name="line-19"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#nonEmptySet"><span class="hs-identifier hs-var">nonEmptySet</span></a><span>
 </span><a name="line-20"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#toSet"><span class="hs-identifier hs-var">toSet</span></a><span>
 </span><a name="line-21"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">singleton</span></a><span>
 </span><a name="line-22"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#fromList"><span class="hs-identifier hs-var">fromList</span></a><span>
@@ -62,7 +62,7 @@
 </span><a name="line-62"></a><span class="hs-comment">-- 'IntSet', except you don't have access to 'Data.IntSet.empty'.  There are also</span><span>
 </span><a name="line-63"></a><span class="hs-comment">-- a few ways to construct an 'NEIntSet' from a 'IntSet':</span><span>
 </span><a name="line-64"></a><span class="hs-comment">--</span><span>
-</span><a name="line-65"></a><span class="hs-comment">-- 1.  The 'nonEmptyIntSet' smart constructor will convert a @'IntSet' a@ into</span><span>
+</span><a name="line-65"></a><span class="hs-comment">-- 1.  The 'nonEmptySet' smart constructor will convert a @'IntSet' a@ into</span><span>
 </span><a name="line-66"></a><span class="hs-comment">--     a @'Maybe' ('NEIntSet' a)@, returning 'Nothing' if the original 'IntSet'</span><span>
 </span><a name="line-67"></a><span class="hs-comment">--     was empty.</span><span>
 </span><a name="line-68"></a><span class="hs-comment">-- 2.  You can use the 'Data.IntSet.NonEmpty.insertIntSet' family of functions to</span><span>
@@ -134,17 +134,17 @@
 </span><a name="line-134"></a><span class="hs-comment">-- 'Nothing' if the 'IntSet' was originally actually empty, and @'Just' n@</span><span>
 </span><a name="line-135"></a><span class="hs-comment">-- with an 'NEIntSet', if the 'IntSet' was not empty.</span><span>
 </span><a name="line-136"></a><span class="hs-comment">--</span><span>
-</span><a name="line-137"></a><span class="hs-comment">-- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an</span><span>
+</span><a name="line-137"></a><span class="hs-comment">-- 'nonEmptySet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an</span><span>
 </span><a name="line-138"></a><span class="hs-comment">-- isomorphism: they are perfect structure-preserving inverses of</span><span>
 </span><a name="line-139"></a><span class="hs-comment">-- eachother.</span><span>
 </span><a name="line-140"></a><span class="hs-comment">--</span><span>
 </span><a name="line-141"></a><span class="hs-comment">-- See 'Data.IntSet.NonEmpty.IsNonEmpty' for a pattern synonym that lets you</span><span>
 </span><a name="line-142"></a><span class="hs-comment">-- &quot;match on&quot; the possiblity of a 'IntSet' being an 'NEIntSet'.</span><span>
 </span><a name="line-143"></a><span class="hs-comment">--</span><span>
-</span><a name="line-144"></a><span class="hs-comment">-- &gt; nonEmptyIntSet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]</span><span>
-</span><a name="line-145"></a><span class="hs-identifier">nonEmptyIntSet</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">IntSet</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">Maybe</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#NEIntSet"><span class="hs-identifier hs-type">NEIntSet</span></a><span>
-</span><a name="line-146"></a><a name="nonEmptyIntSet"><a href="Data.IntSet.NonEmpty.Internal.html#nonEmptyIntSet"><span class="hs-identifier">nonEmptyIntSet</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">fmap</span><span> </span><span class="hs-operator hs-var">.</span><span> </span><span class="hs-identifier hs-var">uncurry</span><span class="hs-special">)</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#NEIntSet"><span class="hs-identifier hs-var">NEIntSet</span></a><span> </span><span class="hs-operator hs-var">.</span><span> </span><span class="hs-identifier hs-var">S.minView</span><span>
-</span><a name="line-147"></a><span class="hs-pragma">{-# INLINE</span><span> </span><span class="hs-pragma">nonEmptyIntSet</span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><a name="line-144"></a><span class="hs-comment">-- &gt; nonEmptySet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]</span><span>
+</span><a name="line-145"></a><span class="hs-identifier">nonEmptySet</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">IntSet</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">Maybe</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#NEIntSet"><span class="hs-identifier hs-type">NEIntSet</span></a><span>
+</span><a name="line-146"></a><a name="nonEmptySet"><a href="Data.IntSet.NonEmpty.Internal.html#nonEmptySet"><span class="hs-identifier">nonEmptySet</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">fmap</span><span> </span><span class="hs-operator hs-var">.</span><span> </span><span class="hs-identifier hs-var">uncurry</span><span class="hs-special">)</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#NEIntSet"><span class="hs-identifier hs-var">NEIntSet</span></a><span> </span><span class="hs-operator hs-var">.</span><span> </span><span class="hs-identifier hs-var">S.minView</span><span>
+</span><a name="line-147"></a><span class="hs-pragma">{-# INLINE</span><span> </span><span class="hs-pragma">nonEmptySet</span><span> </span><span class="hs-pragma">#-}</span><span>
 </span><a name="line-148"></a><span>
 </span><a name="line-149"></a><span class="hs-comment">-- | /O(log n)/.</span><span>
 </span><a name="line-150"></a><span class="hs-comment">-- Convert a non-empty set back into a normal possibly-empty map, for usage</span><span>
@@ -153,7 +153,7 @@
 </span><a name="line-153"></a><span class="hs-comment">-- Can be thought of as &quot;obscuring&quot; the non-emptiness of the set in its</span><span>
 </span><a name="line-154"></a><span class="hs-comment">-- type.  See the 'Data.IntSet.NonEmpty.IsNotEmpty' pattern.</span><span>
 </span><a name="line-155"></a><span class="hs-comment">--</span><span>
-</span><a name="line-156"></a><span class="hs-comment">-- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an</span><span>
+</span><a name="line-156"></a><span class="hs-comment">-- 'nonEmptySet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an</span><span>
 </span><a name="line-157"></a><span class="hs-comment">-- isomorphism: they are perfect structure-preserving inverses of</span><span>
 </span><a name="line-158"></a><span class="hs-comment">-- eachother.</span><span>
 </span><a name="line-159"></a><span class="hs-comment">--</span><span>
@@ -174,7 +174,7 @@
 </span><a name="line-174"></a><span class="hs-comment">-- 'S.fromList'.</span><span>
 </span><a name="line-175"></a><span class="hs-identifier">fromList</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">NonEmpty</span><span> </span><span class="hs-identifier hs-type">Key</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#NEIntSet"><span class="hs-identifier hs-type">NEIntSet</span></a><span>
 </span><a name="line-176"></a><a name="fromList"><a href="Data.IntSet.NonEmpty.Internal.html#fromList"><span class="hs-identifier">fromList</span></a></a><span> </span><span class="hs-special">(</span><a name="local-6989586621679094266"><a href="#local-6989586621679094266"><span class="hs-identifier">x</span></a></a><span> </span><span class="hs-operator hs-var">:|</span><span> </span><a name="local-6989586621679094267"><a href="#local-6989586621679094267"><span class="hs-identifier">s</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">maybe</span><span> </span><span class="hs-special">(</span><a href="Data.IntSet.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">singleton</span></a><span> </span><a href="#local-6989586621679094266"><span class="hs-identifier hs-var">x</span></a><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-operator hs-var">&lt;&gt;</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">singleton</span></a><span> </span><a href="#local-6989586621679094266"><span class="hs-identifier hs-var">x</span></a><span class="hs-special">)</span><span>
-</span><a name="line-177"></a><span>                  </span><span class="hs-operator hs-var">.</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#nonEmptyIntSet"><span class="hs-identifier hs-var">nonEmptyIntSet</span></a><span>
+</span><a name="line-177"></a><span>                  </span><span class="hs-operator hs-var">.</span><span> </span><a href="Data.IntSet.NonEmpty.Internal.html#nonEmptySet"><span class="hs-identifier hs-var">nonEmptySet</span></a><span>
 </span><a name="line-178"></a><span>                  </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-identifier hs-var">S.fromList</span><span> </span><a href="#local-6989586621679094267"><span class="hs-identifier hs-var">s</span></a><span>
 </span><a name="line-179"></a><span class="hs-pragma">{-# INLINE</span><span> </span><span class="hs-pragma">fromList</span><span> </span><span class="hs-pragma">#-}</span><span>
 </span><a name="line-180"></a><span>
