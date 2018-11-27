@@ -2578,7 +2578,7 @@ module Data.Map.NonEmpty.Internal
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Map</a> to reveal it as either containing a
 --   <a>NEMap</a> or an empty map.</li>
---   <li><a>withNEMap</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>Map</a> and treating it as if it were an
 --   <a>NEMap</a>.</li>
 --   </ol>
@@ -2885,7 +2885,7 @@ module Data.Set.NonEmpty.Internal
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Set</a> to reveal it as either containing a
 --   <a>NESet</a> or an empty map.</li>
---   <li><a>withNESet</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>Set</a> and treating it as if it were an
 --   <a>NESet</a>.</li>
 --   </ol>
@@ -3094,7 +3094,7 @@ module Data.Set.NonEmpty
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Set</a> to reveal it as either containing a
 --   <a>NESet</a> or an empty map.</li>
---   <li><a>withNESet</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>Set</a> and treating it as if it were an
 --   <a>NESet</a>.</li>
 --   </ol>
@@ -3900,7 +3900,7 @@ module Data.Map.NonEmpty
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Map</a> to reveal it as either containing a
 --   <a>NEMap</a> or an empty map.</li>
---   <li><a>withNEMap</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>Map</a> and treating it as if it were an
 --   <a>NEMap</a>.</li>
 --   </ol>
@@ -3989,15 +3989,15 @@ nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 toMap :: NEMap k a -> Map k a
 
 -- | <i>O(log n)</i>. A general continuation-based way to consume a
---   <a>Map</a> as if it were an <a>NEMap</a>. <tt><a>withNEMap</a> def
+--   <a>Map</a> as if it were an <a>NEMap</a>. <tt><a>withNonEmpty</a> def
 --   f</tt> will take a <a>Map</a>. If map is empty, it will evaluate to
 --   <tt>def</tt>. Otherwise, a non-empty map <a>NEMap</a> will be fed to
 --   the function <tt>f</tt> instead.
 --   
 --   <pre>
---   <a>nonEmptyMap</a> == <a>withNEMap</a> <a>Nothing</a> <a>Just</a>
+--   <a>nonEmptyMap</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
 --   </pre>
-withNEMap :: r -> (NEMap k a -> r) -> Map k a -> r
+withNonEmpty :: r -> (NEMap k a -> r) -> Map k a -> r
 
 -- | <i>O(log n)</i>. Convert a <a>Map</a> into an <a>NEMap</a> by adding a
 --   key-value pair. Because of this, we know that the map must have at
