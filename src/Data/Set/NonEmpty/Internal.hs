@@ -20,7 +20,6 @@ module Data.Set.NonEmpty.Internal (
   , nonEmptySet
   , toSet
   , singleton
-  , insert
   , fromList
   , toList
   , size
@@ -189,16 +188,6 @@ toSet (NESet x s) = insertMinSet x s
 singleton :: a -> NESet a
 singleton x = NESet x S.empty
 {-# INLINE singleton #-}
-
--- | /O(log n)/. Insert an element in a set.
--- If the set already contains an element equal to the given value,
--- it is replaced with the new value.
-insert :: Ord a => a -> NESet a -> NESet a
-insert x n@(NESet x0 s) = case compare x x0 of
-    LT -> NESet x  $ toSet n
-    EQ -> NESet x  s
-    GT -> NESet x0 $ S.insert x s
-{-# INLINE insert #-}
 
 -- | /O(n*log n)/. Create a set from a list of elements.
 

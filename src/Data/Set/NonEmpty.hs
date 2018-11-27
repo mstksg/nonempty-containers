@@ -351,6 +351,16 @@ powerSet (NESet x s0) = case nonEmptySet p1 of
                         id
 {-# INLINABLE powerSet #-}
 
+-- | /O(log n)/. Insert an element in a set.
+-- If the set already contains an element equal to the given value,
+-- it is replaced with the new value.
+insert :: Ord a => a -> NESet a -> NESet a
+insert x n@(NESet x0 s) = case compare x x0 of
+    LT -> NESet x  $ toSet n
+    EQ -> NESet x  s
+    GT -> NESet x0 $ S.insert x s
+{-# INLINE insert #-}
+
 -- | /O(log n)/. Delete an element from a set.
 delete :: Ord a => a -> NESet a -> Set a
 delete x n@(NESet x0 s) = case compare x x0 of

@@ -34,7 +34,7 @@ prop_valid = property $
     assert . NEM.valid =<< forAll neMapGen
 
 prop_valid_toMap :: Property
-prop_valid_toMap = property $ do
+prop_valid_toMap = property $
     assert . M.valid . NEM.toMap =<< forAll neMapGen
 
 prop_valid_insertMinMap :: Property
