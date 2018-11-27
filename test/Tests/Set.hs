@@ -110,8 +110,8 @@ prop_fromList = ttProp (GTNEList Nothing GTKey :-> TTNESet)
 
 prop_powerSet :: Property
 prop_powerSet = ttProp (GTNESet :-> TTNEList TTNESet)
-    (S.toList   . S.powerSet  )
-    (NES.toList . NES.powerSet)
+    (S.toList   . S.drop 1 . S.powerSet  )
+    (NES.toList            . NES.powerSet)
 
 prop_insert :: Property
 prop_insert = ttProp (GTKey :-> GTNESet :-> TTNESet)

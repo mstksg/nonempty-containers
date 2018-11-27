@@ -206,7 +206,7 @@ insert x n@(NESet x0 s) = case compare x x0 of
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'S.fromList'.
 fromList :: Ord a => NonEmpty a -> NESet a
-fromList (x :| s) = maybe (singleton x) (insert x)
+fromList (x :| s) = maybe (singleton x) (<> singleton x)
                   . nonEmptySet
                   $ S.fromList s
 {-# INLINE fromList #-}
