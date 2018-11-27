@@ -58,7 +58,7 @@ module Data.IntMap.NonEmpty.Internal
 --   </ol>
 --   
 --   You can convert an <a>NEIntMap</a> into a <a>IntMap</a> with
---   <a>toIntMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   <a>toMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
 --   non-empty property from the type.
 data NEIntMap a
 NEIntMap :: !Key -> a -> !IntMap a -> NEIntMap a
@@ -83,7 +83,7 @@ singleton :: Key -> a -> NEIntMap a
 --   <a>NEIntMap</a>, if the <a>IntMap</a> was not empty.
 --   
 --   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntMap</a></tt> form an isomorphism: they are perfect
+--   <a>toMap</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
@@ -180,13 +180,13 @@ size :: NEIntMap a -> Int
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
 --   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntMap</a></tt> form an isomorphism: they are perfect
+--   <a>toMap</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   <pre>
---   toIntMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
+--   toMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
 --   </pre>
-toIntMap :: NEIntMap a -> IntMap a
+toMap :: NEIntMap a -> IntMap a
 
 -- | <i>O(n)</i>. Fold the values in the map using the given
 --   right-associative binary operator, such that <tt><a>foldr</a> f z ==
@@ -285,10 +285,9 @@ foldMapWithKey :: Semigroup m => (Key -> a -> m) -> NEIntMap a -> m
 --   <i>strictly less than</i> all keys present in the <a>IntMap</a>. /The
 --   precondition is not checked./
 --   
---   While this has the same asymptotics as <tt>Data.IntMap.insert</tt>, it
---   saves a constant factor for key comparison (so may be helpful if
---   comparison is expensive) and also does not require an <a>Ord</a>
---   instance for the key type.
+--   At the moment this is simply an alias for <tt>Data.IntSet.insert</tt>,
+--   but it's left here as a placeholder in case this eventually gets
+--   implemented in a more efficient way.
 insertMinIntMap :: Key -> a -> IntMap a -> IntMap a
 
 -- | <i>O(log n)</i>. Insert new key and value into a map where keys are
@@ -296,10 +295,9 @@ insertMinIntMap :: Key -> a -> IntMap a -> IntMap a
 --   <i>strictly greater than</i> all keys present in the <a>IntMap</a>.
 --   /The precondition is not checked./
 --   
---   While this has the same asymptotics as <tt>Data.IntMap.insert</tt>, it
---   saves a constant factor for key comparison (so may be helpful if
---   comparison is expensive) and also does not require an <a>Ord</a>
---   instance for the key type.
+--   At the moment this is simply an alias for <tt>Data.IntSet.insert</tt>,
+--   but it's left here as a placeholder in case this eventually gets
+--   implemented in a more efficient way.
 insertMaxIntMap :: Key -> a -> IntMap a -> IntMap a
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
@@ -367,7 +365,7 @@ module Data.IntSet.NonEmpty.Internal
 --   </ol>
 --   
 --   You can convert an <a>NEIntSet</a> into a <a>IntSet</a> with
---   <a>toIntSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   <a>toSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
 --   non-empty property from the type.
 data NEIntSet
 NEIntSet :: !Key -> !IntSet -> NEIntSet
@@ -383,7 +381,7 @@ type Key = Int
 --   <a>NEIntSet</a>, if the <a>IntSet</a> was not empty.
 --   
 --   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   <a>toSet</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
@@ -402,13 +400,13 @@ nonEmptyIntSet :: IntSet -> Maybe NEIntSet
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
 --   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   <a>toSet</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   <pre>
---   toIntSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
+--   toSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
 --   </pre>
-toIntSet :: NEIntSet -> IntSet
+toSet :: NEIntSet -> IntSet
 
 -- | <i>O(1)</i>. Create a singleton set.
 singleton :: Key -> NEIntSet
@@ -497,7 +495,7 @@ module Data.IntSet.NonEmpty
 --   </ol>
 --   
 --   You can convert an <a>NEIntSet</a> into a <a>IntSet</a> with
---   <a>toIntSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   <a>toSet</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
 --   non-empty property from the type.
 data NEIntSet
 type Key = Int
@@ -529,7 +527,7 @@ type Key = Int
 --   
 --   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
 --   convert a <a>NEIntSet</a> back into a <a>IntSet</a>, obscuring its
---   non-emptiness (see <a>toIntSet</a>).
+--   non-emptiness (see <a>toSet</a>).
 pattern IsNonEmpty :: NEIntSet -> IntSet
 
 -- | <i>O(1)</i>. The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow
@@ -555,7 +553,7 @@ pattern IsEmpty :: IntSet
 --   <a>NEIntSet</a>, if the <a>IntSet</a> was not empty.
 --   
 --   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   <a>toSet</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
@@ -574,13 +572,13 @@ nonEmptyIntSet :: IntSet -> Maybe NEIntSet
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
 --   <a>nonEmptyIntSet</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntSet</a></tt> form an isomorphism: they are perfect
+--   <a>toSet</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   <pre>
---   toIntSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
+--   toSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
 --   </pre>
-toIntSet :: NEIntSet -> IntSet
+toSet :: NEIntSet -> IntSet
 
 -- | <i>O(log n)</i>. A general continuation-based way to consume a
 --   <a>IntSet</a> as if it were an <a>NEIntSet</a>.
@@ -597,15 +595,14 @@ withNEIntSet :: r -> (NEIntSet -> r) -> IntSet -> r
 --   adding a value. Because of this, we know that the set must have at
 --   least one element, and so therefore cannot be empty.
 --   
---   See <a>insertIntSetMin</a> for a version that is constant-time if the
---   new value is <i>strictly smaller than</i> all values in the original
---   set
+--   See <a>insertSetMin</a> for a version that is constant-time if the new
+--   value is <i>strictly smaller than</i> all values in the original set
 --   
 --   <pre>
---   insertIntSet 4 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [4, 5])
---   insertIntSet 4 Data.IntSet.empty == singleton 4 "c"
+--   insertSet 4 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [4, 5])
+--   insertSet 4 Data.IntSet.empty == singleton 4 "c"
 --   </pre>
-insertIntSet :: Key -> IntSet -> NEIntSet
+insertSet :: Key -> IntSet -> NEIntSet
 
 -- | <i>O(1)</i> Convert a <a>IntSet</a> into an <a>NEIntSet</a> by adding
 --   a value where the value is <i>strictly less than</i> all values in the
@@ -614,12 +611,12 @@ insertIntSet :: Key -> IntSet -> NEIntSet
 --   checked.</i>
 --   
 --   <pre>
---   insertIntSetMin 2 (Data.IntSet.fromList [5, 3]) == fromList (2 :| [3, 5])
---   valid (insertIntSetMin 2 (Data.IntSet.fromList [5, 3])) == True
---   valid (insertIntSetMin 7 (Data.IntSet.fromList [5, 3])) == False
---   valid (insertIntSetMin 3 (Data.IntSet.fromList [5, 3])) == False
+--   insertSetMin 2 (Data.IntSet.fromList [5, 3]) == fromList (2 :| [3, 5])
+--   valid (insertSetMin 2 (Data.IntSet.fromList [5, 3])) == True
+--   valid (insertSetMin 7 (Data.IntSet.fromList [5, 3])) == False
+--   valid (insertSetMin 3 (Data.IntSet.fromList [5, 3])) == False
 --   </pre>
-insertIntSetMin :: Key -> IntSet -> NEIntSet
+insertSetMin :: Key -> IntSet -> NEIntSet
 
 -- | <i>O(log n)</i> Convert a <a>IntSet</a> into an <a>NEIntSet</a> by
 --   adding a value where the value is <i>strictly less than</i> all values
@@ -627,21 +624,21 @@ insertIntSetMin :: Key -> IntSet -> NEIntSet
 --   <i>strictly greater than</i> the new value. <i>The precondition is not
 --   checked.</i>
 --   
---   At the current moment, this is identical simply <a>insertIntSet</a>;
+--   At the current moment, this is identical simply <a>insertSet</a>;
 --   however, it is left both for consistency and as a placeholder for a
 --   future version where optimizations are implemented to allow for a
 --   faster implementation.
 --   
 --   <pre>
---   insertIntSetMin 7 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [5, 7])
+--   insertSetMin 7 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [5, 7])
 --   </pre>
-insertIntSetMax :: Key -> IntSet -> NEIntSet
+insertSetMax :: Key -> IntSet -> NEIntSet
 
 -- | <i>O(log n)</i>. Unsafe version of <a>nonEmptyIntSet</a>. Coerces a
 --   <a>IntSet</a> into an <a>NEIntSet</a>, but is undefined (throws a
 --   runtime exception when evaluation is attempted) for an empty
 --   <a>IntSet</a>.
-unsafeFromIntSet :: IntSet -> NEIntSet
+unsafeFromSet :: IntSet -> NEIntSet
 
 -- | <i>O(1)</i>. Create a singleton set.
 singleton :: Key -> NEIntSet
@@ -1041,7 +1038,7 @@ module Data.IntMap.NonEmpty
 --   </ol>
 --   
 --   You can convert an <a>NEIntMap</a> into a <a>IntMap</a> with
---   <a>toIntMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
+--   <a>toMap</a> or <a>IsNonEmpty</a>, essentially "obscuring" the
 --   non-empty property from the type.
 data NEIntMap a
 type Key = Int
@@ -1073,7 +1070,7 @@ type Key = Int
 --   
 --   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
 --   convert a <a>NEIntMap</a> back into a <a>IntMap</a>, obscuring its
---   non-emptiness (see <a>toIntMap</a>).
+--   non-emptiness (see <a>toMap</a>).
 pattern IsNonEmpty :: NEIntMap a -> IntMap a
 
 -- | <i>O(1)</i>. The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow
@@ -1099,7 +1096,7 @@ pattern IsEmpty :: IntMap a
 --   <a>NEIntMap</a>, if the <a>IntMap</a> was not empty.
 --   
 --   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntMap</a></tt> form an isomorphism: they are perfect
+--   <a>toMap</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
@@ -1118,13 +1115,13 @@ nonEmptyIntMap :: IntMap a -> Maybe (NEIntMap a)
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
 --   <a>nonEmptyIntMap</a> and <tt><a>maybe</a> <a>empty</a>
---   <a>toIntMap</a></tt> form an isomorphism: they are perfect
+--   <a>toMap</a></tt> form an isomorphism: they are perfect
 --   structure-preserving inverses of eachother.
 --   
 --   <pre>
---   toIntMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
+--   toMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
 --   </pre>
-toIntMap :: NEIntMap a -> IntMap a
+toMap :: NEIntMap a -> IntMap a
 
 -- | <i>O(log n)</i>. A general continuation-based way to consume a
 --   <a>IntMap</a> as if it were an <a>NEIntMap</a>.
@@ -1142,14 +1139,14 @@ withNEIntMap :: r -> (NEIntMap a -> r) -> IntMap a -> r
 --   have at least one element, and so therefore cannot be empty. If key is
 --   already present, will overwrite the original value.
 --   
---   See <a>insertIntMapMin</a> for a version that is constant-time if the
---   new key is <i>strictly smaller than</i> all keys in the original map.
+--   See <a>insertMapMin</a> for a version that is constant-time if the new
+--   key is <i>strictly smaller than</i> all keys in the original map.
 --   
 --   <pre>
---   insertIntMap 4 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
---   insertIntMap 4 "c" Data.IntMap.empty == singleton 4 "c"
+--   insertMap 4 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
+--   insertMap 4 "c" Data.IntMap.empty == singleton 4 "c"
 --   </pre>
-insertIntMap :: Key -> a -> IntMap a -> NEIntMap a
+insertMap :: Key -> a -> IntMap a -> NEIntMap a
 
 -- | <i>O(log n)</i>. Convert a <a>IntMap</a> into an <a>NEIntMap</a> by
 --   adding a key-value pair. Because of this, we know that the map must
@@ -1158,10 +1155,10 @@ insertIntMap :: Key -> a -> IntMap a -> NEIntMap a
 --   is already present.
 --   
 --   <pre>
---   insertIntMapWith (++) 4 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
---   insertIntMapWith (++) 5 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(5,"ca")])
+--   insertMapWith (++) 4 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
+--   insertMapWith (++) 5 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(5,"ca")])
 --   </pre>
-insertIntMapWith :: (a -> a -> a) -> Key -> a -> IntMap a -> NEIntMap a
+insertMapWith :: (a -> a -> a) -> Key -> a -> IntMap a -> NEIntMap a
 
 -- | <i>O(log n)</i>. Convert a <a>IntMap</a> into an <a>NEIntMap</a> by
 --   adding a key-value pair. Because of this, we know that the map must
@@ -1175,7 +1172,7 @@ insertIntMapWith :: (a -> a -> a) -> Key -> a -> IntMap a -> NEIntMap a
 --   insertWithKey f 7 "xxx" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
 --   insertWithKey f 5 "xxx" Data.IntMap.empty                         == singleton 5 "xxx"
 --   </pre>
-insertIntMapWithKey :: (Key -> a -> a -> a) -> Key -> a -> IntMap a -> NEIntMap a
+insertMapWithKey :: (Key -> a -> a -> a) -> Key -> a -> IntMap a -> NEIntMap a
 
 -- | <i>O(1)</i> Convert a <a>IntMap</a> into an <a>NEIntMap</a> by adding
 --   a key-value pair where the key is <i>strictly less than</i> all keys
@@ -1183,12 +1180,12 @@ insertIntMapWithKey :: (Key -> a -> a -> a) -> Key -> a -> IntMap a -> NEIntMap 
 --   greater than</i> the new key. <i>The precondition is not checked.</i>
 --   
 --   <pre>
---   insertIntMapMin 2 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((2,"c") :| [(3,"b"), (5,"a")])
---   valid (insertIntMapMin 2 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == True
---   valid (insertIntMapMin 7 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
---   valid (insertIntMapMin 3 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
+--   insertMapMin 2 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((2,"c") :| [(3,"b"), (5,"a")])
+--   valid (insertMapMin 2 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == True
+--   valid (insertMapMin 7 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
+--   valid (insertMapMin 3 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
 --   </pre>
-insertIntMapMin :: Key -> a -> IntMap a -> NEIntMap a
+insertMapMin :: Key -> a -> IntMap a -> NEIntMap a
 
 -- | <i>O(log n)</i> Convert a <a>IntMap</a> into an <a>NEIntMap</a> by
 --   adding a key-value pair where the key is <i>strictly greater than</i>
@@ -1196,24 +1193,21 @@ insertIntMapMin :: Key -> a -> IntMap a -> NEIntMap a
 --   <i>strictly less than</i> the new key. <i>The precondition is not
 --   checked.</i>
 --   
---   While this has the same asymptotics as <a>insertIntMap</a>, it saves a
---   constant factor for key comparison (so may be helpful if comparison is
---   expensive) and also does not require an <a>Ord</a> instance for the
---   key type.
+--   At the current moment, this is identical simply <tt>insertIntSet</tt>;
+--   however, it is left both for consistency and as a placeholder for a
+--   future version where optimizations are implemented to allow for a
+--   faster implementation.
 --   
 --   <pre>
---   insertIntMap 7 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(5,"a"), (7,"c")])
---   valid (insertIntMap 7 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == True
---   valid (insertIntMap 2 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
---   valid (insertIntMap 5 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
+--   insertMap 7 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(5,"a"), (7,"c")])
 --   </pre>
-insertIntMapMax :: Key -> a -> IntMap a -> NEIntMap a
+insertMapMax :: Key -> a -> IntMap a -> NEIntMap a
 
 -- | <i>O(log n)</i>. Unsafe version of <a>nonEmptyIntMap</a>. Coerces a
 --   <a>IntMap</a> into an <a>NEIntMap</a>, but is undefined (throws a
 --   runtime exception when evaluation is attempted) for an empty
 --   <a>IntMap</a>.
-unsafeFromIntMap :: IntMap a -> NEIntMap a
+unsafeFromMap :: IntMap a -> NEIntMap a
 
 -- | <i>O(1)</i>. A map with a single element.
 --   
@@ -1309,7 +1303,7 @@ fromDistinctAscList :: NonEmpty (Key, a) -> NEIntMap a
 --   supplied value. <a>insert</a> is equivalent to <tt><a>insertWith</a>
 --   <a>const</a></tt>.
 --   
---   See <a>insertIntMap</a> for a version where the first argument is a
+--   See <a>insertMap</a> for a version where the first argument is a
 --   <a>IntMap</a>.
 --   
 --   <pre>
@@ -1340,8 +1334,8 @@ insertWith :: (a -> a -> a) -> Key -> a -> NEIntMap a -> NEIntMap a
 --   <tt>(key,f key new_value old_value)</tt>. Note that the key passed to
 --   f is the same key passed to <a>insertWithKey</a>.
 --   
---   See <a>insertIntMapWithKey</a> for a version where the first argument
---   is a <a>IntMap</a>.
+--   See <a>insertMapWithKey</a> for a version where the first argument is
+--   a <a>IntMap</a>.
 --   
 --   <pre>
 --   let f key new_value old_value = (show key) ++ ":" ++ new_value ++ "|" ++ old_value
@@ -1375,7 +1369,7 @@ insertLookupWithKey :: (Key -> a -> a -> a) -> Key -> a -> NEIntMap a -> (Maybe 
 -- | <i>O(log n)</i>. Delete a key and its value from the non-empty map. A
 --   potentially empty map (<a>IntMap</a>) is returned, since this might
 --   delete the last item in the <a>NEIntMap</a>. When the key is not a
---   member of the map, is equivalent to <a>toIntMap</a>.
+--   member of the map, is equivalent to <a>toMap</a>.
 --   
 --   <pre>
 --   delete 5 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 3 "b"
