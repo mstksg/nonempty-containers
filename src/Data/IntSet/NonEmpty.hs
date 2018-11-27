@@ -12,12 +12,12 @@ module Data.IntSet.NonEmpty (
   , pattern IsNonEmpty
   , pattern IsEmpty
   , nonEmptyIntSet
-  , toIntSet
+  , toSet
   , withNEIntSet
-  , insertIntSet
-  , insertIntSetMin
-  , insertIntSetMax
-  , unsafeFromIntSet
+  , insertSet
+  , insertSetMin
+  , insertSetMax
+  , unsafeFromSet
 
   -- * Construction
   , singleton
@@ -127,11 +127,11 @@ import qualified Data.List.NonEmpty            as NE
 -- complete coverage.
 --
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
--- a 'NEIntSet' back into a 'IntSet', obscuring its non-emptiness (see 'toIntSet').
+-- a 'NEIntSet' back into a 'IntSet', obscuring its non-emptiness (see 'toSet').
 pattern IsNonEmpty :: NEIntSet -> IntSet
 pattern IsNonEmpty n <- (nonEmptyIntSet->Just n)
   where
-    IsNonEmpty n = toIntSet n
+    IsNonEmpty n = toSet n
 
 -- | /O(1)/. The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat
 -- a 'IntSet' as if it were either a @'IsNonEmpty' n@ (where @n@ is
@@ -171,60 +171,60 @@ withNEIntSet def f = maybe def f . nonEmptyIntSet
 -- Because of this, we know that the set must have at least one
 -- element, and so therefore cannot be empty.
 --
--- See 'insertIntSetMin' for a version that is constant-time if the new
+-- See 'insertSetMin' for a version that is constant-time if the new
 -- value is /strictly smaller than/ all values in the original set
 --
--- > insertIntSet 4 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [4, 5])
--- > insertIntSet 4 Data.IntSet.empty == singleton 4 "c"
-insertIntSet :: Key -> IntSet -> NEIntSet
-insertIntSet x = withNEIntSet (singleton x) (insert x)
-{-# INLINE insertIntSet #-}
+-- > insertSet 4 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [4, 5])
+-- > insertSet 4 Data.IntSet.empty == singleton 4 "c"
+insertSet :: Key -> IntSet -> NEIntSet
+insertSet x = withNEIntSet (singleton x) (insert x)
+{-# INLINE insertSet #-}
 
 -- | /O(1)/ Convert a 'IntSet' into an 'NEIntSet' by adding a value where the
 -- value is /strictly less than/ all values in the input set  The values in
 -- the original map must all be /strictly greater than/ the new value.
 -- /The precondition is not checked./
 --
--- > insertIntSetMin 2 (Data.IntSet.fromList [5, 3]) == fromList (2 :| [3, 5])
--- > valid (insertIntSetMin 2 (Data.IntSet.fromList [5, 3])) == True
--- > valid (insertIntSetMin 7 (Data.IntSet.fromList [5, 3])) == False
--- > valid (insertIntSetMin 3 (Data.IntSet.fromList [5, 3])) == False
-insertIntSetMin :: Key -> IntSet -> NEIntSet
-insertIntSetMin = NEIntSet
-{-# INLINE insertIntSetMin #-}
+-- > insertSetMin 2 (Data.IntSet.fromList [5, 3]) == fromList (2 :| [3, 5])
+-- > valid (insertSetMin 2 (Data.IntSet.fromList [5, 3])) == True
+-- > valid (insertSetMin 7 (Data.IntSet.fromList [5, 3])) == False
+-- > valid (insertSetMin 3 (Data.IntSet.fromList [5, 3])) == False
+insertSetMin :: Key -> IntSet -> NEIntSet
+insertSetMin = NEIntSet
+{-# INLINE insertSetMin #-}
 
 -- | /O(log n)/ Convert a 'IntSet' into an 'NEIntSet' by adding a value
 -- where the value is /strictly less than/ all values in the input set  The
 -- values in the original map must all be /strictly greater than/ the new
 -- value.  /The precondition is not checked./
 --
--- At the current moment, this is identical simply 'insertIntSet'; however,
+-- At the current moment, this is identical simply 'insertSet'; however,
 -- it is left both for consistency and as a placeholder for a future
 -- version where optimizations are implemented to allow for a faster
 -- implementation.
 --
--- > insertIntSetMin 7 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [5, 7])
+-- > insertSetMin 7 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [5, 7])
 
 -- these currently are all valid, but shouldn't be
--- > valid (insertIntSetMin 7 (Data.IntSet.fromList [5, 3])) == True
--- > valid (insertIntSetMin 2 (Data.IntSet.fromList [5, 3])) == False
--- > valid (insertIntSetMin 5 (Data.IntSet.fromList [5, 3])) == False
-insertIntSetMax :: Key -> IntSet -> NEIntSet
-insertIntSetMax x = withNEIntSet (singleton x) go
+-- > valid (insertSetMin 7 (Data.IntSet.fromList [5, 3])) == True
+-- > valid (insertSetMin 2 (Data.IntSet.fromList [5, 3])) == False
+-- > valid (insertSetMin 5 (Data.IntSet.fromList [5, 3])) == False
+insertSetMax :: Key -> IntSet -> NEIntSet
+insertSetMax x = withNEIntSet (singleton x) go
   where
     go (NEIntSet x0 s0) = NEIntSet x0 . insertMaxIntSet x $ s0
-{-# INLINE insertIntSetMax #-}
+{-# INLINE insertSetMax #-}
 
 -- | /O(log n)/. Unsafe version of 'nonEmptyIntSet'.  Coerces a 'IntSet'
 -- into an 'NEIntSet', but is undefined (throws a runtime exception when
 -- evaluation is attempted) for an empty 'IntSet'.
-unsafeFromIntSet
+unsafeFromSet
     :: IntSet
     -> NEIntSet
-unsafeFromIntSet = withNEIntSet e id
+unsafeFromSet = withNEIntSet e id
   where
-    e = errorWithoutStackTrace "NEIntSet.unsafeFromIntSet: empty set"
-{-# INLINE unsafeFromIntSet #-}
+    e = errorWithoutStackTrace "NEIntSet.unsafeFromSet: empty set"
+{-# INLINE unsafeFromSet #-}
 
 -- | /O(n)/. Build a set from an ascending list in linear time.  /The
 -- precondition (input list is ascending) is not checked./
@@ -235,7 +235,7 @@ fromAscList = fromDistinctAscList . combineEq
 -- | /O(n)/. Build a set from an ascending list of distinct elements in linear time.
 -- /The precondition (input list is strictly ascending) is not checked./
 fromDistinctAscList :: NonEmpty Key -> NEIntSet
-fromDistinctAscList (x :| xs) = insertIntSetMin x
+fromDistinctAscList (x :| xs) = insertSetMin x
                               . S.fromDistinctAscList
                               $ xs
 {-# INLINE fromDistinctAscList #-}
@@ -245,7 +245,7 @@ fromDistinctAscList (x :| xs) = insertIntSetMin x
 -- it is replaced with the new value.
 insert :: Key -> NEIntSet -> NEIntSet
 insert x n@(NEIntSet x0 s) = case compare x x0 of
-    LT -> NEIntSet x  $ toIntSet n
+    LT -> NEIntSet x  $ toSet n
     EQ -> NEIntSet x  s
     GT -> NEIntSet x0 $ S.insert x s
 {-# INLINE insert #-}
@@ -253,7 +253,7 @@ insert x n@(NEIntSet x0 s) = case compare x x0 of
 -- | /O(log n)/. Delete an element from a set.
 delete :: Key -> NEIntSet -> IntSet
 delete x n@(NEIntSet x0 s) = case compare x x0 of
-    LT -> toIntSet n
+    LT -> toSet n
     EQ -> s
     GT -> insertMinIntSet x0 . S.delete x $ s
 {-# INLINE delete #-}
@@ -406,7 +406,7 @@ isSubsetOf
     :: NEIntSet
     -> NEIntSet
     -> Bool
-isSubsetOf (NEIntSet x s0) (toIntSet->s1) = x `S.member` s1
+isSubsetOf (NEIntSet x s0) (toSet->s1) = x `S.member` s1
                                          && s0 `S.isSubsetOf` s1
 {-# INLINE isSubsetOf #-}
 
@@ -431,11 +431,11 @@ disjoint
     -> Bool
 disjoint n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
     -- x1 is not in n2
-    LT -> s1 `S.disjoint` toIntSet n2
+    LT -> s1 `S.disjoint` toSet n2
     -- k1 and k2 are a part of the result
     EQ -> False
     -- k2 is not in n1
-    GT -> toIntSet n1 `S.disjoint` s2
+    GT -> toSet n1 `S.disjoint` s2
 {-# INLINE disjoint #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two sets.
@@ -449,11 +449,11 @@ difference
     -> IntSet
 difference n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
     -- x1 is not in n2, so cannot be deleted
-    LT -> insertMinIntSet x1 $ s1 `S.difference` toIntSet n2
+    LT -> insertMinIntSet x1 $ s1 `S.difference` toSet n2
     -- x2 deletes x1, and only x1
     EQ -> s1 `S.difference` s2
     -- x2 is not in n1, so cannot delete anything, so we can just difference n1 // s2.
-    GT -> toIntSet n1 `S.difference` s2
+    GT -> toSet n1 `S.difference` s2
 {-# INLINE difference #-}
 
 -- | Same as 'difference'.
@@ -485,11 +485,11 @@ intersection
     -> IntSet
 intersection n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
     -- x1 is not in n2
-    LT -> s1 `S.intersection` toIntSet n2
+    LT -> s1 `S.intersection` toSet n2
     -- x1 and x2 are a part of the result
     EQ -> insertMinIntSet x1 $ s1 `S.intersection` s2
     -- x2 is not in n1
-    GT -> toIntSet n1 `S.intersection` s2
+    GT -> toSet n1 `S.intersection` s2
 {-# INLINE intersection #-}
 
 -- | /O(n)/. Filter all elements that satisfy the predicate.
@@ -535,8 +535,8 @@ partition f n@(NEIntSet x s0) = case (nonEmptyIntSet s1, nonEmptyIntSet s2) of
       | f x       -> These (singleton x)       n2
       | otherwise -> That                      n
     (Just n1, Just n2)
-      | f x       -> These (insertIntSetMin x s1) n2
-      | otherwise -> These n1                  (insertIntSetMin x s2)
+      | f x       -> These (insertSetMin x s1) n2
+      | otherwise -> These n1                  (insertSetMin x s2)
   where
     (s1, s2) = S.partition f s0
 {-# INLINABLE partition #-}
@@ -573,9 +573,9 @@ split x n@(NEIntSet x0 s0) = case compare x x0 of
     EQ -> That <$> nonEmptyIntSet s0
     GT -> case (nonEmptyIntSet s1, nonEmptyIntSet s2) of
       (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertIntSetMin x0 s1)
+      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
       (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertIntSetMin x0 s1) n2
+      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
   where
     (s1, s2) = S.split x s0
 {-# INLINABLE split #-}
@@ -599,9 +599,9 @@ splitMember x n@(NEIntSet x0 s0) = case compare x x0 of
     EQ -> (True , That <$> nonEmptyIntSet s0)
     GT -> (mem  ,) $ case (nonEmptyIntSet s1, nonEmptyIntSet s2) of
       (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertIntSetMin x0 s1)
+      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
       (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertIntSetMin x0 s1) n2
+      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
   where
     (s1, mem, s2) = S.splitMember x s0
 {-# INLINABLE splitMember #-}
@@ -715,8 +715,8 @@ toAscList = toList
 -- | /O(n)/. Convert the set to a descending non-empty list of elements.
 toDescList :: NEIntSet -> NonEmpty Key
 toDescList (NEIntSet x s) = S.foldl' (flip (NE.<|)) (x :| []) s
-
 {-# INLINE toDescList #-}
+
 combineEq :: NonEmpty Key -> NonEmpty Key
 combineEq (x :| xs) = go x xs
   where

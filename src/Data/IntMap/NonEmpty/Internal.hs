@@ -29,7 +29,7 @@ module Data.IntMap.NonEmpty.Internal (
   , unions
   , elems
   , size
-  , toIntMap
+  , toMap
   -- * Folds
   , foldr
   , foldr'
@@ -100,7 +100,7 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 4.  'Data.IntMap.NonEmpty.withNEIntMap' offers a continuation-based interface
 --     for deconstructing a 'IntMap' and treating it as if it were an 'NEIntMap'.
 --
--- You can convert an 'NEIntMap' into a 'IntMap' with 'toIntMap' or
+-- You can convert an 'NEIntMap' into a 'IntMap' with 'toMap' or
 -- 'Data.IntMap.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
 -- property from the type.
 data NEIntMap a =
@@ -282,9 +282,9 @@ union
     -> NEIntMap a
     -> NEIntMap a
 union n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
-    LT -> NEIntMap k1 v1 . M.union m1 . toIntMap $ n2
+    LT -> NEIntMap k1 v1 . M.union m1 . toMap $ n2
     EQ -> NEIntMap k1 v1 . M.union m1         $ m2
-    GT -> NEIntMap k2 v2 . M.union (toIntMap n1) $ m2
+    GT -> NEIntMap k2 v2 . M.union (toMap n1) $ m2
 {-# INLINE union #-}
 
 -- | The left-biased union of a non-empty list of maps.
@@ -324,13 +324,13 @@ size (NEIntMap _ _ m) = 1 + M.size m
 -- Can be thought of as "obscuring" the non-emptiness of the map in its
 -- type.  See the 'Data.IntMap.NonEmpty.IsNotEmpty' pattern.
 --
--- 'nonEmptyIntMap' and @'maybe' 'Data.IntMap.empty' 'toIntMap'@ form an isomorphism: they
+-- 'nonEmptyIntMap' and @'maybe' 'Data.IntMap.empty' 'toMap'@ form an isomorphism: they
 -- are perfect structure-preserving inverses of eachother.
 --
--- > toIntMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
-toIntMap :: NEIntMap a -> IntMap a
-toIntMap (NEIntMap k v m) = insertMinIntMap k v m
-{-# INLINE toIntMap #-}
+-- > toMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
+toMap :: NEIntMap a -> IntMap a
+toMap (NEIntMap k v m) = insertMinIntMap k v m
+{-# INLINE toMap #-}
 
 -- | /O(n)/.
 -- @'traverseWithKey' f m == 'fromList' <$> 'traverse' (\(k, v) -> (,) k <$> f k v) ('toList' m)@
@@ -386,7 +386,7 @@ toList (NEIntMap k v m) = (k,v) :| M.toList m
 -- 'Nothing' if the 'IntMap' was originally actually empty, and @'Just' n@
 -- with an 'NEIntMap', if the 'IntMap' was not empty.
 --
--- 'nonEmptyIntMap' and @'maybe' 'Data.IntMap.empty' 'toIntMap'@ form an
+-- 'nonEmptyIntMap' and @'maybe' 'Data.IntMap.empty' 'toMap'@ form an
 -- isomorphism: they are perfect structure-preserving inverses of
 -- eachother.
 --
@@ -440,7 +440,7 @@ insertWith
     -> NEIntMap a
     -> NEIntMap a
 insertWith f k v n@(NEIntMap k0 v0 m) = case compare k k0 of
-    LT -> NEIntMap k  v        . toIntMap            $ n
+    LT -> NEIntMap k  v        . toMap            $ n
     EQ -> NEIntMap k  (f v v0) m
     GT -> NEIntMap k0 v0       $ M.insertWith f k v m
 {-# INLINE insertWith #-}
@@ -533,9 +533,11 @@ valid (NEIntMap k _ m) = all ((k <) . fst . fst) (M.minViewWithKey m)
 -- /strictly less than/ all keys present in the 'IntMap'.  /The precondition
 -- is not checked./
 --
--- While this has the same asymptotics as @Data.IntMap.insert@, it saves
--- a constant factor for key comparison (so may be helpful if comparison is
--- expensive) and also does not require an 'Ord' instance for the key type.
+-- At the moment this is simply an alias for @Data.IntSet.insert@, but it's
+-- left here as a placeholder in case this eventually gets implemented in
+-- a more efficient way.
+
+-- TODO: implementation
 insertMinIntMap :: Key -> a -> IntMap a -> IntMap a
 insertMinIntMap = M.insert
 {-# INLINABLE insertMinIntMap #-}
@@ -545,9 +547,11 @@ insertMinIntMap = M.insert
 -- /strictly greater than/ all keys present in the 'IntMap'.  /The
 -- precondition is not checked./
 --
--- While this has the same asymptotics as @Data.IntMap.insert@, it saves
--- a constant factor for key comparison (so may be helpful if comparison is
--- expensive) and also does not require an 'Ord' instance for the key type.
+-- At the moment this is simply an alias for @Data.IntSet.insert@, but it's
+-- left here as a placeholder in case this eventually gets implemented in
+-- a more efficient way.
+
+-- TODO: implementation
 insertMaxIntMap :: Key -> a -> IntMap a -> IntMap a
 insertMaxIntMap = M.insert
 {-# INLINABLE insertMaxIntMap #-}

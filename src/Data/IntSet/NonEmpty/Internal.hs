@@ -17,7 +17,7 @@ module Data.IntSet.NonEmpty.Internal (
     NEIntSet(..)
   , S.Key
   , nonEmptyIntSet
-  , toIntSet
+  , toSet
   , singleton
   , fromList
   , toList
@@ -73,7 +73,7 @@ import qualified Data.Semigroup.Foldable as F1
 -- 4.  'Data.IntSet.NonEmpty.withNEIntSet' offers a continuation-based interface
 --     for deconstructing a 'IntSet' and treating it as if it were an 'NEIntSet'.
 --
--- You can convert an 'NEIntSet' into a 'IntSet' with 'toIntSet' or
+-- You can convert an 'NEIntSet' into a 'IntSet' with 'toSet' or
 -- 'Data.IntSet.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
 -- property from the type.
 data NEIntSet =
@@ -134,7 +134,7 @@ intSetDataType = mkDataType "Data.IntSet.Internal.IntSet" [fromListConstr]
 -- 'Nothing' if the 'IntSet' was originally actually empty, and @'Just' n@
 -- with an 'NEIntSet', if the 'IntSet' was not empty.
 --
--- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toIntSet'@ form an
+-- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an
 -- isomorphism: they are perfect structure-preserving inverses of
 -- eachother.
 --
@@ -153,14 +153,14 @@ nonEmptyIntSet = (fmap . uncurry) NEIntSet . S.minView
 -- Can be thought of as "obscuring" the non-emptiness of the set in its
 -- type.  See the 'Data.IntSet.NonEmpty.IsNotEmpty' pattern.
 --
--- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toIntSet'@ form an
+-- 'nonEmptyIntSet' and @'maybe' 'Data.IntSet.empty' 'toSet'@ form an
 -- isomorphism: they are perfect structure-preserving inverses of
 -- eachother.
 --
--- > toIntSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
-toIntSet :: NEIntSet -> IntSet
-toIntSet (NEIntSet x s) = insertMinIntSet x s
-{-# INLINE toIntSet #-}
+-- > toSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
+toSet :: NEIntSet -> IntSet
+toSet (NEIntSet x s) = insertMinIntSet x s
+{-# INLINE toSet #-}
 
 -- | /O(1)/. Create a singleton set.
 singleton :: Key -> NEIntSet
@@ -190,9 +190,9 @@ union
     -> NEIntSet
     -> NEIntSet
 union n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
-    LT -> NEIntSet x1 . S.union s1 . toIntSet $ n2
+    LT -> NEIntSet x1 . S.union s1 . toSet $ n2
     EQ -> NEIntSet x1 . S.union s1         $ s2
-    GT -> NEIntSet x2 . S.union (toIntSet n1) $ s2
+    GT -> NEIntSet x2 . S.union (toSet n1) $ s2
 {-# INLINE union #-}
 
 -- | The union of a non-empty list of sets

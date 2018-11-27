@@ -27,9 +27,9 @@ prop_valid = property $
 
 
 -- | We cannot implement these because there is no 'valid' for IntSet
--- prop_valid_toIntSet :: Property
--- prop_valid_toIntSet = property $ do
---     assert . S.valid . NES.toIntSet =<< forAll neIntSetGen
+-- prop_valid_toSet :: Property
+-- prop_valid_toSet = property $ do
+--     assert . S.valid . NES.toSet =<< forAll neIntSetGen
 
 -- prop_valid_insertMinIntSet :: Property
 -- prop_valid_insertMinIntSet = property $ do
@@ -47,32 +47,32 @@ prop_valid = property $
 --         pure $ NES.insertMaxIntSet k m
 --     assert $ S.valid n
 
-prop_valid_insertIntSetMin :: Property
-prop_valid_insertIntSetMin = property $ do
+prop_valid_insertSetMin :: Property
+prop_valid_insertSetMin = property $ do
     n  <- forAll $ do
         m <- intSetGen
         let k = maybe 0 (subtract 1 . fst) $ S.minView m
-        pure $ NES.insertIntSetMin k m
+        pure $ NES.insertSetMin k m
     assert $ NES.valid n
 
-prop_valid_insertIntSetMax :: Property
-prop_valid_insertIntSetMax = property $ do
+prop_valid_insertSetMax :: Property
+prop_valid_insertSetMax = property $ do
     n  <- forAll $ do
         m <- intSetGen
         let k = maybe 0 ((+ 1) . fst) $ S.maxView m
-        pure $ NES.insertIntSetMax k m
+        pure $ NES.insertSetMax k m
     assert $ NES.valid n
 
-prop_toIntSetIso1 :: Property
-prop_toIntSetIso1 = property $ do
+prop_toSetIso1 :: Property
+prop_toSetIso1 = property $ do
     m0 <- forAll intSetGen
     tripping m0 NES.nonEmptyIntSet
-                (Identity . maybe S.empty NES.toIntSet)
+                (Identity . maybe S.empty NES.toSet)
 
-prop_toIntSetIso2 :: Property
-prop_toIntSetIso2 = property $ do
+prop_toSetIso2 :: Property
+prop_toSetIso2 = property $ do
     m0 <- forAll $ Gen.maybe neIntSetGen
-    tripping m0 (maybe S.empty NES.toIntSet)
+    tripping m0 (maybe S.empty NES.toSet)
                 (Identity . NES.nonEmptyIntSet)
 
 prop_splitRoot :: Property
@@ -99,10 +99,10 @@ prop_splitRoot = property $ do
 
 
 
-prop_insertIntSet :: Property
-prop_insertIntSet = ttProp (GTIntKey :-> GTIntSet :-> TTNEIntSet)
+prop_insertSet :: Property
+prop_insertSet = ttProp (GTIntKey :-> GTIntSet :-> TTNEIntSet)
     S.insert
-    NES.insertIntSet
+    NES.insertSet
 
 prop_singleton :: Property
 prop_singleton = ttProp (GTIntKey :-> TTNEIntSet)
