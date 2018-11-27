@@ -454,6 +454,38 @@ instance Control.DeepSeq.NFData Data.IntSet.NonEmpty.Internal.NEIntSet
 instance Data.Data.Data Data.IntSet.NonEmpty.Internal.NEIntSet
 instance GHC.Base.Semigroup Data.IntSet.NonEmpty.Internal.NEIntSet
 
+
+-- | <h1>Non-Empty Finite Integer Sets</h1>
+--   
+--   The <a>NEIntSet</a> type represents a non-empty set of integers.
+--   
+--   See documentation for <a>NEIntSet</a> for information on how to
+--   convert and manipulate such non-empty set.
+--   
+--   This module essentially re-imports the API of <a>Data.IntSet</a> and
+--   its <a>IntSet</a> type, along with semantics and asymptotics. In most
+--   situations, asymptotics are different only by a constant factor. In
+--   some situations, asmyptotics are even better (constant-time instead of
+--   log-time).
+--   
+--   Because <a>NEIntSet</a> is implemented using <a>IntSet</a>, all of the
+--   caveats of using <a>IntSet</a> apply (such as the limitation of the
+--   maximum size of sets).
+--   
+--   All functions take non-empty sets as inputs. In situations where their
+--   results can be guarunteed to also be non-empty, they also return
+--   non-empty sets. In situations where their results could potentially be
+--   empty, <a>IntSet</a> is returned instead.
+--   
+--   Some functions (<a>partition</a>, <a>split</a>) have modified return
+--   types to account for possible configurations of non-emptiness.
+--   
+--   This module is intended to be imported qualified, to avoid name
+--   clashes with <a>Prelude</a> and <a>Data.IntSet</a> functions:
+--   
+--   <pre>
+--   import qualified Data.IntSet.NonEmpty as NEIS
+--   </pre>
 module Data.IntSet.NonEmpty
 
 -- | A non-empty set of values <tt>a</tt>. At least one value exists in an
@@ -822,7 +854,7 @@ partition :: (Key -> Bool) -> NEIntSet -> These NEIntSet NEIntSet
 --   </pre>
 split :: Key -> NEIntSet -> Maybe (These NEIntSet NEIntSet)
 
--- | <i>O(log n)</i>. The expression (<tt><tt>splitLookup</tt> x set</tt>)
+-- | <i>O(log n)</i>. The expression (<tt><a>splitMember</a> x set</tt>)
 --   splits a set just like <a>split</a> but also returns <tt><a>member</a>
 --   x set</tt> (whether or not <tt>x</tt> was in <tt>set</tt>)
 --   
@@ -996,6 +1028,47 @@ toDescList :: NEIntSet -> NonEmpty Key
 -- | <i>O(n)</i>. Test if the internal set structure is valid.
 valid :: NEIntSet -> Bool
 
+
+-- | <h1>Non-Empty Finite Integer-Indexed Maps (lazy interface)</h1>
+--   
+--   The <tt><a>NEIntMap</a> v</tt> type represents a non-empty finite map
+--   (sometimes called a dictionary) from integer keys to values of type
+--   <tt>v</tt>. An <a>NEIntMap</a> is strict in its keys but lazy in its
+--   values.
+--   
+--   See documentation for <a>NEIntMap</a> for information on how to
+--   convert and manipulate such non-empty maps.
+--   
+--   This module essentially re-imports the API of <a>Data.IntMap.Lazy</a>
+--   and its <a>IntMap</a> type, along with semantics and asymptotics. In
+--   most situations, asymptotics are different only by a constant factor.
+--   In some situations, asmyptotics are even better (constant-time instead
+--   of log-time).
+--   
+--   Because <a>NEIntMap</a> is implemented using <a>IntMap</a>, all of the
+--   caveats of using <a>IntMap</a> apply (such as the limitation of the
+--   maximum size of maps).
+--   
+--   All functions take non-empty maps as inputs. In situations where their
+--   results can be guarunteed to also be non-empty, they also return
+--   non-empty maps. In situations where their results could potentially be
+--   empty, <a>IntMap</a> is returned instead.
+--   
+--   Some variants of functions (like <a>alter'</a>, <a>alterF'</a>,
+--   <a>adjustMin</a>, <a>adjustMax</a>, <a>adjustMinWithKey</a>,
+--   <a>adjustMaxWithKey</a>) are provided in a way restructured to
+--   preserve guaruntees of non-empty maps being returned.
+--   
+--   Some functions (like <a>mapEither</a>, <a>partition</a>, <a>split</a>)
+--   have modified return types to account for possible configurations of
+--   non-emptiness.
+--   
+--   This module is intended to be imported qualified, to avoid name
+--   clashes with <a>Prelude</a> and <a>Data.IntMap</a> functions:
+--   
+--   <pre>
+--   import qualified Data.IntMap.NonEmpty as NEIM
+--   </pre>
 module Data.IntMap.NonEmpty
 
 -- | A non-empty IntMap from keys <tt>k</tt> to values <tt>a</tt>. At least
@@ -1193,7 +1266,7 @@ insertMapMin :: Key -> a -> IntMap a -> NEIntMap a
 --   <i>strictly less than</i> the new key. <i>The precondition is not
 --   checked.</i>
 --   
---   At the current moment, this is identical simply <tt>insertIntSet</tt>;
+--   At the current moment, this is identical simply <a>insertMap</a>;
 --   however, it is left both for consistency and as a placeholder for a
 --   future version where optimizations are implemented to allow for a
 --   faster implementation.
@@ -3409,8 +3482,8 @@ intersection :: Ord a => NESet a -> NESet a -> Set a
 --   Example:
 --   
 --   <pre>
---   cartesianProduct (fromList (1:|[2])) (fromList (<tt>a</tt>:|[<tt>b</tt>])) =
---     fromList ((1,<tt>a</tt>) :| [(1,<tt>b</tt>), (2,<tt>a</tt>), (2,<tt>b</tt>)])
+--   cartesianProduct (fromList (1:|[2])) (fromList ('a':|['b'])) =
+--     fromList ((1,'a') :| [(1,'b'), (2,'a'), (2,'b')])
 --   </pre>
 cartesianProduct :: NESet a -> NESet b -> NESet (a, b)
 
@@ -3544,7 +3617,7 @@ partition :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
 --   </pre>
 split :: Ord a => a -> NESet a -> Maybe (These (NESet a) (NESet a))
 
--- | <i>O(log n)</i>. The expression (<tt><tt>splitLookup</tt> x set</tt>)
+-- | <i>O(log n)</i>. The expression (<tt><a>splitMember</a> x set</tt>)
 --   splits a set just like <a>split</a> but also returns <tt><a>member</a>
 --   x set</tt> (whether or not <tt>x</tt> was in <tt>set</tt>)
 --   

@@ -538,8 +538,8 @@
 </span><a name="line-538"></a><span class="hs-comment">-- Example:</span><span>
 </span><a name="line-539"></a><span class="hs-comment">--</span><span>
 </span><a name="line-540"></a><span class="hs-comment">-- @</span><span>
-</span><a name="line-541"></a><span class="hs-comment">-- cartesianProduct (fromList (1:|[2])) (fromList ('a':|['b'])) =</span><span>
-</span><a name="line-542"></a><span class="hs-comment">--   fromList ((1,'a') :| [(1,'b'), (2,'a'), (2,'b')])</span><span>
+</span><a name="line-541"></a><span class="hs-comment">-- cartesianProduct (fromList (1:|[2])) (fromList (\'a\':|[\'b\'])) =</span><span>
+</span><a name="line-542"></a><span class="hs-comment">--   fromList ((1,\'a\') :| [(1,\'b\'), (2,\'a\'), (2,\'b\')])</span><span>
 </span><a name="line-543"></a><span class="hs-comment">-- @</span><span>
 </span><a name="line-544"></a><span>
 </span><a name="line-545"></a><span class="hs-comment">-- TODO: can this be better?</span><span>
@@ -736,7 +736,7 @@
 </span><a name="line-736"></a><span>    </span><span class="hs-special">(</span><a name="local-6989586621679113130"><a href="#local-6989586621679113130"><span class="hs-identifier">s1</span></a></a><span class="hs-special">,</span><span> </span><a name="local-6989586621679113131"><a href="#local-6989586621679113131"><span class="hs-identifier">s2</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">S.split</span><span> </span><a href="#local-6989586621679113126"><span class="hs-identifier hs-var">x</span></a><span> </span><a href="#local-6989586621679113129"><span class="hs-identifier hs-var">s0</span></a><span>
 </span><a name="line-737"></a><span class="hs-pragma">{-# INLINABLE</span><span> </span><span class="hs-pragma">split</span><span> </span><span class="hs-pragma">#-}</span><span>
 </span><a name="line-738"></a><span>
-</span><a name="line-739"></a><span class="hs-comment">-- | /O(log n)/. The expression (@'splitLookup' x set@) splits a set just</span><span>
+</span><a name="line-739"></a><span class="hs-comment">-- | /O(log n)/. The expression (@'splitMember' x set@) splits a set just</span><span>
 </span><a name="line-740"></a><span class="hs-comment">-- like 'split' but also returns @'member' x set@ (whether or not @x@ was</span><span>
 </span><a name="line-741"></a><span class="hs-comment">-- in @set@)</span><span>
 </span><a name="line-742"></a><span class="hs-comment">--</span><span>
