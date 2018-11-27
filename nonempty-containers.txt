@@ -52,7 +52,7 @@ module Data.IntMap.NonEmpty.Internal
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntMap</a> to reveal it as either containing a
 --   <a>NEIntMap</a> or an empty map.</li>
---   <li><a>withNEIntMap</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>IntMap</a> and treating it as if it were an
 --   <a>NEIntMap</a>.</li>
 --   </ol>
@@ -359,7 +359,7 @@ module Data.IntSet.NonEmpty.Internal
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntSet</a> to reveal it as either containing a
 --   <a>NEIntSet</a> or an empty map.</li>
---   <li><a>withNEIntSet</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>IntSet</a> and treating it as if it were an
 --   <a>NEIntSet</a>.</li>
 --   </ol>
@@ -489,7 +489,7 @@ module Data.IntSet.NonEmpty
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntSet</a> to reveal it as either containing a
 --   <a>NEIntSet</a> or an empty map.</li>
---   <li><a>withNEIntSet</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>IntSet</a> and treating it as if it were an
 --   <a>NEIntSet</a>.</li>
 --   </ol>
@@ -1032,7 +1032,7 @@ module Data.IntMap.NonEmpty
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntMap</a> to reveal it as either containing a
 --   <a>NEIntMap</a> or an empty map.</li>
---   <li><a>withNEIntMap</a> offers a continuation-based interface for
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
 --   deconstructing a <a>IntMap</a> and treating it as if it were an
 --   <a>NEIntMap</a>.</li>
 --   </ol>
@@ -1125,14 +1125,14 @@ toMap :: NEIntMap a -> IntMap a
 
 -- | <i>O(log n)</i>. A general continuation-based way to consume a
 --   <a>IntMap</a> as if it were an <a>NEIntMap</a>.
---   <tt><a>withNEIntMap</a> def f</tt> will take a <a>IntMap</a>. If map
+--   <tt><a>withNonEmpty</a> def f</tt> will take a <a>IntMap</a>. If map
 --   is empty, it will evaluate to <tt>def</tt>. Otherwise, a non-empty map
 --   <a>NEIntMap</a> will be fed to the function <tt>f</tt> instead.
 --   
 --   <pre>
---   <a>nonEmptyMap</a> == <a>withNEIntMap</a> <a>Nothing</a> <a>Just</a>
+--   <a>nonEmptyMap</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
 --   </pre>
-withNEIntMap :: r -> (NEIntMap a -> r) -> IntMap a -> r
+withNonEmpty :: r -> (NEIntMap a -> r) -> IntMap a -> r
 
 -- | <i>O(log n)</i>. Convert a <a>IntMap</a> into an <a>NEIntMap</a> by
 --   adding a key-value pair. Because of this, we know that the map must
