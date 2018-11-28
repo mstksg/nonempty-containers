@@ -2953,7 +2953,7 @@ instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Intern
 
 module Data.Sequence.NonEmpty
 data NESeq a
-(:<||) :: a -> Seq a -> NESeq a
+(:<||) :: a -> !Seq a -> NESeq a
 pattern (:||>) :: Seq a -> a -> NESeq a
 nonEmptySeq :: Seq a -> Maybe (NESeq a)
 toSeq :: NESeq a -> Seq a
@@ -2964,8 +2964,41 @@ singleton :: a -> NESeq a
 (|>) :: NESeq a -> a -> NESeq a
 (><) :: NESeq a -> NESeq a -> NESeq a
 fromList :: NonEmpty a -> NESeq a
+replicate :: Int -> a -> NESeq a
+replicateA :: Applicative f => Int -> f a -> f (NESeq a)
+replicateA1 :: Apply f => Int -> f a -> f (NESeq a)
+replicateM :: Applicative m => Int -> m a -> m (NESeq a)
 iterateN :: Int -> (a -> a) -> a -> NESeq a
+unfoldr :: (a -> (b, Maybe a)) -> a -> NESeq b
+unfoldl :: (a -> (b, Maybe a)) -> a -> NESeq b
 length :: NESeq a -> Int
+scanl :: (a -> b -> a) -> a -> NESeq b -> NESeq a
+scanl1 :: (a -> a -> a) -> NESeq a -> NESeq a
+scanr :: (a -> b -> b) -> b -> NESeq a -> NESeq b
+scanr1 :: (a -> a -> a) -> NESeq a -> NESeq a
+tails :: NESeq a -> NESeq (NESeq a)
+inits :: NESeq a -> NESeq (NESeq a)
+chunksOf :: Int -> NESeq a -> NESeq (NESeq a)
+takeWhileL :: (a -> Bool) -> NESeq a -> Seq a
+takeWhileR :: (a -> Bool) -> NESeq a -> Seq a
+dropWhileL :: (a -> Bool) -> NESeq a -> Seq a
+dropWhileR :: (a -> Bool) -> NESeq a -> Seq a
+spanl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+breakl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+breakr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+partition :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+filter :: (a -> Bool) -> NESeq a -> Seq a
+splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
+zip :: NESeq a -> NESeq b -> NESeq (a, b)
+zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
+zip3 :: NESeq a -> NESeq b -> NESeq c -> NESeq (a, b, c)
+zipWith3 :: (a -> b -> c -> d) -> NESeq a -> NESeq b -> NESeq c -> NESeq d
+zip4 :: NESeq a -> NESeq b -> NESeq c -> NESeq d -> NESeq (a, b, c, d)
+zipWith4 :: (a -> b -> c -> d -> e) -> NESeq a -> NESeq b -> NESeq c -> NESeq d -> NESeq e
+unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
+unzipWith :: (a -> (b, c)) -> NESeq a -> (NESeq b, NESeq c)
+instance GHC.Show.Show a => GHC.Show.Show (Data.Sequence.NonEmpty.NESeq a)
 
 
 -- | Unsafe internal-use functions used in the implementation of
@@ -5874,3 +5907,4 @@ instance Data.Containers.NonEmpty.HasNonEmpty (Data.Map.Internal.Map k a)
 instance Data.Containers.NonEmpty.HasNonEmpty (Data.IntMap.Internal.IntMap a)
 instance Data.Containers.NonEmpty.HasNonEmpty (Data.Set.Internal.Set a)
 instance Data.Containers.NonEmpty.HasNonEmpty Data.IntSet.Internal.IntSet
+instance Data.Containers.NonEmpty.HasNonEmpty (Data.Sequence.Internal.Seq a)
