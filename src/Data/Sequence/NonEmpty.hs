@@ -7,8 +7,8 @@ module Data.Sequence.NonEmpty (
   -- * Finite sequences
     NESeq ((:<||), (:||>))
   -- ** Conversions between empty and non-empty sequences
-  -- , pattern IsNonEmpty
-  -- , pattern IsEmpty
+  , pattern IsNonEmpty
+  , pattern IsEmpty
   , nonEmptySeq
   , toSeq
   , withNonEmpty
@@ -19,13 +19,15 @@ module Data.Sequence.NonEmpty (
   , (<|)
   , (|>)
   , (><)
+  , (|><)
+  , (><|)
   , fromList
   -- ** Repetition
   , replicate
   , replicateA
   , replicateA1
   , replicateM
-  -- , cycleTaking
+  , cycleTaking
   -- ** Iterative construction
   , iterateN
   , unfoldr
@@ -58,12 +60,12 @@ module Data.Sequence.NonEmpty (
   , partition
   , filter
   -- * Sorting
-  -- , sort
-  -- , sortBy
-  -- , sortOn
-  -- , unstableSort
-  -- , unstableSortBy
-  -- , unstableSortOn
+  , sort
+  , sortBy
+  , sortOn
+  , unstableSort
+  , unstableSortBy
+  , unstableSortOn
   -- * Indexing
   , lookup
   , (!?)
@@ -80,14 +82,14 @@ module Data.Sequence.NonEmpty (
   -- | These functions perform sequential searches from the left
   -- or right ends of the sequence  returning indices of matching
   -- elements.
-  -- , elemIndexL
-  -- , elemIndicesL
-  -- , elemIndexR
-  -- , elemIndicesR
-  -- , findIndexL
-  -- , findIndicesL
-  -- , findIndexR
-  -- , findIndicesR
+  , elemIndexL
+  , elemIndicesL
+  , elemIndexR
+  , elemIndicesR
+  , findIndexL
+  , findIndicesL
+  , findIndexR
+  , findIndicesR
   -- * Folds
   -- | General folds are available via the 'Foldable' instance of 'Seq'.
   , foldMapWithIndex
@@ -111,6 +113,7 @@ module Data.Sequence.NonEmpty (
   ) where
 
 import           Control.Applicative
+import           Control.Monad hiding (replicateM)
 import           Data.Bifunctor
 import           Data.Foldable hiding (length)
 import           Data.Functor.Apply
@@ -121,7 +124,9 @@ import           Data.These
 import           Prelude hiding       (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter, reverse, lookup, take, drop)
 import qualified Data.Sequence        as Seq
 
-data NESeq a = a :<|| !(Seq a)
+data NESeq a = NESeq { nesHead :: a
+                     , nesTail :: !(Seq a)
+                     }
   deriving Show
 
 unsnoc :: NESeq a -> (Seq a, a)
@@ -129,8 +134,12 @@ unsnoc (x :<|| (xs :|> y)) = (x :<| xs, y)
 unsnoc (x :<|| Empty     ) = (Empty   , x)
 {-# INLINE unsnoc #-}
 
+pattern (:<||) :: a -> Seq a -> NESeq a
+pattern x :<|| xs = NESeq x xs
+{-# COMPLETE (:<||) #-}
+
 pattern (:||>) :: Seq a -> a -> NESeq a
-pattern xs :||> x <- (unsnoc->(xs, x))
+pattern xs :||> x <- (unsnoc->(!xs, x))
   where
     (x :<| xs) :||> y = x :<|| (xs :|> y)
     Empty      :||> y = y :<|| Empty
@@ -138,6 +147,51 @@ pattern xs :||> x <- (unsnoc->(xs, x))
 
 infixr 5 :<||
 infixr 5 :||>
+
+-- | /O(1)/. The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat
+-- a 'Seq' as if it were either a @'IsNonEmpty' n@ (where @n@ is a 'NESeq')
+-- or an 'IsEmpty'.
+--
+-- For example, you can pattern match on a 'Seq':
+--
+-- @
+-- safeHead :: 'Seq' Int -> Int
+-- safeHead ('IsNonEmpty' (x :<|| _))  = x  -- here, user provided a non-empty sequence, and @n@ is the 'NESeq'
+-- safeHead 'IsEmpty'                  = 0  -- here the user provided an empty sequence
+-- @
+--
+-- Matching on @'IsNonEmpty' n@ means that the original 'Seq' was /not/
+-- empty, and you have a verified-non-empty 'NESeq' @n@ to use.
+--
+-- A case statement handling both 'IsNonEmpty' and 'IsEmpty' provides
+-- complete coverage.
+--
+-- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
+-- a 'NESeq' back into a 'Seq', obscuring its non-emptiness (see 'toSeq').
+pattern IsNonEmpty :: NESeq a -> Seq a
+pattern IsNonEmpty n <- (nonEmptySeq->Just n)
+  where
+    IsNonEmpty n = toSeq n
+
+-- | /O(1)/. The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat
+-- a 'Seq' as if it were either a @'IsNonEmpty' n@ (where @n@ is
+-- a 'NESeq') or an 'IsEmpty'.
+--
+-- Matching on 'IsEmpty' means that the original 'Seq' was empty.
+--
+-- A case statement handling both 'IsNonEmpty' and 'IsEmpty' provides
+-- complete coverage.
+--
+-- This is a bidirectional pattern, so you can use 'IsEmpty' as an
+-- expression, and it will be interpreted as 'Data.Seq.empty'.
+--
+-- See 'IsNonEmpty' for more information.
+pattern IsEmpty :: Seq a
+pattern IsEmpty <- (Seq.null->True)
+  where
+    IsEmpty = Seq.empty
+
+{-# COMPLETE IsNonEmpty, IsEmpty #-}
 
 nonEmptySeq :: Seq a -> Maybe (NESeq a)
 nonEmptySeq (x :<| xs) = Just $ x :<|| xs
@@ -184,9 +238,19 @@ x <| xs = x :<|| toSeq xs
 (x :<|| xs) >< ys = x :<|| (xs Seq.>< toSeq ys)
 {-# INLINE (><) #-}
 
+(|><) :: NESeq a -> Seq a -> NESeq a
+(x :<|| xs) |>< ys = x :<|| (xs Seq.>< ys)
+{-# INLINE (|><) #-}
+
+(><|) :: Seq a -> NESeq a -> NESeq a
+xs ><| ys = withNonEmpty ys (>< ys) xs
+{-# INLINE (><|) #-}
+
 infixr 5 <|
 infixl 5 |>
 infixr 5 ><
+infixr 5 |><
+infixr 5 ><|
 
 fromList :: NonEmpty a -> NESeq a
 fromList (x :| xs) = x :<|| Seq.fromList xs
@@ -202,13 +266,13 @@ replicate n x
 
 replicateA :: Applicative f => Int -> f a -> f (NESeq a)
 replicateA n x
-    | n < 1     = error "NESeq.replicate: must take a positive integer argument"
+    | n < 1     = error "NESeq.replicateA: must take a positive integer argument"
     | otherwise = liftA2 (:<||) x (Seq.replicateA (n - 1) x)
 {-# INLINE replicateA #-}
 
 replicateA1 :: Apply f => Int -> f a -> f (NESeq a)
 replicateA1 n x
-    | n < 1     = error "NESeq.replicate: must take a positive integer argument"
+    | n < 1     = error "NESeq.replicateA1: must take a positive integer argument"
     | otherwise = case runMaybeApply (Seq.replicateA (n - 1) (MaybeApply (Left x))) of
         Left  xs -> (:<||)    <$> x <.> xs
         Right xs -> (:<|| xs) <$> x
@@ -218,6 +282,12 @@ replicateM :: Applicative m => Int -> m a -> m (NESeq a)
 replicateM = replicateA
 {-# INLINE replicateM #-}
 
+cycleTaking :: Int -> NESeq a -> NESeq a
+cycleTaking n xs0@(x :<|| xs)
+    | n < 1             = error "NESeq.cycleTaking: must take a positive integer argument"
+    | n < Seq.length xs = x :<|| Seq.take (n - 1) xs
+    | otherwise         = xs0 |>< Seq.cycleTaking (n - length xs0) (toSeq xs0)
+{-# INLINE cycleTaking #-}
 
 iterateN :: Int -> (a -> a) -> a -> NESeq a
 iterateN n f x = x :<|| Seq.iterateN (n - 1) f (f x)
@@ -357,8 +427,56 @@ filter p (x :<|| xs)
     | otherwise = Seq.filter p xs
 {-# INLINE filter #-}
 
+sort :: Ord a => NESeq a -> NESeq a
+sort = sortBy compare
+{-# INLINE sort #-}
 
+sortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
+sortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
+                     . Seq.sortBy c
+                     $ xs
+{-# INLINE sortBy #-}
 
+sortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
+sortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)
+                     . Seq.sortOn f
+                     $ xs
+{-# INLINE sortOn #-}
+
+unstableSort :: Ord a => NESeq a -> NESeq a
+unstableSort = unstableSortBy compare
+{-# INLINE unstableSort #-}
+
+unstableSortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
+unstableSortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
+                     . Seq.unstableSortBy c
+                     $ xs
+{-# INLINE unstableSortBy #-}
+
+unstableSortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
+unstableSortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)
+                     . Seq.unstableSortOn f
+                     $ xs
+{-# INLINE unstableSortOn #-}
+
+insertBy :: (a -> a -> Ordering) -> a -> NESeq a -> NESeq a
+insertBy c x xs = case spanl ltx xs of
+    This  ys    -> ys |> x
+    That     zs -> x <| zs
+    These ys zs -> ys >< (x <| zs)
+  where
+    ltx y = c x y == LT
+{-# INLINABLE insertBy #-}
+
+insertOn :: Ord b => (a -> b) -> a -> NESeq a -> NESeq a
+insertOn f x xs = case spanl ltx xs of
+    This  ys    -> ys |> x
+    That     zs -> x <| zs
+    These ys zs -> ys >< (x <| zs)
+  where
+    fx = f x
+    ltx y = fx < f y
+{-# INLINABLE insertOn #-}
 
 lookup :: Int -> NESeq a -> Maybe a
 lookup 0 (x :<|| _ ) = Just x
@@ -423,6 +541,52 @@ splitAt n xs0@(x :<|| xs) = case (nonEmptySeq ys, nonEmptySeq zs) of
   where
     (ys, zs) = Seq.splitAt (n - 1) xs
 {-# INLINABLE splitAt #-}
+
+elemIndexL :: Eq a => a -> NESeq a -> Maybe Int
+elemIndexL x = findIndexL (== x)
+{-# INLINE elemIndexL #-}
+
+elemIndexR :: Eq a => a -> NESeq a -> Maybe Int
+elemIndexR x = findIndexR (== x)
+{-# INLINE elemIndexR #-}
+
+elemIndicesL :: Eq a => a -> NESeq a -> [Int]
+elemIndicesL x = findIndicesL (== x)
+{-# INLINE elemIndicesL #-}
+
+elemIndicesR :: Eq a => a -> NESeq a -> [Int]
+elemIndicesR x = findIndicesR (== x)
+{-# INLINE elemIndicesR #-}
+
+findIndexL :: (a -> Bool) -> NESeq a -> Maybe Int
+findIndexL p (x :<|| xs) = here_ <|> there_
+  where
+    here_  = 0 <$ guard (p x)
+    there_ = (+ 1) <$> Seq.findIndexL p xs
+{-# INLINE findIndexL #-}
+
+findIndexR :: (a -> Bool) -> NESeq a -> Maybe Int
+findIndexR p (xs :||> x) = here_ <|> there_
+  where
+    here_  = Seq.length xs <$ guard (p x)
+    there_ = Seq.findIndexL p xs
+{-# INLINE findIndexR #-}
+
+findIndicesL :: (a -> Bool) -> NESeq a -> [Int]
+findIndicesL p (x :<|| xs)
+    | p x       = 0 : ixs
+    | otherwise = ixs
+  where
+    ixs = (+ 1) <$> Seq.findIndicesL p xs
+{-# INLINE findIndicesL #-}
+
+findIndicesR :: (a -> Bool) -> NESeq a -> [Int]
+findIndicesR p (xs :||> x)
+    | p x       = Seq.length xs : ixs
+    | otherwise = ixs
+  where
+    ixs = Seq.findIndicesL p xs
+{-# INLINE findIndicesR #-}
 
 foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
 foldMapWithIndex f (x :<|| xs) = maybe (f 0 x) (f 0 x <>)
