@@ -18,10 +18,11 @@ module Data.Sequence.NonEmpty (
   , (|>)
   , (><)
   , fromList
-  --   -- ** Repetition
-  -- , replicate
-  -- , replicateA
-  -- , replicateM
+  -- ** Repetition
+  , replicate
+  , replicateA
+  , replicateA1
+  , replicateM
   -- , cycleTaking
   -- ** Iterative construction
   , iterateN
@@ -48,16 +49,16 @@ module Data.Sequence.NonEmpty (
   , inits
   , chunksOf
   -- ** Sequential searches
-  -- , takeWhileL
-  -- , takeWhileR
-  -- , dropWhileL
-  -- , dropWhileR
-  -- , spanl
-  -- , spanr
-  -- , breakl
-  -- , breakr
-  -- , partition
-  -- , filter
+  , takeWhileL
+  , takeWhileR
+  , dropWhileL
+  , dropWhileR
+  , spanl
+  , spanr
+  , breakl
+  , breakr
+  , partition
+  , filter
   --   -- * Sorting
   -- , sort
   -- , sortBy
@@ -110,12 +111,14 @@ module Data.Sequence.NonEmpty (
   , unzipWith
   ) where
 
+import           Control.Applicative
 import           Data.Bifunctor
-import           Data.List.NonEmpty (NonEmpty(..))
-import           Data.Sequence      (Seq(..))
+import           Data.Functor.Apply
+import           Data.List.NonEmpty  (NonEmpty(..))
+import           Data.Sequence       (Seq(..))
 import           Data.These
-import           Prelude hiding     (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip)
-import qualified Data.Sequence      as Seq
+import           Prelude hiding      (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter)
+import qualified Data.Sequence       as Seq
 
 data NESeq a = a :<|| !(Seq a)
   deriving Show
@@ -154,21 +157,54 @@ unsafeFromSeq Empty      = errorWithoutStackTrace "NESeq.unsafeFromSeq: empty se
 
 singleton :: a -> NESeq a
 singleton = (:<|| Seq.empty)
+{-# INLINE singleton #-}
 
 (<|) :: a -> NESeq a -> NESeq a
 x <| xs = x :<|| toSeq xs
+{-# INLINE (<|) #-}
 
 (|>) :: NESeq a -> a -> NESeq a
 (x :<|| xs) |> y = x :<|| (xs Seq.|> y)
+{-# INLINE (|>) #-}
 
 (><) :: NESeq a -> NESeq a -> NESeq a
 (x :<|| xs) >< ys = x :<|| (xs Seq.>< toSeq ys)
+{-# INLINE (><) #-}
 
 fromList :: NonEmpty a -> NESeq a
 fromList (x :| xs) = x :<|| Seq.fromList xs
+{-# INLINE fromList #-}
+
+-- TODO: should this just return a Maybe (NESeq a)?  if so, then what's the
+-- point?
+replicate :: Int -> a -> NESeq a
+replicate n x
+    | n < 1     = error "NESeq.replicate: must take a positive integer argument"
+    | otherwise = x :<|| Seq.replicate (n - 1) x
+{-# INLINE replicate #-}
+
+replicateA :: Applicative f => Int -> f a -> f (NESeq a)
+replicateA n x
+    | n < 1     = error "NESeq.replicate: must take a positive integer argument"
+    | otherwise = liftA2 (:<||) x (Seq.replicateA (n - 1) x)
+{-# INLINE replicateA #-}
+
+replicateA1 :: Apply f => Int -> f a -> f (NESeq a)
+replicateA1 n x
+    | n < 1     = error "NESeq.replicate: must take a positive integer argument"
+    | otherwise = case runMaybeApply (Seq.replicateA (n - 1) (MaybeApply (Left x))) of
+        Left  xs -> (:<||)    <$> x <.> xs
+        Right xs -> (:<|| xs) <$> x
+{-# INLINE replicateA1 #-}
+
+replicateM :: Applicative m => Int -> m a -> m (NESeq a)
+replicateM = replicateA
+{-# INLINE replicateM #-}
+
 
 iterateN :: Int -> (a -> a) -> a -> NESeq a
 iterateN n f x = x :<|| Seq.iterateN (n - 1) f (f x)
+{-# INLINE iterateN #-}
 
 unfoldr :: (a -> (b, Maybe a)) -> a -> NESeq b
 unfoldr f = go
@@ -223,6 +259,91 @@ chunksOf n = go
       These ys zs -> ys <| go zs
     e = error "chunksOf: A non-empty sequence can only be broken up into positively-sized chunks."
 {-# INLINABLE chunksOf #-}
+
+takeWhileL :: (a -> Bool) -> NESeq a -> Seq a
+takeWhileL p (x :<|| xs)
+    | p x       = x Seq.<| Seq.takeWhileL p xs
+    | otherwise = Seq.empty
+{-# INLINE takeWhileL #-}
+
+takeWhileR :: (a -> Bool) -> NESeq a -> Seq a
+takeWhileR p (xs :||> x)
+    | p x       = Seq.takeWhileR p xs Seq.|> x
+    | otherwise = Seq.empty
+{-# INLINE takeWhileR #-}
+
+dropWhileL :: (a -> Bool) -> NESeq a -> Seq a
+dropWhileL p xs0@(x :<|| xs)
+    | p x       = Seq.dropWhileL p xs
+    | otherwise = toSeq xs0
+{-# INLINE dropWhileL #-}
+
+dropWhileR :: (a -> Bool) -> NESeq a -> Seq a
+dropWhileR p xs0@(xs :||> x)
+    | p x       = Seq.dropWhileR p xs
+    | otherwise = toSeq xs0
+{-# INLINE dropWhileR #-}
+
+spanl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+spanl p xs0@(x :<|| xs)
+    | p x       = case (nonEmptySeq ys, nonEmptySeq zs) of
+        (Nothing , Nothing ) -> This  (singleton x)
+        (Just _  , Nothing ) -> This  xs0
+        (Nothing , Just zs') -> These (singleton x) zs'
+        (Just ys', Just zs') -> These (x <| ys')    zs'
+    | otherwise = That xs0
+  where
+    (ys, zs) = Seq.spanl p xs
+{-# INLINABLE spanl #-}
+
+spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+spanr p xs0@(xs :||> x)
+    | p x       = case (nonEmptySeq ys, nonEmptySeq zs) of
+        (Nothing , Nothing ) -> That  (singleton x)
+        (Just ys', Nothing ) -> These ys'           (singleton x)
+        (Nothing , Just _  ) -> That  xs0
+        (Just ys', Just zs') -> These ys'           (zs' |> x)
+    | otherwise = That xs0
+  where
+    (ys, zs) = Seq.spanr p xs
+{-# INLINABLE spanr #-}
+
+breakl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+breakl p = spanl (not . p)
+{-# INLINE breakl #-}
+
+breakr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+breakr p = spanr (not . p)
+{-# INLINE breakr #-}
+
+partition :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+partition p xs0@(x :<|| xs) = case (nonEmptySeq ys, nonEmptySeq zs) of
+    (Nothing , Nothing )
+      | p x       -> This  (singleton x)
+      | otherwise -> That                (singleton x)
+    (Just ys', Nothing )
+      | p x       -> This  xs0
+      | otherwise -> These ys'           (singleton x)
+    (Nothing, Just zs' )
+      | p x       -> These (singleton x) zs'
+      | otherwise -> That                xs0
+    (Just ys', Just zs')
+      | p x       -> These (x <| ys')    zs'
+      | otherwise -> These ys'           (x <| zs')
+  where
+    (ys, zs) = Seq.partition p xs
+{-# INLINABLE partition #-}
+
+filter :: (a -> Bool) -> NESeq a -> Seq a
+filter p (x :<|| xs)
+    | p x       = x Seq.<| Seq.filter p xs
+    | otherwise = Seq.filter p xs
+{-# INLINE filter #-}
+
+
+
+
+
 
 splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
 splitAt 0 xs0             = That xs0
