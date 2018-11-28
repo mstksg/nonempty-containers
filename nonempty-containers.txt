@@ -252,6 +252,9 @@ foldl1 :: (a -> a -> a) -> NEIntMap a -> a
 --   <a>Apply</a> is not at the moment (and might not ever be) an official
 --   superclass of <a>Applicative</a>.
 --   
+--   <b>WARNING</b>: Differs from <tt>Data.IntMap.traverseWithKey</tt>,
+--   which traverses positive items first, then negative items.
+--   
 --   <pre>
 --   <a>traverseWithKey</a> f = <a>unwrapApplicative</a> . <a>traverseWithKey1</a> (\k -&gt; WrapApplicative . f k)
 --   </pre>
@@ -265,6 +268,9 @@ traverseWithKey :: Applicative t => (Key -> a -> t b) -> NEIntMap a -> t (NEIntM
 --   the traversing function also has access to the key associated with a
 --   value.
 --   
+--   <b>WARNING</b>: Differs from <tt>Data.IntMap.traverseWithKey</tt>,
+--   which traverses positive items first, then negative items.
+--   
 --   Is more general than <a>traverseWithKey</a>, since works with all
 --   <a>Apply</a>, and not just <a>Applicative</a>.
 traverseWithKey1 :: Apply t => (Key -> a -> t b) -> NEIntMap a -> t (NEIntMap b)
@@ -276,9 +282,16 @@ traverseWithKey1 :: Apply t => (Key -> a -> t b) -> NEIntMap a -> t (NEIntMap b)
 --   <a>foldMapWithKey</a> f = <a>fold1</a> . <a>mapWithKey</a> f
 --   </pre>
 --   
+--   <b>WARNING</b>: Differs from <tt>Data.IntMap.foldMapWithKey</tt>,
+--   which traverses positive items first, then negative items.
+--   
 --   This can be an asymptotically faster than <a>foldrWithKey</a> or
 --   <a>foldlWithKey</a> for some monoids.
 foldMapWithKey :: Semigroup m => (Key -> a -> m) -> NEIntMap a -> m
+
+-- | <i>O(n)</i>. A fixed version of <a>traverseWithKey</a> that traverses
+--   items in ascending order of keys.
+traverseMapWithKey :: Applicative t => (Key -> a -> t b) -> IntMap a -> t (IntMap b)
 
 -- | <i>O(log n)</i>. Insert new key and value into a map where keys are
 --   <i>strictly greater than</i> the new key. That is, the new key must be
@@ -288,7 +301,7 @@ foldMapWithKey :: Semigroup m => (Key -> a -> m) -> NEIntMap a -> m
 --   At the moment this is simply an alias for <tt>Data.IntSet.insert</tt>,
 --   but it's left here as a placeholder in case this eventually gets
 --   implemented in a more efficient way.
-insertMinIntMap :: Key -> a -> IntMap a -> IntMap a
+insertMinMap :: Key -> a -> IntMap a -> IntMap a
 
 -- | <i>O(log n)</i>. Insert new key and value into a map where keys are
 --   <i>strictly less than</i> the new key. That is, the new key must be
@@ -298,7 +311,7 @@ insertMinIntMap :: Key -> a -> IntMap a -> IntMap a
 --   At the moment this is simply an alias for <tt>Data.IntSet.insert</tt>,
 --   but it's left here as a placeholder in case this eventually gets
 --   implemented in a more efficient way.
-insertMaxIntMap :: Key -> a -> IntMap a -> IntMap a
+insertMaxMap :: Key -> a -> IntMap a -> IntMap a
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: NEIntMap a -> Bool
@@ -435,7 +448,7 @@ valid :: NEIntSet -> Bool
 --   At the moment this is simply an alias for <tt>Data.IntSet.insert</tt>,
 --   but it's left here as a placeholder in case this eventually gets
 --   implemented in a more efficient way.
-insertMinIntSet :: Key -> IntSet -> IntSet
+insertMinSet :: Key -> IntSet -> IntSet
 
 -- | <i>O(log n)</i>. Insert new value into a set where values are
 --   /strictly less than<i> the new value. That is, the new value must be
@@ -445,7 +458,7 @@ insertMinIntSet :: Key -> IntSet -> IntSet
 --   At the moment this is simply an alias for <tt>Data.IntSet.insert</tt>,
 --   but it's left here as a placeholder in case this eventually gets
 --   implemented in a more efficient way.
-insertMaxIntSet :: Key -> IntSet -> IntSet
+insertMaxSet :: Key -> IntSet -> IntSet
 instance GHC.Classes.Eq Data.IntSet.NonEmpty.Internal.NEIntSet
 instance GHC.Classes.Ord Data.IntSet.NonEmpty.Internal.NEIntSet
 instance GHC.Show.Show Data.IntSet.NonEmpty.Internal.NEIntSet
@@ -614,14 +627,14 @@ toSet :: NEIntSet -> IntSet
 
 -- | <i>O(log n)</i>. A general continuation-based way to consume a
 --   <a>IntSet</a> as if it were an <a>NEIntSet</a>.
---   <tt><a>withNEIntSet</a> def f</tt> will take a <a>IntSet</a>. If set
+--   <tt><a>withNonEmpty</a> def f</tt> will take a <a>IntSet</a>. If set
 --   is empty, it will evaluate to <tt>def</tt>. Otherwise, a non-empty set
 --   <a>NEIntSet</a> will be fed to the function <tt>f</tt> instead.
 --   
 --   <pre>
---   <a>nonEmptySet</a> == <a>withNEIntSet</a> <a>Nothing</a> <a>Just</a>
+--   <a>nonEmptySet</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
 --   </pre>
-withNEIntSet :: r -> (NEIntSet -> r) -> IntSet -> r
+withNonEmpty :: r -> (NEIntSet -> r) -> IntSet -> r
 
 -- | <i>O(log n)</i>. Convert a <a>IntSet</a> into an <a>NEIntSet</a> by
 --   adding a value. Because of this, we know that the set must have at
@@ -1506,21 +1519,19 @@ update :: (a -> Maybe a) -> Key -> NEIntMap a -> IntMap a
 --   </pre>
 updateWithKey :: (Key -> a -> Maybe a) -> Key -> NEIntMap a -> IntMap a
 
--- | <i>O(log n)</i>. The expression (<tt><a>updateWithKey</a> f k
---   map</tt>) updates the value <tt>x</tt> at <tt>k</tt> (if it is in the
---   map). If (<tt>f k x</tt>) is <a>Nothing</a>, the element is deleted.
---   If it is (<tt><a>Just</a> y</tt>), the key <tt>k</tt> is bound to the
---   new value <tt>y</tt>.
+-- | <i>O(min(n,W))</i>. Lookup and update. The function returns original
+--   value, if it is updated. This is different behavior than
+--   <tt>Data.Map.NonEmpty.updateLookupWithKey</tt>. Returns the original
+--   key value if the map entry is deleted.
 --   
---   Returns a potentially empty map (<a>IntMap</a>), because we can't know
---   ahead of time if the function returns <a>Nothing</a> and deletes the
---   final item in the <a>NEIntMap</a>.
+--   Returns a potentially empty map (<a>IntMap</a>) in the case that we
+--   delete the final key of a singleton map.
 --   
 --   <pre>
 --   let f k x = if x == "a" then Just ((show k) ++ ":new a") else Nothing
---   updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "5:new a")]
---   updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "a")]
---   updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
+--   updateLookupWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "5:new a", Data.IntMap.fromList ((3, "b") :| [(5, "5:new a")]))
+--   updateLookupWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  Data.IntMap.fromList ((3, "b") :| [(5, "a")]))
+--   updateLookupWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Data.IntMap.singleton 5 "a")
 --   </pre>
 updateLookupWithKey :: (Key -> a -> Maybe a) -> Key -> NEIntMap a -> (Maybe a, IntMap a)
 
@@ -1915,6 +1926,9 @@ mapWithKey :: (Key -> a -> b) -> NEIntMap a -> NEIntMap b
 --   the traversing function also has access to the key associated with a
 --   value.
 --   
+--   <b>WARNING</b>: Differs from <tt>Data.IntMap.traverseWithKey</tt>,
+--   which traverses positive items first, then negative items.
+--   
 --   Is more general than <a>traverseWithKey</a>, since works with all
 --   <a>Apply</a>, and not just <a>Applicative</a>.
 traverseWithKey1 :: Apply t => (Key -> a -> t b) -> NEIntMap a -> t (NEIntMap b)
@@ -1930,6 +1944,9 @@ traverseWithKey1 :: Apply t => (Key -> a -> t b) -> NEIntMap a -> t (NEIntMap b)
 --   provided only for types that do not have <a>Apply</a> instance, since
 --   <a>Apply</a> is not at the moment (and might not ever be) an official
 --   superclass of <a>Applicative</a>.
+--   
+--   <b>WARNING</b>: Differs from <tt>Data.IntMap.traverseWithKey</tt>,
+--   which traverses positive items first, then negative items.
 --   
 --   <pre>
 --   <a>traverseWithKey</a> f = <a>unwrapApplicative</a> . <a>traverseWithKey1</a> (\k -&gt; WrapApplicative . f k)
@@ -2092,6 +2109,9 @@ foldlWithKey :: (a -> Key -> b -> a) -> a -> NEIntMap b -> a
 --   <pre>
 --   <a>foldMapWithKey</a> f = <a>fold1</a> . <a>mapWithKey</a> f
 --   </pre>
+--   
+--   <b>WARNING</b>: Differs from <tt>Data.IntMap.foldMapWithKey</tt>,
+--   which traverses positive items first, then negative items.
 --   
 --   This can be an asymptotically faster than <a>foldrWithKey</a> or
 --   <a>foldlWithKey</a> for some monoids.
@@ -4417,21 +4437,18 @@ update :: Ord k => (a -> Maybe a) -> k -> NEMap k a -> Map k a
 --   </pre>
 updateWithKey :: Ord k => (k -> a -> Maybe a) -> k -> NEMap k a -> Map k a
 
--- | <i>O(log n)</i>. The expression (<tt><a>updateWithKey</a> f k
---   map</tt>) updates the value <tt>x</tt> at <tt>k</tt> (if it is in the
---   map). If (<tt>f k x</tt>) is <a>Nothing</a>, the element is deleted.
---   If it is (<tt><a>Just</a> y</tt>), the key <tt>k</tt> is bound to the
---   new value <tt>y</tt>.
+-- | <i>O(log n)</i>. Lookup and update. See also <a>updateWithKey</a>. The
+--   function returns changed value, if it is updated. Returns the original
+--   key value if the map entry is deleted.
 --   
---   Returns a potentially empty map (<a>Map</a>), because we can't know
---   ahead of time if the function returns <a>Nothing</a> and deletes the
---   final item in the <a>NEMap</a>.
+--   Returns a potentially empty map (<a>Map</a>) in the case that we
+--   delete the final key of a singleton map.
 --   
 --   <pre>
 --   let f k x = if x == "a" then Just ((show k) ++ ":new a") else Nothing
---   updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "5:new a")]
---   updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a")]
---   updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+--   updateLookupWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "5:new a", Data.Map.fromList ((3, "b") :| [(5, "5:new a")]))
+--   updateLookupWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  Data.Map.fromList ((3, "b") :| [(5, "a")]))
+--   updateLookupWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Data.Map.singleton 5 "a")
 --   </pre>
 updateLookupWithKey :: Ord k => (k -> a -> Maybe a) -> k -> NEMap k a -> (Maybe a, Map k a)
 
@@ -5710,3 +5727,124 @@ maxView :: NEMap k a -> (a, Map k a)
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
+
+
+-- | <h1>Non-Empty Typeclass</h1>
+--   
+--   Provides the typeclass <a>HasNonEmpty</a>, which abstracts over
+--   different types which have a "non-empty" variant.
+module Data.Containers.NonEmpty
+
+-- | If <tt>s</tt> is an instance of <tt>HasNonEmpty</tt>, it means that
+--   there is a corresponding "non-empty" version of <tt>s</tt>,
+--   <tt><a>NE</a> s</tt>.
+--   
+--   In order for things to be well-behaved, we expect that <a>nonEmpty</a>
+--   and <tt>maybe <a>empty</a> <a>fromNonEmpty</a></tt> should form an
+--   isomorphism (or that <tt><a>withNonEmpty</a> <a>empty</a>
+--   <a>fromNonEmpty</a> == id</tt>. In addition, the following properties
+--   should hold for most exectations:
+--   
+--   <ul>
+--   <li><pre>(x == empty) ==&gt; isEmpty x</pre></li>
+--   <li><pre>(x == empty) ==&gt; isNothing (nonEmpty x)</pre></li>
+--   <li><pre>isEmpty x ==&gt; isNothing (nonEmpty x)</pre></li>
+--   <li><pre>unsafeToNonEmpty x == fromJust (nonEmpty x)</pre></li>
+--   <li>Usually, <tt>not (isEmpty x) ==&gt; isJust (nonEmpty x)</tt>, but
+--   this isn't necessary.</li>
+--   </ul>
+class HasNonEmpty s where {
+    
+    -- | <tt><a>NE</a> s</tt> is the "non-empty" version of <tt>s</tt>.
+    type family NE s = t | t -> s;
+}
+
+-- | "Smart constructor" for <tt><a>NE</a> s</tt> given a (potentailly
+--   empty) <tt>s</tt>. Will return <a>Nothing</a> if the <tt>s</tt> was
+--   empty, and <tt><a>Just</a> n</tt> if the <tt>s</tt> was not empty,
+--   with <tt>n :: <a>NE</a> s</tt>.
+--   
+--   Should form an isomorphism with <tt><a>maybe</a> <a>empty</a>
+--   <a>fromNonEmpty</a></tt>.
+nonEmpty :: HasNonEmpty s => s -> Maybe (NE s)
+
+-- | Convert a <tt><a>NE</a> s</tt> (non-empty <tt>s</tt>) back into an
+--   <tt>s</tt>, "obscuring" its non-emptiness from its type.
+fromNonEmpty :: HasNonEmpty s => NE s -> s
+
+-- | Continuation-based version of <a>nonEmpty</a>, which can be more
+--   efficient in certain situations.
+--   
+--   <tt><a>withNonEmpty</a> <a>empty</a> <a>fromNonEmpty</a></tt> should
+--   be <tt>id</tt>.
+withNonEmpty :: HasNonEmpty s => r -> (NE s -> r) -> s -> r
+
+-- | An empty <tt>s</tt>.
+empty :: HasNonEmpty s => s
+
+-- | Check if an <tt>s</tt> is empty.
+isEmpty :: HasNonEmpty s => s -> Bool
+
+-- | Unsafely coerce an <tt>s</tt> into an <tt><a>NE</a> s</tt> (non-empty
+--   <tt>s</tt>). Is undefined (throws a runtime exception when evaluation
+--   is attempted) when the <tt>s</tt> is empty.
+unsafeToNonEmpty :: HasNonEmpty s => s -> NE s
+
+-- | The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow you to treat a
+--   <tt>s</tt> as if it were either a <tt><a>IsNonEmpty</a> n</tt> (where
+--   <tt>n</tt> is a non-empty version of <tt>s</tt>, type <tt><a>NE</a>
+--   s</tt>) or an <a>IsEmpty</a>.
+--   
+--   For example, you can pattern match on a list to get a <a>NonEmpty</a>
+--   (non-empty list):
+--   
+--   <pre>
+--   safeHead :: [Int] -&gt; Int
+--   safeHead (<a>IsNonEmpty</a> (x :| _)) = x     -- here, the list was not empty
+--   safehead <a>IsEmpty</a>               = 0     -- here, the list was empty
+--   </pre>
+--   
+--   Matching on <tt><a>IsNonEmpty</a> n</tt> means that the original input
+--   was <i>not</i> empty, and you have a verified-non-empty <tt>n ::
+--   <a>NE</a> s</tt> to use.
+--   
+--   Note that because of the way coverage checking works for polymorphic
+--   pattern synonyms, you will unfortunatelly still get incomplete pattern
+--   match warnings if you match on both <a>IsNonEmpty</a> and
+--   <a>NonEmpty</a>, even though the two are meant to provide complete
+--   coverage. However, many instances of <a>HasNonEmpty</a> (like
+--   <a>NEMap</a>, <a>NEIntMap</a>, <a>NESet</a>, <a>NEIntSet</a>) will
+--   provide their own monomorphic versions of these patterns that can be
+--   verified as complete covers by GHC.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
+--   convert a <tt><a>NE</a> s</tt> back into an <tt>s</tt>, "obscuring"
+--   its non-emptiness (see <a>fromNonEmpty</a>).
+pattern IsNonEmpty :: HasNonEmpty s => NE s -> s
+
+-- | The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow you to treat a
+--   <tt>s</tt> as if it were either a <tt><a>IsNonEmpty</a> n</tt> (where
+--   <tt>n</tt> is a non-empty version of <tt>s</tt>, type <tt><a>NE</a>
+--   s</tt>) or an <a>IsEmpty</a>.
+--   
+--   Matching on <a>IsEmpty</a> means that the original item was empty.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsEmpty</a> as an
+--   expression, and it will be interpreted as <a>empty</a>.
+--   
+--   Note that because of the way coverage checking works for polymorphic
+--   pattern synonyms, you will unfortunatelly still get incomplete pattern
+--   match warnings if you match on both <a>IsNonEmpty</a> and
+--   <a>NonEmpty</a>, even though the two are meant to provide complete
+--   coverage. However, many instances of <a>HasNonEmpty</a> (like
+--   <a>NEMap</a>, <a>NEIntMap</a>, <a>NESet</a>, <a>NEIntSet</a>) will
+--   provide their own monomorphic versions of these patterns that can be
+--   verified as complete covers by GHC.
+--   
+--   See <a>IsNonEmpty</a> for more information.
+pattern IsEmpty :: HasNonEmpty s => s
+instance Data.Containers.NonEmpty.HasNonEmpty [a]
+instance Data.Containers.NonEmpty.HasNonEmpty (Data.Map.Internal.Map k a)
+instance Data.Containers.NonEmpty.HasNonEmpty (Data.IntMap.Internal.IntMap a)
+instance Data.Containers.NonEmpty.HasNonEmpty (Data.Set.Internal.Set a)
+instance Data.Containers.NonEmpty.HasNonEmpty Data.IntSet.Internal.IntSet
