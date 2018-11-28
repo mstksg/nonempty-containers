@@ -41,12 +41,17 @@
 -- with "Prelude" and "Data.IntSet" functions:
 --
 -- > import qualified Data.IntSet.NonEmpty as NEIS
+--
+-- Note that all asmyptotics /O(f(n))/ in this module are actually
+-- /O(min(W, f(n)))/, where @W@ is the number of bits in an 'Int' (32 or
+-- 64).  That is, if @f(n)@ is greater than @W@, all operations are
+-- constant-time.
 module Data.IntSet.NonEmpty (
   -- * Non-Empty Set Type
     NEIntSet
   , Key
 
-  -- ** Conversions between empty and non-empty maps
+  -- ** Conversions between empty and non-empty sets
   , pattern IsNonEmpty
   , pattern IsEmpty
   , nonEmptySet

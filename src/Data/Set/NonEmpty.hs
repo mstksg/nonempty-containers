@@ -47,7 +47,7 @@
 module Data.Set.NonEmpty (
   -- * Non-Empty Set Type
     NESet
-  -- ** Conversions between empty and non-empty maps
+  -- ** Conversions between empty and non-empty sets
   , pattern IsNonEmpty
   , pattern IsEmpty
   , nonEmptySet

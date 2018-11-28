@@ -49,6 +49,11 @@
 -- "Prelude" and "Data.IntMap" functions:
 --
 -- > import qualified Data.IntMap.NonEmpty as NEIM
+--
+-- Note that all asmyptotics /O(f(n))/ in this module are actually
+-- /O(min(W, f(n)))/, where @W@ is the number of bits in an 'Int' (32 or
+-- 64).  That is, if @f(n)@ is greater than @W@, all operations are
+-- constant-time.
 module Data.IntMap.NonEmpty (
   -- * Non-Empty IntMap Type
     NEIntMap
