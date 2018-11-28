@@ -499,6 +499,11 @@ instance GHC.Base.Semigroup Data.IntSet.NonEmpty.Internal.NEIntSet
 --   <pre>
 --   import qualified Data.IntSet.NonEmpty as NEIS
 --   </pre>
+--   
+--   Note that all asmyptotics <i>O(f(n))</i> in this module are actually
+--   <i>O(min(W, f(n)))</i>, where <tt>W</tt> is the number of bits in an
+--   <a>Int</a> (32 or 64). That is, if <tt>f(n)</tt> is greater than
+--   <tt>W</tt>, all operations are constant-time.
 module Data.IntSet.NonEmpty
 
 -- | A non-empty set of values <tt>a</tt>. At least one value exists in an
@@ -1082,6 +1087,11 @@ valid :: NEIntSet -> Bool
 --   <pre>
 --   import qualified Data.IntMap.NonEmpty as NEIM
 --   </pre>
+--   
+--   Note that all asmyptotics <i>O(f(n))</i> in this module are actually
+--   <i>O(min(W, f(n)))</i>, where <tt>W</tt> is the number of bits in an
+--   <a>Int</a> (32 or 64). That is, if <tt>f(n)</tt> is greater than
+--   <tt>W</tt>, all operations are constant-time.
 module Data.IntMap.NonEmpty
 
 -- | A non-empty IntMap from keys <tt>k</tt> to values <tt>a</tt>. At least
@@ -2940,6 +2950,22 @@ instance Data.Foldable.Foldable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
+
+module Data.Sequence.NonEmpty
+data NESeq a
+(:<||) :: a -> Seq a -> NESeq a
+pattern (:||>) :: Seq a -> a -> NESeq a
+nonEmptySeq :: Seq a -> Maybe (NESeq a)
+toSeq :: NESeq a -> Seq a
+withNonEmpty :: r -> (NESeq a -> r) -> Seq a -> r
+unsafeFromSeq :: Seq a -> NESeq a
+singleton :: a -> NESeq a
+(<|) :: a -> NESeq a -> NESeq a
+(|>) :: NESeq a -> a -> NESeq a
+(><) :: NESeq a -> NESeq a -> NESeq a
+fromList :: NonEmpty a -> NESeq a
+iterateN :: Int -> (a -> a) -> a -> NESeq a
+length :: NESeq a -> Int
 
 
 -- | Unsafe internal-use functions used in the implementation of
