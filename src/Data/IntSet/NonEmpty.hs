@@ -51,7 +51,7 @@ module Data.IntSet.NonEmpty (
   , pattern IsEmpty
   , nonEmptySet
   , toSet
-  , withNEIntSet
+  , withNonEmpty
   , insertSet
   , insertSetMin
   , insertSetMax
@@ -192,18 +192,18 @@ pattern IsEmpty <- (S.null->True)
 {-# COMPLETE IsNonEmpty, IsEmpty #-}
 
 -- | /O(log n)/. A general continuation-based way to consume a 'IntSet' as if
--- it were an 'NEIntSet'. @'withNEIntSet' def f@ will take a 'IntSet'.  If set is
+-- it were an 'NEIntSet'. @'withNonEmpty' def f@ will take a 'IntSet'.  If set is
 -- empty, it will evaluate to @def@.  Otherwise, a non-empty set 'NEIntSet'
 -- will be fed to the function @f@ instead.
 --
--- @'nonEmptySet' == 'withNEIntSet' 'Nothing' 'Just'@
-withNEIntSet
+-- @'nonEmptySet' == 'withNonEmpty' 'Nothing' 'Just'@
+withNonEmpty
     :: r                   -- ^ value to return if set is empty
     -> (NEIntSet -> r)     -- ^ function to apply if set is not empty
     -> IntSet
     -> r
-withNEIntSet def f = maybe def f . nonEmptySet
-{-# INLINE withNEIntSet #-}
+withNonEmpty def f = maybe def f . nonEmptySet
+{-# INLINE withNonEmpty #-}
 
 -- | /O(log n)/. Convert a 'IntSet' into an 'NEIntSet' by adding a value.
 -- Because of this, we know that the set must have at least one
@@ -215,7 +215,7 @@ withNEIntSet def f = maybe def f . nonEmptySet
 -- > insertSet 4 (Data.IntSet.fromList [5, 3]) == fromList (3 :| [4, 5])
 -- > insertSet 4 Data.IntSet.empty == singleton 4 "c"
 insertSet :: Key -> IntSet -> NEIntSet
-insertSet x = withNEIntSet (singleton x) (insert x)
+insertSet x = withNonEmpty (singleton x) (insert x)
 {-# INLINE insertSet #-}
 
 -- | /O(1)/ Convert a 'IntSet' into an 'NEIntSet' by adding a value where the
@@ -248,9 +248,9 @@ insertSetMin = NEIntSet
 -- > valid (insertSetMin 2 (Data.IntSet.fromList [5, 3])) == False
 -- > valid (insertSetMin 5 (Data.IntSet.fromList [5, 3])) == False
 insertSetMax :: Key -> IntSet -> NEIntSet
-insertSetMax x = withNEIntSet (singleton x) go
+insertSetMax x = withNonEmpty (singleton x) go
   where
-    go (NEIntSet x0 s0) = NEIntSet x0 . insertMaxIntSet x $ s0
+    go (NEIntSet x0 s0) = NEIntSet x0 . insertMaxSet x $ s0
 {-# INLINE insertSetMax #-}
 
 -- | /O(log n)/. Unsafe version of 'nonEmptySet'.  Coerces a 'IntSet'
@@ -259,7 +259,7 @@ insertSetMax x = withNEIntSet (singleton x) go
 unsafeFromSet
     :: IntSet
     -> NEIntSet
-unsafeFromSet = withNEIntSet e id
+unsafeFromSet = withNonEmpty e id
   where
     e = errorWithoutStackTrace "NEIntSet.unsafeFromSet: empty set"
 {-# INLINE unsafeFromSet #-}
@@ -293,7 +293,7 @@ delete :: Key -> NEIntSet -> IntSet
 delete x n@(NEIntSet x0 s) = case compare x x0 of
     LT -> toSet n
     EQ -> s
-    GT -> insertMinIntSet x0 . S.delete x $ s
+    GT -> insertMinSet x0 . S.delete x $ s
 {-# INLINE delete #-}
 
 -- | /O(log n)/. Is the element in the set?
@@ -487,7 +487,7 @@ difference
     -> IntSet
 difference n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
     -- x1 is not in n2, so cannot be deleted
-    LT -> insertMinIntSet x1 $ s1 `S.difference` toSet n2
+    LT -> insertMinSet x1 $ s1 `S.difference` toSet n2
     -- x2 deletes x1, and only x1
     EQ -> s1 `S.difference` s2
     -- x2 is not in n1, so cannot delete anything, so we can just difference n1 // s2.
@@ -525,7 +525,7 @@ intersection n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
     -- x1 is not in n2
     LT -> s1 `S.intersection` toSet n2
     -- x1 and x2 are a part of the result
-    EQ -> insertMinIntSet x1 $ s1 `S.intersection` s2
+    EQ -> insertMinSet x1 $ s1 `S.intersection` s2
     -- x2 is not in n1
     GT -> toSet n1 `S.intersection` s2
 {-# INLINE intersection #-}
@@ -539,7 +539,7 @@ filter
     -> NEIntSet
     -> IntSet
 filter f (NEIntSet x s1)
-    | f x       = insertMinIntSet x . S.filter f $ s1
+    | f x       = insertMinSet x . S.filter f $ s1
     | otherwise = S.filter f s1
 {-# INLINE filter #-}
 
@@ -709,7 +709,7 @@ deleteMin (NEIntSet _ s) = s
 -- > deleteMax (fromList (5 :| [3, 7])) == Data.IntSet.fromList [3, 5]
 -- > deleteMax (singleton 5) == Data.IntSet.empty
 deleteMax :: NEIntSet -> IntSet
-deleteMax (NEIntSet x s) = insertMinIntSet x . S.deleteMax $ s
+deleteMax (NEIntSet x s) = insertMinSet x . S.deleteMax $ s
 {-# INLINE deleteMax #-}
 
 -- | /O(1)/. Delete and find the minimal element.  It is constant-time, so
@@ -734,7 +734,7 @@ deleteFindMin (NEIntSet x s) = (x, s)
 --
 -- > deleteFindMax (fromList (5 :| [3, 10])) == (10, Data.IntSet.fromList [3, 5])
 deleteFindMax :: NEIntSet -> (Key, IntSet)
-deleteFindMax (NEIntSet x s) = maybe (x, S.empty) (second (insertMinIntSet x))
+deleteFindMax (NEIntSet x s) = maybe (x, S.empty) (second (insertMinSet x))
                              . S.maxView
                              $ s
 {-# INLINE deleteFindMax #-}

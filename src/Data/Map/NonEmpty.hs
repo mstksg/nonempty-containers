@@ -1197,19 +1197,17 @@ updateWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     GT -> insertMinMap k0 v . M.updateWithKey f k   $ m
 {-# INLINE updateWithKey #-}
 
--- | /O(log n)/. The expression (@'updateWithKey' f k map@) updates the
--- value @x@ at @k@ (if it is in the map). If (@f k x@) is 'Nothing', the
--- element is deleted. If it is (@'Just' y@), the key @k@ is bound to the
--- new value @y@.
+-- | /O(log n)/. Lookup and update. See also 'updateWithKey'.
+-- The function returns changed value, if it is updated.
+-- Returns the original key value if the map entry is deleted.
 --
--- Returns a potentially empty map ('Map'), because we can't know ahead of
--- time if the function returns 'Nothing' and deletes the final item in the
--- 'NEMap'.
+-- Returns a potentially empty map ('Map') in the case that we delete the
+-- final key of a singleton map.
 --
 -- > let f k x = if x == "a" then Just ((show k) ++ ":new a") else Nothing
--- > updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "5:new a")]
--- > updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.fromList [(3, "b"), (5, "a")]
--- > updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.Map.singleton 5 "a"
+-- > updateLookupWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "5:new a", Data.Map.fromList ((3, "b") :| [(5, "5:new a")]))
+-- > updateLookupWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  Data.Map.fromList ((3, "b") :| [(5, "a")]))
+-- > updateLookupWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Data.Map.singleton 5 "a")
 updateLookupWithKey
     :: Ord k
     => (k -> a -> Maybe a)
@@ -1218,7 +1216,8 @@ updateLookupWithKey
     -> (Maybe a, Map k a)
 updateLookupWithKey f k n@(NEMap k0 v m) = case compare k k0 of
     LT -> (Nothing, toMap n)
-    EQ -> (f k0 v , maybe m (flip (insertMinMap k0) m) . f k0 $ v)
+    EQ -> let u = f k0 v
+          in  (u <|> Just v, maybe m (flip (insertMinMap k0) m) u)
     GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
 {-# INLINE updateLookupWithKey #-}
 

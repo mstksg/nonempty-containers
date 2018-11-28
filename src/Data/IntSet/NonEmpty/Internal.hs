@@ -24,8 +24,8 @@ module Data.IntSet.NonEmpty.Internal (
   , union
   , unions
   , valid
-  , insertMinIntSet
-  , insertMaxIntSet
+  , insertMinSet
+  , insertMaxSet
   ) where
 
 import           Control.DeepSeq
@@ -159,7 +159,7 @@ nonEmptySet = (fmap . uncurry) NEIntSet . S.minView
 --
 -- > toSet (fromList ((3,"a") :| [(5,"b")])) == Data.IntSet.fromList [(3,"a"), (5,"b")]
 toSet :: NEIntSet -> IntSet
-toSet (NEIntSet x s) = insertMinIntSet x s
+toSet (NEIntSet x s) = insertMinSet x s
 {-# INLINE toSet #-}
 
 -- | /O(1)/. Create a singleton set.
@@ -230,9 +230,9 @@ valid (NEIntSet x s) = all ((x <) . fst) (S.minView s)
 -- a more efficient way.
 
 -- TODO: implementation
-insertMinIntSet :: Key -> IntSet -> IntSet
-insertMinIntSet = S.insert
-{-# INLINABLE insertMinIntSet #-}
+insertMinSet :: Key -> IntSet -> IntSet
+insertMinSet = S.insert
+{-# INLINABLE insertMinSet #-}
 
 -- | /O(log n)/. Insert new value into a set where values are /strictly
 -- less than/ the new value.  That is, the new value must be /strictly
@@ -244,7 +244,7 @@ insertMinIntSet = S.insert
 -- a more efficient way.
 
 -- TODO: implementation
-insertMaxIntSet :: Key -> IntSet -> IntSet
-insertMaxIntSet = S.insert
-{-# INLINABLE insertMaxIntSet #-}
+insertMaxSet :: Key -> IntSet -> IntSet
+insertMaxSet = S.insert
+{-# INLINABLE insertMaxSet #-}
 

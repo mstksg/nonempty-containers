@@ -8,18 +8,17 @@ import           Control.Applicative
 import           Data.Coerce
 import           Data.Foldable
 import           Data.Functor.Identity
-import           Data.List.NonEmpty            (NonEmpty(..))
+import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup.Foldable
-import           Data.Semigroup.Traversable
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
-import qualified Data.IntMap                   as M
-import qualified Data.IntMap.NonEmpty          as NEM
-import qualified Data.List.NonEmpty            as NE
-import qualified Data.Text                     as T
-import qualified Hedgehog.Gen                  as Gen
-import qualified Hedgehog.Range                as Range
+import qualified Data.IntMap             as M
+import qualified Data.IntMap.NonEmpty    as NEM
+import qualified Data.List.NonEmpty      as NE
+import qualified Data.Text               as T
+import qualified Hedgehog.Gen            as Gen
+import qualified Hedgehog.Range          as Range
 
 intMapTests :: TestTree
 intMapTests = groupTree $$(discover)
@@ -358,43 +357,45 @@ prop_mapWithKey_rules_map = ttProp (gf2 valGen :?> gf1 valGen :?> GTNEIntMap :->
     (\f g xs -> M.mapWithKey   f (M.map   g xs))
     (\f g xs -> NEM.mapWithKey f (NEM.map g xs))
 
-prop_traverseWithKey1 :: Property
-prop_traverseWithKey1 = ttProp (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (\f -> M.traverseWithKey    (\k -> (`More` Done (f . (k,)))))
-    (\f -> NEM.traverseWithKey1 (\k -> (`More` Done (f . (k,)))))
+-- | These intentionally do not match, because Foldable for IntMap is
+-- inconsistent
+-- prop_traverseWithKey1 :: Property
+-- prop_traverseWithKey1 = ttProp (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+--     (\f -> M.traverseWithKey    (\k -> (`More` Done (f . (k,)))))
+--     (\f -> NEM.traverseWithKey1 (\k -> (`More` Done (f . (k,)))))
 
-prop_traverseWithKey :: Property
-prop_traverseWithKey = ttProp (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (\f -> M.traverseWithKey   (\k -> (`More` Done (f . (k,)))))
-    (\f -> NEM.traverseWithKey (\k -> (`More` Done (f . (k,)))))
+-- prop_traverseWithKey :: Property
+-- prop_traverseWithKey = ttProp (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+--     (\f -> M.traverseWithKey   (\k -> (`More` Done (f . (k,)))))
+--     (\f -> NEM.traverseWithKey (\k -> (`More` Done (f . (k,)))))
 
-prop_sequence1 :: Property
-prop_sequence1 = ttProp (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (sequenceA . fmap (`More` Done id))
-    (sequence1 . fmap (`More` Done id))
+-- prop_sequence1 :: Property
+-- prop_sequence1 = ttProp (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+--     (sequenceA . fmap (`More` Done id))
+--     (sequence1 . fmap (`More` Done id))
 
-prop_sequenceA :: Property
-prop_sequenceA = ttProp (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (sequenceA . fmap (`More` Done id))
-    (sequenceA . fmap (`More` Done id))
+-- prop_sequenceA :: Property
+-- prop_sequenceA = ttProp (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+--     (sequenceA . fmap (`More` Done id))
+--     (sequenceA . fmap (`More` Done id))
 
-prop_mapAccumWithKey :: Property
-prop_mapAccumWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
-                             :?> GTOther valGen
-                             :-> GTNEIntMap
-                             :-> TTOther :*: TTNEIntMap
-                               )
-    M.mapAccumWithKey
-    NEM.mapAccumWithKey
+-- prop_mapAccumWithKey :: Property
+-- prop_mapAccumWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
+--                              :?> GTOther valGen
+--                              :-> GTNEIntMap
+--                              :-> TTOther :*: TTNEIntMap
+--                                )
+--     M.mapAccumWithKey
+--     NEM.mapAccumWithKey
 
-prop_mapAccumRWithKey :: Property
-prop_mapAccumRWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
-                              :?> GTOther valGen
-                              :-> GTNEIntMap
-                              :-> TTOther :*: TTNEIntMap
-                                )
-    M.mapAccumRWithKey
-    NEM.mapAccumRWithKey
+-- prop_mapAccumRWithKey :: Property
+-- prop_mapAccumRWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
+--                               :?> GTOther valGen
+--                               :-> GTNEIntMap
+--                               :-> TTOther :*: TTNEIntMap
+--                                 )
+--     M.mapAccumRWithKey
+--     NEM.mapAccumRWithKey
 
 prop_mapKeys :: Property
 prop_mapKeys = ttProp (gf1 intKeyGen :?> GTNEIntMap :-> TTNEIntMap)
@@ -469,7 +470,7 @@ prop_foldlWithKey = ttProp ( gf3 valGen
 
 prop_foldMapWithKey :: Property
 prop_foldMapWithKey = ttProp (gf2 valGen :?> GTNEIntMap :-> TTOther)
-    M.foldMapWithKey
+    (\f -> foldMap (uncurry f) . M.toList)
     NEM.foldMapWithKey
 
 prop_foldr' :: Property
@@ -679,22 +680,22 @@ prop_elem = ttProp (GTVal :-> GTNEIntMap :-> TTOther)
 
 prop_fold1 :: Property
 prop_fold1 = ttProp (GTNEIntMap :-> TTVal)
-    fold
+    (fold . toList)
     fold1
 
 prop_fold :: Property
 prop_fold = ttProp (GTNEIntMap :-> TTVal)
-    fold
+    (fold . toList)
     fold
 
 prop_foldMap1 :: Property
-prop_foldMap1 = ttProp (GTNEIntMap :-> TTOther)
-    (foldMap  (:[]))
-    (foldMap1 (:[]))
+prop_foldMap1 = ttProp (gf1 valGen :?> GTNEIntMap :-> TTOther)
+    (\f -> foldMap  ((:[]) . f) . toList)
+    (\f -> foldMap1 ((:[]) . f))
 
 prop_foldMap :: Property
-prop_foldMap = ttProp (GTNEIntMap :-> TTOther)
-    (foldMap (:[]))
-    (foldMap (:[]))
+prop_foldMap = ttProp (gf1 valGen :?> GTNEIntMap :-> TTOther)
+    (\f -> foldMap ((:[]) . f) . toList)
+    (\f -> foldMap ((:[]) . f))
 
 

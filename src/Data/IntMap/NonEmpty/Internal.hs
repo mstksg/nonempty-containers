@@ -41,9 +41,10 @@ module Data.IntMap.NonEmpty.Internal (
   , traverseWithKey
   , traverseWithKey1
   , foldMapWithKey
+  , traverseMapWithKey
   -- * Unsafe IntMap Functions
-  , insertMinIntMap
-  , insertMaxIntMap
+  , insertMinMap
+  , insertMaxMap
   -- * Debug
   , valid
   ) where
@@ -242,6 +243,9 @@ foldl1 f (NEIntMap _ v m) = M.foldl f v m
 --
 -- @'foldMapWithKey' f = 'Data.Semigroup.Foldable.fold1' . 'Data.IntMap.NonEmpty.mapWithKey' f@
 --
+-- __WARNING__: Differs from @Data.IntMap.foldMapWithKey@, which traverses
+-- positive items first, then negative items.
+--
 -- This can be an asymptotically faster than
 -- 'Data.IntMap.NonEmpty.foldrWithKey' or 'Data.IntMap.NonEmpty.foldlWithKey' for
 -- some monoids.
@@ -252,10 +256,7 @@ foldMapWithKey
     => (Key -> a -> m)
     -> NEIntMap a
     -> m
-foldMapWithKey f (NEIntMap k0 v m) = maybe (f k0 v) (f k0 v <>)
-                                . getOption
-                                . M.foldMapWithKey (\k -> Option . Just . f k)
-                                $ m
+foldMapWithKey f = F1.foldMap1 (uncurry f) . toList
 {-# INLINE foldMapWithKey #-}
 
 -- | /O(n)/. IntMap a function over all values in the map.
@@ -329,7 +330,7 @@ size (NEIntMap _ _ m) = 1 + M.size m
 --
 -- > toMap (fromList ((3,"a") :| [(5,"b")])) == Data.IntMap.fromList [(3,"a"), (5,"b")]
 toMap :: NEIntMap a -> IntMap a
-toMap (NEIntMap k v m) = insertMinIntMap k v m
+toMap (NEIntMap k v m) = insertMinMap k v m
 {-# INLINE toMap #-}
 
 -- | /O(n)/.
@@ -342,6 +343,9 @@ toMap (NEIntMap k v m) = insertMinIntMap k v m
 -- that do not have 'Apply' instance, since 'Apply' is not at the moment
 -- (and might not ever be) an official superclass of 'Applicative'.
 --
+-- __WARNING__: Differs from @Data.IntMap.traverseWithKey@, which traverses
+-- positive items first, then negative items.
+--
 -- @
 -- 'traverseWithKey' f = 'unwrapApplicative' . 'traverseWithKey1' (\\k -> WrapApplicative . f k)
 -- @
@@ -350,7 +354,9 @@ traverseWithKey
     => (Key -> a -> t b)
     -> NEIntMap a
     -> t (NEIntMap b)
-traverseWithKey f (NEIntMap k v m0) = NEIntMap k <$> f k v <*> M.traverseWithKey f m0
+traverseWithKey f (NEIntMap k v m0) =
+        NEIntMap k <$> f k v
+                   <*> traverseMapWithKey f m0
 {-# INLINE traverseWithKey #-}
 
 -- | /O(n)/.
@@ -358,6 +364,9 @@ traverseWithKey f (NEIntMap k v m0) = NEIntMap k <$> f k v <*> M.traverseWithKey
 --
 -- That is, behaves exactly like a regular 'traverse1' except that the traversing
 -- function also has access to the key associated with a value.
+--
+-- __WARNING__: Differs from @Data.IntMap.traverseWithKey@, which traverses
+-- positive items first, then negative items.
 --
 -- Is more general than 'traverseWithKey', since works with all 'Apply',
 -- and not just 'Applicative'.
@@ -372,7 +381,7 @@ traverseWithKey1 f (NEIntMap k0 v m0) = case runMaybeApply m1 of
     Left  m2 -> NEIntMap k0 <$> f k0 v <.> m2
     Right m2 -> flip (NEIntMap k0) m2 <$> f k0 v
   where
-    m1 = M.traverseWithKey (\k -> MaybeApply . Left . f k) m0
+    m1 = traverseMapWithKey (\k -> MaybeApply . Left . f k) m0
 {-# INLINE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
@@ -459,14 +468,18 @@ instance Functor NEIntMap where
     x <$ NEIntMap k _ m = NEIntMap k x (x <$ m)
     {-# INLINE (<$) #-}
 
--- | Traverses elements in order of ascending keys
+-- | Traverses elements in order of ascending keys.
+--
+-- __WARNING:__ 'fold' and 'foldMap' are different than for the 'IntMap'
+-- instance.  They traverse elements in order of ascending keys, while
+-- 'IntMap' traverses positive keys first, then negative keys.
 --
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
 instance Foldable NEIntMap where
-    fold      (NEIntMap _ v m) = v <> F.fold m
+    fold      (NEIntMap _ v m) = v <> F.fold (M.elems m)
     {-# INLINE fold #-}
-    foldMap f (NEIntMap _ v m) = f v <> foldMap f m
+    foldMap f (NEIntMap _ v m) = f v <> foldMap f (M.elems m)
     {-# INLINE foldMap #-}
     foldr   = foldr
     {-# INLINE foldr #-}
@@ -485,24 +498,32 @@ instance Foldable NEIntMap where
     length  = size
     {-# INLINE length #-}
     elem x (NEIntMap _ v m) = F.elem x m
-                        || x == v
+                           || x == v
     {-# INLINE elem #-}
     toList  = F.toList . elems
     {-# INLINE toList #-}
 
 -- | Traverses elements in order of ascending keys
+--
+-- __WARNING:__ Different than for the 'IntMap' instance.  They traverse
+-- elements in order of ascending keys, while 'IntMap' traverses positive
+-- keys first, then negative keys.
 instance Traversable NEIntMap where
-    traverse f (NEIntMap k v m) = NEIntMap k <$> f v <*> traverse f m
+    traverse f = traverseWithKey (const f)
     {-# INLINE traverse #-}
-    sequenceA (NEIntMap k v m)  = NEIntMap k <$> v <*> sequenceA m
-    {-# INLINE sequenceA #-}
 
 -- | Traverses elements in order of ascending keys
+--
+-- __WARNING:__ 'fold1' and 'foldMap1' are different than 'fold' and
+-- 'foldMap' for the 'IntMap' instance of 'Foldable'.  They traverse
+-- elements in order of ascending keys, while 'IntMap' traverses positive
+-- keys first, then negative keys.
 instance Foldable1 NEIntMap where
     fold1 (NEIntMap _ v m) = maybe v (v <>)
-                        . getOption
-                        . F.foldMap (Option . Just)
-                        $ m
+                           . getOption
+                           . F.foldMap (Option . Just)
+                           . M.elems
+                           $ m
     {-# INLINE fold1 #-}
     foldMap1 f = foldMapWithKey (const f)
     {-# INLINE foldMap1 #-}
@@ -510,15 +531,14 @@ instance Foldable1 NEIntMap where
     {-# INLINE toNonEmpty #-}
 
 -- | Traverses elements in order of ascending keys
+--
+-- __WARNING:__ 'traverse1' and 'sequence1' are different 'traverse' and
+-- 'sequence' for the 'IntMap' instance of 'Traversable'.  They traverse
+-- elements in order of ascending keys, while 'IntMap' traverses positive
+-- keys first, then negative keys.
 instance Traversable1 NEIntMap where
     traverse1 f = traverseWithKey1 (const f)
     {-# INLINE traverse1 #-}
-    sequence1 (NEIntMap k v m0) = case runMaybeApply m1 of
-        Left  m2 -> NEIntMap k <$> v <.> m2
-        Right m2 -> flip (NEIntMap k) m2 <$> v
-      where
-        m1 = traverse (MaybeApply . Left) m0
-    {-# INLINE sequence1 #-}
 
 -- | /O(n)/. Test if the internal map structure is valid.
 valid :: NEIntMap a -> Bool
@@ -538,9 +558,9 @@ valid (NEIntMap k _ m) = all ((k <) . fst . fst) (M.minViewWithKey m)
 -- a more efficient way.
 
 -- TODO: implementation
-insertMinIntMap :: Key -> a -> IntMap a -> IntMap a
-insertMinIntMap = M.insert
-{-# INLINABLE insertMinIntMap #-}
+insertMinMap :: Key -> a -> IntMap a -> IntMap a
+insertMinMap = M.insert
+{-# INLINABLE insertMinMap #-}
 
 -- | /O(log n)/. Insert new key and value into a map where keys are
 -- /strictly less than/ the new key.  That is, the new key must be
@@ -552,7 +572,17 @@ insertMinIntMap = M.insert
 -- a more efficient way.
 
 -- TODO: implementation
-insertMaxIntMap :: Key -> a -> IntMap a -> IntMap a
-insertMaxIntMap = M.insert
-{-# INLINABLE insertMaxIntMap #-}
+insertMaxMap :: Key -> a -> IntMap a -> IntMap a
+insertMaxMap = M.insert
+{-# INLINABLE insertMaxMap #-}
+
+-- | /O(n)/. A fixed version of 'Data.IntMap.traverseWithKey' that
+-- traverses items in ascending order of keys.
+traverseMapWithKey :: Applicative t => (Key -> a -> t b) -> IntMap a -> t (IntMap b)
+traverseMapWithKey f = go
+  where
+    go Nil = pure Nil
+    go (Tip k v) = Tip k <$> f k v
+    go (Bin p m l r) = liftA2 (flip (Bin p m)) (go r) (go l)
+{-# INLINE traverseMapWithKey #-}
 

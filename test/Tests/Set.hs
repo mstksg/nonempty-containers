@@ -2,7 +2,9 @@
 
 module Tests.Set (setTests) where
 
+import           Data.Foldable
 import           Data.Functor.Identity
+import           Data.Semigroup.Foldable
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
@@ -397,3 +399,28 @@ prop_toDescList :: Property
 prop_toDescList = ttProp (GTNESet :-> TTNEList TTKey)
     S.toDescList
     NES.toDescList
+
+prop_elem :: Property
+prop_elem = ttProp (GTKey :-> GTNESet :-> TTOther)
+    elem
+    elem
+
+prop_fold1 :: Property
+prop_fold1 = ttProp (GTNESet :-> TTKey)
+    fold
+    fold1
+
+prop_fold :: Property
+prop_fold = ttProp (GTNESet :-> TTKey)
+    fold
+    fold
+
+prop_foldMap1 :: Property
+prop_foldMap1 = ttProp (gf1 keyGen :?> GTNESet :-> TTOther)
+    (\f -> foldMap  ((:[]) . f))
+    (\f -> foldMap1 ((:[]) . f))
+
+prop_foldMap :: Property
+prop_foldMap = ttProp (gf1 keyGen :?> GTNESet :-> TTOther)
+    (\f -> foldMap ((:[]) . f))
+    (\f -> foldMap ((:[]) . f))

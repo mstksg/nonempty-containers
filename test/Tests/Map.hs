@@ -770,12 +770,12 @@ prop_fold = ttProp (GTNEMap :-> TTVal)
     fold
 
 prop_foldMap1 :: Property
-prop_foldMap1 = ttProp (GTNEMap :-> TTOther)
-    (foldMap  (:[]))
-    (foldMap1 (:[]))
+prop_foldMap1 = ttProp (gf1 valGen :?> GTNEMap :-> TTOther)
+    (\f -> foldMap  ((:[]) . f))
+    (\f -> foldMap1 ((:[]) . f))
 
 prop_foldMap :: Property
-prop_foldMap = ttProp (GTNEMap :-> TTOther)
-    (foldMap (:[]))
-    (foldMap (:[]))
+prop_foldMap = ttProp (gf1 valGen :?> GTNEMap :-> TTOther)
+    (\f -> foldMap ((:[]) . f))
+    (\f -> foldMap ((:[]) . f))
 

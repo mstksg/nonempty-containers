@@ -410,7 +410,7 @@ insertMapMax
     -> NEIntMap a
 insertMapMax k v = withNonEmpty (singleton k v) go
   where
-    go (NEIntMap k0 v0 m0) = NEIntMap k0 v0 . insertMaxIntMap k v $ m0
+    go (NEIntMap k0 v0 m0) = NEIntMap k0 v0 . insertMaxMap k v $ m0
 {-# INLINE insertMapMax #-}
 
 -- | /O(n)/. Build a non-empty map from a non-empty set of keys and
@@ -584,7 +584,7 @@ delete :: Key -> NEIntMap a -> IntMap a
 delete k n@(NEIntMap k0 v m) = case compare k k0 of
     LT -> toMap n
     EQ -> m
-    GT -> insertMinIntMap k0 v . M.delete k $ m
+    GT -> insertMinMap k0 v . M.delete k $ m
 {-# INLINE delete #-}
 
 -- | /O(log n)/. Update a value at a specific key with the result of the
@@ -658,23 +658,22 @@ updateWithKey
     -> IntMap a
 updateWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
     LT -> toMap n
-    EQ -> maybe m (flip (insertMinIntMap k0) m) . f k0 $ v
-    GT -> insertMinIntMap k0 v . M.updateWithKey f k   $ m
+    EQ -> maybe m (flip (insertMinMap k0) m) . f k0 $ v
+    GT -> insertMinMap k0 v . M.updateWithKey f k   $ m
 {-# INLINE updateWithKey #-}
 
--- | /O(log n)/. The expression (@'updateWithKey' f k map@) updates the
--- value @x@ at @k@ (if it is in the map). If (@f k x@) is 'Nothing', the
--- element is deleted. If it is (@'Just' y@), the key @k@ is bound to the
--- new value @y@.
+-- | /O(min(n,W))/. Lookup and update.
+-- The function returns original value, if it is updated.
+-- This is different behavior than @Data.Map.NonEmpty.updateLookupWithKey@.
+-- Returns the original key value if the map entry is deleted.
 --
--- Returns a potentially empty map ('IntMap'), because we can't know ahead of
--- time if the function returns 'Nothing' and deletes the final item in the
--- 'NEIntMap'.
+-- Returns a potentially empty map ('IntMap') in the case that we delete
+-- the final key of a singleton map.
 --
 -- > let f k x = if x == "a" then Just ((show k) ++ ":new a") else Nothing
--- > updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "5:new a")]
--- > updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "a")]
--- > updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
+-- > updateLookupWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "5:new a", Data.IntMap.fromList ((3, "b") :| [(5, "5:new a")]))
+-- > updateLookupWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  Data.IntMap.fromList ((3, "b") :| [(5, "a")]))
+-- > updateLookupWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Data.IntMap.singleton 5 "a")
 updateLookupWithKey
     :: (Key -> a -> Maybe a)
     -> Key
@@ -682,8 +681,9 @@ updateLookupWithKey
     -> (Maybe a, IntMap a)
 updateLookupWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
     LT -> (Nothing, toMap n)
-    EQ -> (f k0 v , maybe m (flip (insertMinIntMap k0) m) . f k0 $ v)
-    GT -> fmap (insertMinIntMap k0 v) . M.updateLookupWithKey f k $ m
+    EQ -> let u = f k0 v
+          in  (Just v, maybe m (flip (insertMinMap k0) m) u)
+    GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
 {-# INLINE updateLookupWithKey #-}
 
 -- | /O(log n)/. The expression (@'alter' f k map@) alters the value @x@ at
@@ -711,9 +711,9 @@ alter
     -> NEIntMap a
     -> IntMap a
 alter f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> ($ toMap n) . maybe id (insertMinIntMap k ) $ f Nothing
-    EQ -> ($ m      ) . maybe id (insertMinIntMap k0) $ f (Just v)
-    GT -> insertMinIntMap k0 v . M.alter f k $ m
+    LT -> ($ toMap n) . maybe id (insertMinMap k ) $ f Nothing
+    EQ -> ($ m      ) . maybe id (insertMinMap k0) $ f (Just v)
+    GT -> insertMinMap k0 v . M.alter f k $ m
 {-# INLINE alter #-}
 
 -- | /O(log n)/. The expression (@'alterF' f k map@) alters the value @x@
@@ -771,9 +771,9 @@ alterF
     -> NEIntMap a
     -> f (IntMap a)
 alterF f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> ($ toMap n) . maybe id (insertMinIntMap k ) <$> f Nothing
-    EQ -> ($ m      ) . maybe id (insertMinIntMap k0) <$> f (Just v)
-    GT -> insertMinIntMap k0 v <$> M.alterF f k m
+    LT -> ($ toMap n) . maybe id (insertMinMap k ) <$> f Nothing
+    EQ -> ($ m      ) . maybe id (insertMinMap k0) <$> f (Just v)
+    GT -> insertMinMap k0 v <$> M.alterF f k m
 {-# INLINABLE [2] alterF #-}
 
 -- if f ~ Const b, it's a lookup
@@ -1044,7 +1044,7 @@ difference
     -> IntMap a
 difference n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 _ m2) = case compare k1 k2 of
     -- k1 is not in n2, so cannot be deleted
-    LT -> insertMinIntMap k1 v1 $ m1 `M.difference` toMap n2
+    LT -> insertMinMap k1 v1 $ m1 `M.difference` toMap n2
     -- k2 deletes k1, and only k1
     EQ -> m1 `M.difference` m2
     -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
@@ -1099,9 +1099,9 @@ differenceWithKey
     -> IntMap a
 differenceWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
     -- k1 is not in n2, so cannot be deleted
-    LT -> insertMinIntMap k1 v1 $ M.differenceWithKey f m1 (toMap n2)
+    LT -> insertMinMap k1 v1 $ M.differenceWithKey f m1 (toMap n2)
     -- k2 deletes k1, and only k1
-    EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinIntMap k1) $ f k1 v1 v2
+    EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinMap k1) $ f k1 v1 v2
     -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
     GT -> M.differenceWithKey f (toMap n1) m2
 {-# INLINE differenceWithKey #-}
@@ -1122,7 +1122,7 @@ intersection n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 _ m2) = case compare k1 k2 o
     -- k1 is not in n2
     LT -> m1 `M.intersection` toMap n2
     -- k1 and k2 are a part of the result
-    EQ -> insertMinIntMap k1 v1 $ m1 `M.intersection` m2
+    EQ -> insertMinMap k1 v1 $ m1 `M.intersection` m2
     -- k2 is not in n1
     GT -> toMap n1 `M.intersection` m2
 {-# INLINE intersection #-}
@@ -1157,7 +1157,7 @@ intersectionWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compa
     -- k1 is not in n2
     LT -> M.intersectionWithKey f m1 (toMap n2)
     -- k1 and k2 are a part of the result
-    EQ -> insertMinIntMap k1 (f k1 v1 v2) $ M.intersectionWithKey f m1 m2
+    EQ -> insertMinMap k1 (f k1 v1 v2) $ M.intersectionWithKey f m1 m2
     -- k2 is not in n1
     GT -> M.intersectionWithKey f (toMap n1) m2
 {-# INLINE intersectionWithKey #-}
@@ -1407,7 +1407,7 @@ filter
     -> NEIntMap a
     -> IntMap a
 filter f (NEIntMap k v m)
-    | f v       = insertMinIntMap k v . M.filter f $ m
+    | f v       = insertMinMap k v . M.filter f $ m
     | otherwise = M.filter f m
 {-# INLINE filter #-}
 
@@ -1422,7 +1422,7 @@ filterWithKey
     -> NEIntMap a
     -> IntMap a
 filterWithKey f (NEIntMap k v m)
-    | f k v     = insertMinIntMap k v . M.filterWithKey f $ m
+    | f k v     = insertMinMap k v . M.filterWithKey f $ m
     | otherwise = M.filterWithKey f m
 {-# INLINE filterWithKey #-}
 
@@ -1443,7 +1443,7 @@ restrictKeys n@(NEIntMap k v m) xs = case S.minView xs of
       -- k is not in xs
       LT -> m `M.restrictKeys` xs
       -- k and y are a part of the result
-      EQ -> insertMinIntMap k v $ m `M.restrictKeys` ys
+      EQ -> insertMinMap k v $ m `M.restrictKeys` ys
       -- y is not in m
       GT -> toMap n `M.restrictKeys` ys
 {-# INLINE restrictKeys #-}
@@ -1463,7 +1463,7 @@ withoutKeys n@(NEIntMap k v m) xs = case S.minView xs of
     Nothing      -> toMap n
     Just (y, ys) -> case compare k y of
       -- k is not in xs, so cannot be deleted
-      LT -> insertMinIntMap k v $ m `M.withoutKeys` xs
+      LT -> insertMinMap k v $ m `M.withoutKeys` xs
       -- y deletes k, and only k
       EQ -> m `M.withoutKeys` ys
       -- y is not in n, so cannot delete anything, so we can just difference n and ys
@@ -1556,7 +1556,7 @@ mapMaybeWithKey
     -> NEIntMap a
     -> IntMap b
 mapMaybeWithKey f (NEIntMap k v m) = ($ M.mapMaybeWithKey f m)
-                                . maybe id (insertMinIntMap k)
+                                . maybe id (insertMinMap k)
                                 $ f k v
 {-# INLINE mapMaybeWithKey #-}
 
@@ -1800,7 +1800,7 @@ deleteMin (NEIntMap _ _ m) = m
 -- > deleteMax (fromList ((5,"a") :| [(3,"b"), (7,"c")])) == Data.IntMap.fromList [(3,"b"), (5,"a")]
 -- > deleteMax (singleton 5 "a") == Data.IntMap.empty
 deleteMax :: NEIntMap a -> IntMap a
-deleteMax (NEIntMap k v m) = insertMinIntMap k v . M.deleteMax $ m
+deleteMax (NEIntMap k v m) = insertMinMap k v . M.deleteMax $ m
 {-# INLINE deleteMax #-}
 
 -- | /O(1)/ if delete, /O(log n)/ otherwise. Update the value at the
@@ -1830,7 +1830,7 @@ adjustMin f = adjustMinWithKey (const f)
 -- > updateMinWithKey (\ k a -> Just ((show k) ++ ":" ++ a)) (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3,"3:b"), (5,"a")]
 -- > updateMinWithKey (\ _ _ -> Nothing)                     (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
 updateMinWithKey :: (Key -> a -> Maybe a) -> NEIntMap a -> IntMap a
-updateMinWithKey f (NEIntMap k v m) = ($ m) . maybe id (insertMinIntMap k) $ f k v
+updateMinWithKey f (NEIntMap k v m) = ($ m) . maybe id (insertMinMap k) $ f k v
 {-# INLINE updateMinWithKey #-}
 
 -- | /O(1)/. A version of 'adjustMaxWithKey' that disallows deletion,
@@ -1868,7 +1868,7 @@ adjustMax f = adjustMaxWithKey (const f)
 updateMaxWithKey :: (Key -> a -> Maybe a) -> NEIntMap a -> IntMap a
 updateMaxWithKey f (NEIntMap k v m)
     | M.null m  = maybe m (M.singleton k) $ f k v
-    | otherwise = insertMinIntMap k v
+    | otherwise = insertMinMap k v
                 . M.updateMaxWithKey f
                 $ m
 {-# INLINE updateMaxWithKey #-}
@@ -1933,7 +1933,7 @@ maxView = first snd . deleteFindMax
 --
 -- > deleteFindMax (fromList ((5,"a") :| [(3,"b"), (10,"c")])) == ((10,"c"), Data.IntMap.fromList [(3,"b"), (5,"a")])
 deleteFindMax :: NEIntMap a -> ((Key, a), IntMap a)
-deleteFindMax (NEIntMap k v m) = maybe ((k, v), M.empty) (second (insertMinIntMap k v))
+deleteFindMax (NEIntMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v))
                             . M.maxViewWithKey
                             $ m
 {-# INLINE deleteFindMax #-}

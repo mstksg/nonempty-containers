@@ -1,14 +1,16 @@
-{-# LANGUAGE DeriveFunctor       #-}
-{-# LANGUAGE DeriveGeneric       #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE KindSignatures      #-}
-{-# LANGUAGE LambdaCase          #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE RecordWildCards     #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# OPTIONS_GHC -Wno-orphans     #-}
+{-# LANGUAGE DeriveFunctor        #-}
+{-# LANGUAGE DeriveGeneric        #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE GADTs                #-}
+{-# LANGUAGE KindSignatures       #-}
+{-# LANGUAGE LambdaCase           #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE RankNTypes           #-}
+{-# LANGUAGE RecordWildCards      #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeApplications     #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# OPTIONS_GHC -Wno-orphans      #-}
 
 module Tests.Util (
     K(..), KeyType, overKX, dummyKey
@@ -91,6 +93,13 @@ instance (Vary a, Vary b) => Vary (K a b)
 instance (Arg a, Arg b) => Arg (K a b)
 
 type KeyType = K Int T.Text
+
+instance Semigroup KeyType where
+    K x1 y1 <> K x2 y2 = K (x1 + x2) (y1 <> y2)
+
+instance Monoid KeyType where
+    mempty = K 0 ""
+    mappend = (<>)
 
 dummyKey :: KeyType
 dummyKey = K 0 "hello"
@@ -448,13 +457,13 @@ intKeyGen :: MonadGen m => m Key
 intKeyGen = Gen.int (Range.linear (-100) 100)
 
 intMapGen :: MonadGen m => m (IntMap T.Text)
-intMapGen = IM.fromAscList . M.toList <$> Gen.map mapSize ((,) <$> intKeyGen <*> valGen)
+intMapGen = IM.fromDistinctAscList . M.toList <$> Gen.map mapSize ((,) <$> intKeyGen <*> valGen)
 
 neIntMapGen :: MonadGen m => m (NEIntMap T.Text)
 neIntMapGen = Gen.just $ NEIM.nonEmptyMap <$> intMapGen
 
 intSetGen :: MonadGen m => m IntSet
-intSetGen = IS.fromAscList . S.toList <$> Gen.set mapSize intKeyGen
+intSetGen = IS.fromDistinctAscList . S.toList <$> Gen.set mapSize intKeyGen
 
 neIntSetGen :: MonadGen m => m NEIntSet
 neIntSetGen = Gen.just $ NEIS.nonEmptySet <$> intSetGen
