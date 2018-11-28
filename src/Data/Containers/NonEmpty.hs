@@ -22,25 +22,29 @@ module Data.Containers.NonEmpty (
   , pattern IsNonEmpty, pattern IsEmpty
   ) where
 
-import           Data.IntMap          (IntMap)
-import           Data.IntMap.NonEmpty (NEIntMap)
-import           Data.IntSet          (IntSet)
-import           Data.IntSet.NonEmpty (NEIntSet)
-import           Data.List.NonEmpty   (NonEmpty(..))
-import           Data.Map             (Map)
-import           Data.Map.NonEmpty    (NEMap)
+import           Data.IntMap            (IntMap)
+import           Data.IntMap.NonEmpty   (NEIntMap)
+import           Data.IntSet            (IntSet)
+import           Data.IntSet.NonEmpty   (NEIntSet)
+import           Data.List.NonEmpty     (NonEmpty(..))
+import           Data.Map               (Map)
+import           Data.Map.NonEmpty      (NEMap)
 import           Data.Maybe
-import           Data.Set             (Set)
-import           Data.Set.NonEmpty    (NESet)
-import qualified Data.IntMap          as IM
-import qualified Data.IntMap.NonEmpty as NEIM
-import qualified Data.IntSet          as IS
-import qualified Data.IntSet.NonEmpty as NEIS
-import qualified Data.List.NonEmpty   as NE
-import qualified Data.Map             as M
-import qualified Data.Map.NonEmpty    as NEM
-import qualified Data.Set             as S
-import qualified Data.Set.NonEmpty    as NES
+import           Data.Sequence          (Seq(..))
+import           Data.Sequence.NonEmpty (NESeq(..))
+import           Data.Set               (Set)
+import           Data.Set.NonEmpty      (NESet)
+import qualified Data.IntMap            as IM
+import qualified Data.IntMap.NonEmpty   as NEIM
+import qualified Data.IntSet            as IS
+import qualified Data.IntSet.NonEmpty   as NEIS
+import qualified Data.List.NonEmpty     as NE
+import qualified Data.Map               as M
+import qualified Data.Map.NonEmpty      as NEM
+import qualified Data.Sequence          as Seq
+import qualified Data.Sequence.NonEmpty as NESeq
+import qualified Data.Set               as S
+import qualified Data.Set.NonEmpty      as NES
 
 -- | If @s@ is an instance of @HasNonEmpty@, it means that there is
 -- a corresponding "non-empty" version of @s@, @'NE' s@.
@@ -142,6 +146,16 @@ instance HasNonEmpty IntSet where
     empty            = IS.empty
     isEmpty          = IS.null
     unsafeToNonEmpty = NEIS.unsafeFromSet
+
+instance HasNonEmpty (Seq a) where
+    type NE (Seq a) = NESeq a
+    nonEmpty         = NESeq.nonEmptySeq
+    fromNonEmpty     = NESeq.toSeq
+    withNonEmpty     = NESeq.withNonEmpty
+    empty            = Seq.empty
+    isEmpty          = Seq.null
+    unsafeToNonEmpty = NESeq.unsafeFromSeq
+
 
 -- | The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat a @s@ as
 -- if it were either a @'IsNonEmpty' n@ (where @n@ is a non-empty version
