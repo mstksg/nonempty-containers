@@ -904,6 +904,9 @@ lookup k (NEIntMap k0 v m) = case compare k k0 of
     e = error "NEIntMap.!: given key is not an element in the map"
 {-# INLINE (!) #-}
 
+infixl 9 !?
+infixl 9 !
+
 -- | /O(log n)/. The expression @('findWithDefault' def k map)@ returns
 -- the value at key @k@ or returns default value @def@
 -- when the key is not in the map.

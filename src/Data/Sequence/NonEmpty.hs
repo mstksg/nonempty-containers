@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns    #-}
 {-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns    #-}
@@ -12,6 +13,7 @@ module Data.Sequence.NonEmpty (
   , toSeq
   , withNonEmpty
   , unsafeFromSeq
+  , insertSeqAt
   -- * Construction
   , singleton
   , (<|)
@@ -34,11 +36,7 @@ module Data.Sequence.NonEmpty (
 
   -- ** Queries
   , length
-  --   -- ** Views
-  -- , ViewL(..)
-  -- , viewl
-  -- , ViewR(..)
-  -- , viewr
+
   -- * Scans
   , scanl
   , scanl1
@@ -59,24 +57,24 @@ module Data.Sequence.NonEmpty (
   , breakr
   , partition
   , filter
-  --   -- * Sorting
+  -- * Sorting
   -- , sort
   -- , sortBy
   -- , sortOn
   -- , unstableSort
   -- , unstableSortBy
   -- , unstableSortOn
-  --   -- * Indexing
-  -- , lookup
-  -- , (!?)
-  -- , index
-  -- , adjust
-  -- , adjust'
-  -- , update
-  -- , take
-  -- , drop
-  -- , insertAt
-  -- , deleteAt
+  -- * Indexing
+  , lookup
+  , (!?)
+  , index
+  , adjust
+  , adjust'
+  , update
+  , take
+  , drop
+  , insertAt
+  , deleteAt
   , splitAt
   -- ** Indexing with predicates
   -- | These functions perform sequential searches from the left
@@ -90,16 +88,17 @@ module Data.Sequence.NonEmpty (
   -- , findIndicesL
   -- , findIndexR
   -- , findIndicesR
-  --   -- * Folds
-  --   -- | General folds are available via the 'Foldable' instance of 'Seq'.
-  -- , foldMapWithIndex
-  -- , foldlWithIndex
-  -- , foldrWithIndex
-  --   -- * Transformations
-  -- , mapWithIndex
-  -- , traverseWithIndex
-  -- , reverse
-  -- , intersperse
+  -- * Folds
+  -- | General folds are available via the 'Foldable' instance of 'Seq'.
+  , foldMapWithIndex
+  , foldlWithIndex      -- TODO: foldlWithIndex1
+  , foldrWithIndex
+  -- * Transformations
+  , mapWithIndex
+  , traverseWithIndex
+  , traverseWithIndex1
+  , reverse
+  , intersperse
   -- ** Zips and unzip
   , zip
   , zipWith
@@ -113,12 +112,14 @@ module Data.Sequence.NonEmpty (
 
 import           Control.Applicative
 import           Data.Bifunctor
+import           Data.Foldable hiding (length)
 import           Data.Functor.Apply
-import           Data.List.NonEmpty  (NonEmpty(..))
-import           Data.Sequence       (Seq(..))
+import           Data.List.NonEmpty   (NonEmpty(..))
+import           Data.Semigroup
+import           Data.Sequence        (Seq(..))
 import           Data.These
-import           Prelude hiding      (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter)
-import qualified Data.Sequence       as Seq
+import           Prelude hiding       (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter, reverse, lookup, take, drop)
+import qualified Data.Sequence        as Seq
 
 data NESeq a = a :<|| !(Seq a)
   deriving Show
@@ -134,6 +135,9 @@ pattern xs :||> x <- (unsnoc->(xs, x))
     (x :<| xs) :||> y = x :<|| (xs :|> y)
     Empty      :||> y = y :<|| Empty
 {-# COMPLETE (:||>) #-}
+
+infixr 5 :<||
+infixr 5 :||>
 
 nonEmptySeq :: Seq a -> Maybe (NESeq a)
 nonEmptySeq (x :<| xs) = Just $ x :<|| xs
@@ -155,6 +159,15 @@ unsafeFromSeq (x :<| xs) = x :<|| xs
 unsafeFromSeq Empty      = errorWithoutStackTrace "NESeq.unsafeFromSeq: empty seq"
 {-# INLINE unsafeFromSeq #-}
 
+insertSeqAt :: Int -> a -> Seq a -> NESeq a
+insertSeqAt i y
+    | i <= 0    = (y :<||)
+    | otherwise = \case
+        x :<| xs -> x :<|| Seq.insertAt (i - 1) y xs
+        Empty    -> y :<|| Seq.empty
+{-# INLINE insertSeqAt #-}
+
+
 singleton :: a -> NESeq a
 singleton = (:<|| Seq.empty)
 {-# INLINE singleton #-}
@@ -170,6 +183,10 @@ x <| xs = x :<|| toSeq xs
 (><) :: NESeq a -> NESeq a -> NESeq a
 (x :<|| xs) >< ys = x :<|| (xs Seq.>< toSeq ys)
 {-# INLINE (><) #-}
+
+infixr 5 <|
+infixl 5 |>
+infixr 5 ><
 
 fromList :: NonEmpty a -> NESeq a
 fromList (x :| xs) = x :<|| Seq.fromList xs
@@ -343,7 +360,58 @@ filter p (x :<|| xs)
 
 
 
+lookup :: Int -> NESeq a -> Maybe a
+lookup 0 (x :<|| _ ) = Just x
+lookup i (_ :<|| xs) = Seq.lookup (i - 1) xs
+{-# INLINE lookup #-}
 
+(!?) :: NESeq a -> Int -> Maybe a
+(!?) = flip lookup
+{-# INLINE (!?) #-}
+
+index :: NESeq a -> Int -> a
+index (x :<|| _ ) 0 = x
+index (_ :<|| xs) i = xs `Seq.index` (i - 1)
+{-# INLINE index #-}
+
+adjust :: (a -> a) -> Int -> NESeq a -> NESeq a
+adjust f 0 (x :<|| xs) = f x :<|| xs
+adjust f i (x :<|| xs) = x :<|| Seq.adjust f (i - 1) xs
+{-# INLINE adjust #-}
+
+adjust' :: (a -> a) -> Int -> NESeq a -> NESeq a
+adjust' f 0 (x :<|| xs) = let !y  = f x                     in y :<|| xs
+adjust' f i (x :<|| xs) = let !ys = Seq.adjust f (i - 1) xs in x :<|| ys
+{-# INLINE adjust' #-}
+
+update :: Int -> a -> NESeq a -> NESeq a
+update 0 y (_ :<|| xs) = y :<|| xs
+update i y (x :<|| xs) = x :<|| Seq.update (i - 1) y xs
+{-# INLINE update #-}
+
+take :: Int -> NESeq a -> Seq a
+take i (x :<|| xs)
+    | i <= 0    = Seq.empty
+    | otherwise = x Seq.<| Seq.take (i - 1) xs
+{-# INLINE take #-}
+
+drop :: Int -> NESeq a -> Seq a
+drop i xs0@(_ :<|| xs)
+    | i <= 0    = toSeq xs0
+    | otherwise = Seq.drop (i - 1) xs
+{-# INLINE drop #-}
+
+insertAt :: Int -> a -> NESeq a -> NESeq a
+insertAt i y xs0@(x :<|| xs)
+    | i <= 0    = y <| xs0
+    | otherwise = x :<|| Seq.insertAt (i - 1) y xs
+{-# INLINE insertAt #-}
+
+deleteAt :: Int -> NESeq a -> Seq a
+deleteAt i (x :<|| xs)
+    | i <= 0    = xs
+    | otherwise = x Seq.<| Seq.deleteAt (i - 1) xs
+{-# INLINE deleteAt #-}
 
 splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
 splitAt 0 xs0             = That xs0
@@ -355,6 +423,46 @@ splitAt n xs0@(x :<|| xs) = case (nonEmptySeq ys, nonEmptySeq zs) of
   where
     (ys, zs) = Seq.splitAt (n - 1) xs
 {-# INLINABLE splitAt #-}
+
+foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
+foldMapWithIndex f (x :<|| xs) = maybe (f 0 x) (f 0 x <>)
+                               . getOption
+                               . Seq.foldMapWithIndex (\i -> Option . Just . f (i + 1))
+                               $ xs
+{-# INLINE foldMapWithIndex #-}
+
+foldlWithIndex :: (b -> Int -> a -> b) -> b -> NESeq a -> b
+foldlWithIndex f z (x :<|| xs) =
+    Seq.foldlWithIndex (\y -> f y . (+ 1)) (f z 0 x) xs
+{-# INLINE foldlWithIndex #-}
+
+foldrWithIndex :: (Int -> a -> b -> b) -> b -> NESeq a -> b
+foldrWithIndex f z (x :<|| xs) = f 0 x . Seq.foldrWithIndex (f . (+ 1)) z $ xs
+{-# INLINE foldrWithIndex #-}
+
+mapWithIndex :: (Int -> a -> b) -> NESeq a -> NESeq b
+mapWithIndex f (x :<|| xs) = f 0 x :<|| Seq.mapWithIndex (f . (+ 1)) xs
+{-# INLINE mapWithIndex #-}
+
+traverseWithIndex :: Applicative f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+traverseWithIndex f (x :<|| xs) = (:<||) <$> f 0 x <*> Seq.traverseWithIndex (f . (+ 1)) xs
+{-# INLINE traverseWithIndex #-}
+
+traverseWithIndex1 :: Apply f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+traverseWithIndex1 f (x :<|| xs) = case runMaybeApply xs' of
+    Left  ys -> (:<||)    <$> f 0 x <.> ys
+    Right ys -> (:<|| ys) <$> f 0 x
+  where
+    xs' = Seq.traverseWithIndex (\i -> MaybeApply . Left . f (i+1)) xs
+{-# INLINE traverseWithIndex1 #-}
+
+reverse :: NESeq a -> NESeq a
+reverse (x :<|| xs) = Seq.reverse xs :||> x
+{-# INLINE reverse #-}
+
+intersperse :: a -> NESeq a -> NESeq a
+intersperse z (x :<|| xs) = x :<|| (z Seq.<| Seq.intersperse z xs)
+{-# INLINE intersperse #-}
 
 zip :: NESeq a -> NESeq b -> NESeq (a, b)
 zip (x :<|| xs) (y :<|| ys) = (x, y) :<|| Seq.zip xs ys
