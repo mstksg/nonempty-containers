@@ -175,7 +175,7 @@ import           Data.Functor.Apply
 import           Data.Sequence                   (Seq(..))
 import           Data.Sequence.NonEmpty.Internal
 import           Data.These
-import           Prelude hiding                  (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter, reverse, lookup, take, drop, head, tail, init, last)
+import           Prelude hiding                  (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter, reverse, lookup, take, drop, head, tail, init, last, map)
 import qualified Data.Sequence                   as Seq
 
 -- | /O(1)/. The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat
@@ -276,14 +276,6 @@ xs ><| ys = withNonEmpty ys (>< ys) xs
 
 infixl 5 |>
 infixr 5 ><|
-
--- | \( O(\log n) \). @replicate n x@ is a sequence consisting of @n@
--- copies of @x@.  Is only defined when @n@ is positive.
-replicate :: Int -> a -> NESeq a
-replicate n x
-    | n < 1     = error "NESeq.replicate: must take a positive integer argument"
-    | otherwise = x :<|| Seq.replicate (n - 1) x
-{-# INLINE replicate #-}
 
 -- | 'replicateA' is an 'Applicative' version of 'replicate', and makes \(
 -- O(\log n) \) calls to 'liftA2' and 'pure'.  Is only defined when @n@ is
@@ -914,7 +906,15 @@ foldrWithIndex f z (x :<|| xs) = f 0 x . Seq.foldrWithIndex (f . (+ 1)) z $ xs
 -- element in the sequence.
 mapWithIndex :: (Int -> a -> b) -> NESeq a -> NESeq b
 mapWithIndex f (x :<|| xs) = f 0 x :<|| Seq.mapWithIndex (f . (+ 1)) xs
-{-# INLINE mapWithIndex #-}
+{-# NOINLINE [1] mapWithIndex #-}
+{-# RULES
+"mapWithIndex/mapWithIndex" forall f g xs . mapWithIndex f (mapWithIndex g xs) =
+  mapWithIndex (\k a -> f k (g k a)) xs
+"mapWithIndex/map" forall f g xs . mapWithIndex f (map g xs) =
+  mapWithIndex (\k a -> f k (g a)) xs
+"map/mapWithIndex" forall f g xs . map f (mapWithIndex g xs) =
+  mapWithIndex (\k a -> f (g k a)) xs
+ #-}
 
 -- | 'traverseWithIndex' is a version of 'traverse' that also offers
 -- access to the index of each element.
@@ -923,12 +923,28 @@ mapWithIndex f (x :<|| xs) = f 0 x :<|| Seq.mapWithIndex (f . (+ 1)) xs
 -- 'traverseWithIndex1' should be used whenever possible.
 traverseWithIndex :: Applicative f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
 traverseWithIndex f (x :<|| xs) = (:<||) <$> f 0 x <*> Seq.traverseWithIndex (f . (+ 1)) xs
-{-# INLINE traverseWithIndex #-}
+{-# NOINLINE [1] traverseWithIndex #-}
+{-# RULES
+"travWithIndex/mapWithIndex" forall f g xs . traverseWithIndex f (mapWithIndex g xs) =
+  traverseWithIndex (\k a -> f k (g k a)) xs
+"travWithIndex/map" forall f g xs . traverseWithIndex f (map g xs) =
+  traverseWithIndex (\k a -> f k (g a)) xs
+ #-}
 
 -- | \( O(n) \). The reverse of a sequence.
 reverse :: NESeq a -> NESeq a
 reverse (x :<|| xs) = Seq.reverse xs :||> x
-{-# INLINE reverse #-}
+{-# NOINLINE [1] reverse #-}
+
+-- | \( O(n) \). Reverse a sequence while mapping over it. This is not
+-- currently exported, but is used in rewrite rules.
+mapReverse :: (a -> b) -> NESeq a -> NESeq b
+mapReverse f (x :<|| xs) = fmap f (Seq.reverse xs) :||> f x
+
+{-# RULES
+"map/reverse" forall f xs . map f (reverse xs) = mapReverse f xs
+"reverse/map" forall f xs . reverse (map f xs) = mapReverse f xs
+ #-}
 
 -- | \( O(n) \). Intersperse an element between the elements of a sequence.
 --
@@ -986,4 +1002,9 @@ unzipWith :: (a -> (b, c)) -> NESeq a -> (NESeq b, NESeq c)
 unzipWith f (x :<|| xs) = bimap (y :<||) (z :<||) . Seq.unzipWith f $ xs
   where
     (y, z) = f x
-{-# INLINE unzipWith #-}
+{-# NOINLINE [1] unzipWith #-}
+
+{-# RULES
+"unzipWith/map" forall f g xs. unzipWith f (map g xs) =
+                                     unzipWith (f . g) xs
+ #-}

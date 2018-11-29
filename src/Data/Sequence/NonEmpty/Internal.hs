@@ -1,6 +1,5 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveFunctor      #-}
 {-# LANGUAGE DeriveTraversable  #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE PatternSynonyms    #-}
@@ -30,8 +29,10 @@ module Data.Sequence.NonEmpty.Internal (
   , length
   , fromList
   , fromFunction
+  , replicate
   , index
   , (<|), (><), (|><)
+  , map
   , foldMapWithIndex
   , traverseWithIndex1
   , tails
@@ -45,6 +46,7 @@ import           Control.DeepSeq
 import           Control.Monad.Fix
 import           Control.Monad.Zip
 import           Data.Bifunctor
+import           Data.Coerce
 import           Data.Data
 import           Data.Foldable              (Foldable)
 import           Data.Functor.Alt
@@ -56,7 +58,7 @@ import           Data.Semigroup
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Data.Sequence              (Seq(..))
-import           Prelude hiding             (length, zipWith, unzip, zip)
+import           Prelude hiding             (length, zipWith, unzip, zip, map, replicate)
 import           Text.Read
 import qualified Data.Foldable              as F
 import qualified Data.Sequence              as Seq
@@ -103,7 +105,7 @@ import qualified Data.Sequence              as Seq
 data NESeq a = NESeq { nesHead :: a
                      , nesTail :: !(Seq a)
                      }
-  deriving (Functor, Traversable, Typeable)
+  deriving (Traversable, Typeable)
 
 -- | /O(1)/. An abstract constructor for an 'NESeq' that consists of
 -- a "head" @a@ and a "tail" @'Seq' a@.  Similar to ':|' for 'NonEmpty'.
@@ -232,6 +234,14 @@ fromFunction n f
     | n < 1     = error "NESeq.fromFunction: must take a positive integer argument"
     | otherwise = f 0 :<|| Seq.fromFunction (n - 1) (f . (+ 1))
 
+-- | \( O(\log n) \). @replicate n x@ is a sequence consisting of @n@
+-- copies of @x@.  Is only defined when @n@ is positive.
+replicate :: Int -> a -> NESeq a
+replicate n x
+    | n < 1     = error "NESeq.replicate: must take a positive integer argument"
+    | otherwise = x :<|| Seq.replicate (n - 1) x
+{-# INLINE replicate #-}
+
 -- | \( O(\log(\min(i,n-i))) \). The element at the specified position,
 -- counting from 0.  The argument should thus be a non-negative
 -- integer less than the size of the sequence.
@@ -270,6 +280,16 @@ x <| xs = x :<|| toSeq xs
 infixr 5 <|
 infixr 5 ><
 infixr 5 |><
+
+map :: (a -> b) -> NESeq a -> NESeq b
+map f (x :<|| xs) = f x :<|| fmap f xs
+{-# NOINLINE [1] map #-}
+{-# RULES
+"map/map" forall f g xs . map f (map g xs) = map (f . g) xs
+ #-}
+{-# RULES
+"map/coerce" map coerce = coerce
+ #-}
 
 -- | /O(n)/. A generalization of 'foldMap1', 'foldMapWithIndex' takes
 -- a folding function that also depends on the element's index, and applies
@@ -340,6 +360,12 @@ unzip ((x, y) :<|| xys) = bimap (x :<||) (y :<||) . Seq.unzip $ xys
 instance Semigroup (NESeq a) where
     (<>) = (><)
     {-# INLINE (<>) #-}
+
+instance Functor NESeq where
+    fmap = map
+    {-# INLINE fmap #-}
+    x <$ xs = replicate (length xs) x
+    {-# INLINE (<$) #-}
 
 instance Apply NESeq where
     (f :<|| fs) <.> xs = fxs |>< fsxs

@@ -1,5 +1,4 @@
 {-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TupleSections     #-}
 {-# LANGUAGE TypeApplications  #-}
 
 module Tests.Map (mapTests) where
@@ -90,6 +89,12 @@ prop_read_show = readShow neMapGen
 
 prop_read1_show1 :: Property
 prop_read1_show1 = readShow1 neMapGen
+
+prop_show_show1 :: Property
+prop_show_show1 = showShow1 neMapGen
+
+prop_show_show2 :: Property
+prop_show_show2 = showShow2 neMapGen
 
 prop_splitRoot :: Property
 prop_splitRoot = property $ do

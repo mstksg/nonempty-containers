@@ -20,7 +20,7 @@ module Tests.Util (
   , TestType(..)
   , ttProp
   , groupTree
-  , readShow, readShow1
+  , readShow, readShow1, showShow1, showShow2
   , Context(..)
   , Bazaar(..)
   , keyGen, valGen, mapSize, mapGen, neMapGen, setGen, neSetGen
@@ -441,6 +441,26 @@ readShow1
 readShow1 g = property $ do
     m0 <- forAll g
     tripping m0 (($ "")  . showsPrec1 0) (fmap fst . listToMaybe . readsPrec1 0)
+
+showShow1
+    :: (Show1 f, Show a, Show (f a))
+    => Gen (f a)
+    -> Property
+showShow1 g = property $ do
+    m0 <- forAll g
+    let s0 = show m0
+        s1 = showsPrec1 0 m0 ""
+    s0 === s1
+
+showShow2
+    :: (Show2 f, Show a, Show b, Show (f a b))
+    => Gen (f a b)
+    -> Property
+showShow2 g = property $ do
+    m0 <- forAll g
+    let s0 = show m0
+        s2 = showsPrec2 0 m0 ""
+    s0 === s2
 
 -- readShow2
 --     :: (Eq (f a b), Show2 f, Show a, Show b, Show (f a b), Read2 f, Read a, Read b)

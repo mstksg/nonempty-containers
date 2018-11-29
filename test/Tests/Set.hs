@@ -76,6 +76,9 @@ prop_toSetIso2 = property $ do
 prop_read_show :: Property
 prop_read_show = readShow neSetGen
 
+prop_show_show1 :: Property
+prop_show_show1 = showShow1 neSetGen
+
 prop_splitRoot :: Property
 prop_splitRoot = property $ do
     n <- forAll neSetGen

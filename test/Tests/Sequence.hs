@@ -45,6 +45,8 @@ prop_read_show = readShow neSeqGen
 prop_read1_show1 :: Property
 prop_read1_show1 = readShow1 neSeqGen
 
+prop_show_show1 :: Property
+prop_show_show1 = showShow1 neSeqGen
 
 
 

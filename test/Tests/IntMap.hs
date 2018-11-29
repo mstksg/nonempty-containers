@@ -90,6 +90,9 @@ prop_read_show = readShow neIntMapGen
 prop_read1_show1 :: Property
 prop_read1_show1 = readShow1 neIntMapGen
 
+prop_show_show1 :: Property
+prop_show_show1 = showShow1 neIntMapGen
+
 prop_splitRoot :: Property
 prop_splitRoot = property $ do
     n <- forAll neIntMapGen
