@@ -328,20 +328,6 @@ unsafeFromMap = withNonEmpty e id
     e = errorWithoutStackTrace "NEMap.unsafeFromMap: empty map"
 {-# INLINE unsafeFromMap #-}
 
--- | /O(log n)/. A general continuation-based way to consume a 'Map' as if
--- it were an 'NEMap'. @'withNonEmpty' def f@ will take a 'Map'.  If map is
--- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NEMap'
--- will be fed to the function @f@ instead.
---
--- @'nonEmptyMap' == 'withNonEmpty' 'Nothing' 'Just'@
-withNonEmpty
-    :: r                    -- ^ value to return if map is empty
-    -> (NEMap k a -> r)     -- ^ function to apply if map is not empty
-    -> Map k a
-    -> r
-withNonEmpty def f = maybe def f . nonEmptyMap
-{-# INLINE withNonEmpty #-}
-
 -- | /O(n)/. Build a non-empty map from a non-empty set of keys and
 -- a function which for each key computes its value.
 --
@@ -351,6 +337,7 @@ fromSet
     -> NESet k
     -> NEMap k a
 fromSet f (NESet k ks) = NEMap k (f k) (M.fromSet f ks)
+{-# INLINE fromSet #-}
 
 -- | /O(log n)/. Lookup the value at a key in the map.
 --
@@ -763,6 +750,7 @@ assocs = toList
 -- > keysSet (fromList ((5,"a") :| [(3,"b")])) == Data.Set.NonEmpty.fromList (3 :| [5])
 keysSet :: NEMap k a -> NESet k
 keysSet (NEMap k _ m) = NESet k (M.keysSet m)
+{-# INLINE keysSet #-}
 
 -- | /O(n)/. Map a function over all values in the map.
 --

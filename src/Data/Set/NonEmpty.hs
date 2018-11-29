@@ -221,20 +221,6 @@ unsafeFromSet = withNonEmpty e id
     e = errorWithoutStackTrace "NESet.unsafeFromSet: empty set"
 {-# INLINE unsafeFromSet #-}
 
--- | /O(log n)/. A general continuation-based way to consume a 'Set' as if
--- it were an 'NESet'. @'withNonEmpty' def f@ will take a 'Set'.  If set is
--- empty, it will evaluate to @def@.  Otherwise, a non-empty set 'NESet'
--- will be fed to the function @f@ instead.
---
--- @'nonEmptySet' == 'withNonEmpty' 'Nothing' 'Just'@
-withNonEmpty
-    :: r                  -- ^ value to return if set is empty
-    -> (NESet a -> r)     -- ^ function to apply if set is not empty
-    -> Set a
-    -> r
-withNonEmpty def f = maybe def f . nonEmptySet
-{-# INLINE withNonEmpty #-}
-
 -- | /O(log n)/. Convert a 'Set' into an 'NESet' by adding a value.
 -- Because of this, we know that the set must have at least one
 -- element, and so therefore cannot be empty.

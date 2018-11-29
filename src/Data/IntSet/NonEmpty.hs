@@ -196,20 +196,6 @@ pattern IsEmpty <- (S.null->True)
 
 {-# COMPLETE IsNonEmpty, IsEmpty #-}
 
--- | /O(log n)/. A general continuation-based way to consume a 'IntSet' as if
--- it were an 'NEIntSet'. @'withNonEmpty' def f@ will take a 'IntSet'.  If set is
--- empty, it will evaluate to @def@.  Otherwise, a non-empty set 'NEIntSet'
--- will be fed to the function @f@ instead.
---
--- @'nonEmptySet' == 'withNonEmpty' 'Nothing' 'Just'@
-withNonEmpty
-    :: r                   -- ^ value to return if set is empty
-    -> (NEIntSet -> r)     -- ^ function to apply if set is not empty
-    -> IntSet
-    -> r
-withNonEmpty def f = maybe def f . nonEmptySet
-{-# INLINE withNonEmpty #-}
-
 -- | /O(log n)/. Convert a 'IntSet' into an 'NEIntSet' by adding a value.
 -- Because of this, we know that the set must have at least one
 -- element, and so therefore cannot be empty.

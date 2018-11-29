@@ -310,20 +310,6 @@ unsafeFromMap = withNonEmpty e id
     e = errorWithoutStackTrace "NEIntMap.unsafeFromMap: empty map"
 {-# INLINE unsafeFromMap #-}
 
--- | /O(log n)/. A general continuation-based way to consume a 'IntMap' as if
--- it were an 'NEIntMap'. @'withNonEmpty' def f@ will take a 'IntMap'.  If map is
--- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NEIntMap'
--- will be fed to the function @f@ instead.
---
--- @'nonEmptyMap' == 'withNonEmpty' 'Nothing' 'Just'@
-withNonEmpty
-    :: r                    -- ^ value to return if map is empty
-    -> (NEIntMap a -> r)     -- ^ function to apply if map is not empty
-    -> IntMap a
-    -> r
-withNonEmpty def f = maybe def f . nonEmptyMap
-{-# INLINE withNonEmpty #-}
-
 -- | /O(log n)/. Convert a 'IntMap' into an 'NEIntMap' by adding a key-value
 -- pair.  Because of this, we know that the map must have at least one
 -- element, and so therefore cannot be empty. If key is already present,
@@ -427,6 +413,7 @@ fromSet
     -> NEIntSet
     -> NEIntMap a
 fromSet f (NEIntSet k ks) = NEIntMap k (f k) (M.fromSet f ks)
+{-# INLINE fromSet #-}
 
 -- | /O(n*log n)/. Build a map from a non-empty list of key\/value pairs
 -- with a combining function. See also 'fromAscListWith'.
@@ -1383,6 +1370,7 @@ assocs = toList
 -- > keysSet (fromList ((5,"a") :| [(3,"b")])) == Data.Set.NonEmpty.fromList (3 :| [5])
 keysSet :: NEIntMap a -> NEIntSet
 keysSet (NEIntMap k _ m) = NEIntSet k (M.keysSet m)
+{-# INLINE keysSet #-}
 
 -- | /O(n)/. Convert the map to a list of key\/value pairs where the keys are
 -- in ascending order.

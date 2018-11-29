@@ -21,6 +21,7 @@ module Data.Map.NonEmpty.Internal (
     NEMap(..)
   , singleton
   , nonEmptyMap
+  , withNonEmpty
   , fromList
   , toList
   , map
@@ -98,8 +99,8 @@ import qualified Data.Semigroup.Foldable    as F1
 -- 3.  You can use the 'Data.Map.NonEmpty.IsNonEmpty' and
 --     'Data.Map.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Map'
 --     to reveal it as either containing a 'NEMap' or an empty map.
--- 4.  'Data.Map.NonEmpty.withNonEmpty' offers a continuation-based interface
---     for deconstructing a 'Map' and treating it as if it were an 'NEMap'.
+-- 4.  'withNonEmpty' offers a continuation-based interface for
+--     deconstructing a 'Map' and treating it as if it were an 'NEMap'.
 --
 -- You can convert an 'NEMap' into a 'Map' with 'toMap' or
 -- 'Data.Map.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
@@ -408,6 +409,20 @@ nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 nonEmptyMap = (fmap . uncurry . uncurry) NEMap . M.minViewWithKey
 {-# INLINE nonEmptyMap #-}
 
+-- | /O(log n)/. A general continuation-based way to consume a 'Map' as if
+-- it were an 'NEMap'. @'withNonEmpty' def f@ will take a 'Map'.  If map is
+-- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NEMap'
+-- will be fed to the function @f@ instead.
+--
+-- @'nonEmptyMap' == 'withNonEmpty' 'Nothing' 'Just'@
+withNonEmpty
+    :: r                    -- ^ value to return if map is empty
+    -> (NEMap k a -> r)     -- ^ function to apply if map is not empty
+    -> Map k a
+    -> r
+withNonEmpty def f = maybe def f . nonEmptyMap
+{-# INLINE withNonEmpty #-}
+
 -- | /O(n*log n)/. Build a non-empty map from a non-empty list of
 -- key\/value pairs. See also 'Data.Map.NonEmpty.fromAscList'. If the list
 -- contains more than one value for the same key, the last value for the
@@ -420,9 +435,9 @@ nonEmptyMap = (fmap . uncurry . uncurry) NEMap . M.minViewWithKey
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'M.fromList'.
 fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
-fromList ((k, v) :| xs) = maybe (singleton k v) (insertWith (const id) k v)
-                        . nonEmptyMap
-                        $ M.fromList xs
+fromList ((k, v) :| xs) = withNonEmpty (singleton k v) (insertWith (const id) k v)
+                        . M.fromList
+                        $ xs
 {-# INLINE fromList #-}
 
 -- | /O(1)/. A map with a single element.

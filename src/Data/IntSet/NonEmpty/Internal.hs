@@ -16,8 +16,9 @@
 -- the abstraction of 'NEIntSet' and produce unsound sets, so be wary!
 module Data.IntSet.NonEmpty.Internal (
     NEIntSet(..)
-  , S.Key
+  , Key
   , nonEmptySet
+  , withNonEmpty
   , toSet
   , singleton
   , fromList
@@ -71,7 +72,7 @@ import qualified Data.Semigroup.Foldable as F1
 -- 3.  You can use the 'Data.IntSet.NonEmpty.IsNonEmpty' and
 --     'Data.IntSet.NonEmpty.IsEmpty' patterns to "pattern match" on a 'IntSet'
 --     to reveal it as either containing a 'NEIntSet' or an empty map.
--- 4.  'Data.IntSet.NonEmpty.withNonEmpty' offers a continuation-based interface
+-- 4.  'withNonEmpty' offers a continuation-based interface
 --     for deconstructing a 'IntSet' and treating it as if it were an 'NEIntSet'.
 --
 -- You can convert an 'NEIntSet' into a 'IntSet' with 'toSet' or
@@ -147,6 +148,20 @@ nonEmptySet :: IntSet -> Maybe NEIntSet
 nonEmptySet = (fmap . uncurry) NEIntSet . S.minView
 {-# INLINE nonEmptySet #-}
 
+-- | /O(log n)/. A general continuation-based way to consume a 'IntSet' as if
+-- it were an 'NEIntSet'. @'withNonEmpty' def f@ will take a 'IntSet'.  If set is
+-- empty, it will evaluate to @def@.  Otherwise, a non-empty set 'NEIntSet'
+-- will be fed to the function @f@ instead.
+--
+-- @'nonEmptySet' == 'withNonEmpty' 'Nothing' 'Just'@
+withNonEmpty
+    :: r                   -- ^ value to return if set is empty
+    -> (NEIntSet -> r)     -- ^ function to apply if set is not empty
+    -> IntSet
+    -> r
+withNonEmpty def f = maybe def f . nonEmptySet
+{-# INLINE withNonEmpty #-}
+
 -- | /O(log n)/.
 -- Convert a non-empty set back into a normal possibly-empty map, for usage
 -- with functions that expect 'IntSet'.
@@ -174,9 +189,9 @@ singleton x = NEIntSet x S.empty
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'S.fromList'.
 fromList :: NonEmpty Key -> NEIntSet
-fromList (x :| s) = maybe (singleton x) (<> singleton x)
-                  . nonEmptySet
-                  $ S.fromList s
+fromList (x :| s) = withNonEmpty (singleton x) (<> singleton x)
+                  . S.fromList
+                  $ s
 {-# INLINE fromList #-}
 
 -- | /O(n)/. Convert the set to a non-empty list of elements.
