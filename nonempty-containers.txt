@@ -1698,6 +1698,7 @@ lookup :: Key -> NEIntMap a -> Maybe a
 --   fromList ((5, 'a') :| [(3, 'b')]) !? 5 == Just 'a'
 --   </pre>
 (!?) :: NEIntMap a -> Key -> Maybe a
+infixl 9 !?
 
 -- | <i>O(log n)</i>. Find the value at a key. Calls <a>error</a> when the
 --   element can not be found.
@@ -1707,6 +1708,7 @@ lookup :: Key -> NEIntMap a -> Maybe a
 --   fromList ((5,'a') :| [(3,'b')]) ! 5 == 'a'
 --   </pre>
 (!) :: NEIntMap a -> Key -> a
+infixl 9 !
 
 -- | <i>O(log n)</i>. The expression <tt>(<a>findWithDefault</a> def k
 --   map)</tt> returns the value at key <tt>k</tt> or returns default value
@@ -2951,26 +2953,136 @@ instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
 
+module Data.Sequence.NonEmpty.Internal
+data NESeq a
+NESeq :: a -> !Seq a -> NESeq a
+[nesHead] :: NESeq a -> a
+[nesTail] :: NESeq a -> !Seq a
+infixr 5 `NESeq`
+infixr 5 `NESeq`
+pattern (:<||) :: a -> Seq a -> NESeq a
+infixr 5 :<||
+pattern (:||>) :: Seq a -> a -> NESeq a
+infixl 5 :||>
+withNonEmpty :: r -> (NESeq a -> r) -> Seq a -> r
+toSeq :: NESeq a -> Seq a
+toList :: NESeq a -> NonEmpty a
+singleton :: a -> NESeq a
+length :: NESeq a -> Int
+fromList :: NonEmpty a -> NESeq a
+fromFunction :: Int -> (Int -> a) -> NESeq a
+index :: NESeq a -> Int -> a
+(<|) :: a -> NESeq a -> NESeq a
+infixr 5 <|
+(><) :: NESeq a -> NESeq a -> NESeq a
+infixr 5 ><
+(|><) :: NESeq a -> Seq a -> NESeq a
+infixr 5 |><
+foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
+traverseWithIndex1 :: Apply f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+tails :: NESeq a -> NESeq (NESeq a)
+zip :: NESeq a -> NESeq b -> NESeq (a, b)
+zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
+unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
+instance Data.Traversable.Traversable Data.Sequence.NonEmpty.Internal.NESeq
+instance GHC.Base.Functor Data.Sequence.NonEmpty.Internal.NESeq
+instance GHC.Show.Show a => GHC.Show.Show (Data.Sequence.NonEmpty.Internal.NESeq a)
+instance GHC.Read.Read a => GHC.Read.Read (Data.Sequence.NonEmpty.Internal.NESeq a)
+instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Sequence.NonEmpty.Internal.NESeq a)
+instance Data.Functor.Classes.Show1 Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Functor.Classes.Read1 Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Functor.Classes.Eq1 Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Functor.Classes.Ord1 Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Data.Data a => Data.Data.Data (Data.Sequence.NonEmpty.Internal.NESeq a)
+instance GHC.Base.Semigroup (Data.Sequence.NonEmpty.Internal.NESeq a)
+instance Data.Functor.Bind.Class.Apply Data.Sequence.NonEmpty.Internal.NESeq
+instance GHC.Base.Applicative Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Functor.Alt.Alt Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Functor.Bind.Class.Bind Data.Sequence.NonEmpty.Internal.NESeq
+instance GHC.Base.Monad Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Functor.Extend.Extend Data.Sequence.NonEmpty.Internal.NESeq
+instance Control.Comonad.Comonad Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Foldable.Foldable Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Semigroup.Foldable.Class.Foldable1 Data.Sequence.NonEmpty.Internal.NESeq
+instance Data.Semigroup.Traversable.Class.Traversable1 Data.Sequence.NonEmpty.Internal.NESeq
+instance Control.Monad.Zip.MonadZip Data.Sequence.NonEmpty.Internal.NESeq
+instance Control.Monad.Fix.MonadFix Data.Sequence.NonEmpty.Internal.NESeq
+instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Sequence.NonEmpty.Internal.NESeq a)
+
 module Data.Sequence.NonEmpty
 data NESeq a
-(:<||) :: a -> !Seq a -> NESeq a
+pattern (:<||) :: a -> Seq a -> NESeq a
 pattern (:||>) :: Seq a -> a -> NESeq a
+infixr 5 `NESeq`
+infixr 5 :<||
+infixl 5 :||>
+
+-- | <i>O(1)</i>. The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow
+--   you to treat a <a>Seq</a> as if it were either a <tt><a>IsNonEmpty</a>
+--   n</tt> (where <tt>n</tt> is a <a>NESeq</a>) or an <a>IsEmpty</a>.
+--   
+--   For example, you can pattern match on a <a>Seq</a>:
+--   
+--   <pre>
+--   safeHead :: <a>Seq</a> Int -&gt; Int
+--   safeHead (<a>IsNonEmpty</a> (x :&lt;|| _))  = x  -- here, user provided a non-empty sequence, and <tt>n</tt> is the <a>NESeq</a>
+--   safeHead <a>IsEmpty</a>                  = 0  -- here the user provided an empty sequence
+--   </pre>
+--   
+--   Matching on <tt><a>IsNonEmpty</a> n</tt> means that the original
+--   <a>Seq</a> was <i>not</i> empty, and you have a verified-non-empty
+--   <a>NESeq</a> <tt>n</tt> to use.
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsNonEmpty</a> to
+--   convert a <a>NESeq</a> back into a <a>Seq</a>, obscuring its
+--   non-emptiness (see <a>toSeq</a>).
+pattern IsNonEmpty :: NESeq a -> Seq a
+
+-- | <i>O(1)</i>. The <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns allow
+--   you to treat a <a>Seq</a> as if it were either a <tt><a>IsNonEmpty</a>
+--   n</tt> (where <tt>n</tt> is a <a>NESeq</a>) or an <a>IsEmpty</a>.
+--   
+--   Matching on <a>IsEmpty</a> means that the original <a>Seq</a> was
+--   empty.
+--   
+--   A case statement handling both <a>IsNonEmpty</a> and <a>IsEmpty</a>
+--   provides complete coverage.
+--   
+--   This is a bidirectional pattern, so you can use <a>IsEmpty</a> as an
+--   expression, and it will be interpreted as <a>empty</a>.
+--   
+--   See <a>IsNonEmpty</a> for more information.
+pattern IsEmpty :: Seq a
 nonEmptySeq :: Seq a -> Maybe (NESeq a)
 toSeq :: NESeq a -> Seq a
 withNonEmpty :: r -> (NESeq a -> r) -> Seq a -> r
 unsafeFromSeq :: Seq a -> NESeq a
+insertSeqAt :: Int -> a -> Seq a -> NESeq a
 singleton :: a -> NESeq a
 (<|) :: a -> NESeq a -> NESeq a
+infixr 5 <|
 (|>) :: NESeq a -> a -> NESeq a
+infixl 5 |>
 (><) :: NESeq a -> NESeq a -> NESeq a
+infixr 5 ><
+(|><) :: NESeq a -> Seq a -> NESeq a
+infixr 5 |><
+(><|) :: Seq a -> NESeq a -> NESeq a
+infixr 5 ><|
 fromList :: NonEmpty a -> NESeq a
+fromFunction :: Int -> (Int -> a) -> NESeq a
 replicate :: Int -> a -> NESeq a
 replicateA :: Applicative f => Int -> f a -> f (NESeq a)
 replicateA1 :: Apply f => Int -> f a -> f (NESeq a)
 replicateM :: Applicative m => Int -> m a -> m (NESeq a)
+cycleTaking :: Int -> NESeq a -> NESeq a
 iterateN :: Int -> (a -> a) -> a -> NESeq a
 unfoldr :: (a -> (b, Maybe a)) -> a -> NESeq b
 unfoldl :: (a -> (b, Maybe a)) -> a -> NESeq b
+toList :: NESeq a -> NonEmpty a
 length :: NESeq a -> Int
 scanl :: (a -> b -> a) -> a -> NESeq b -> NESeq a
 scanl1 :: (a -> a -> a) -> NESeq a -> NESeq a
@@ -2989,7 +3101,39 @@ breakl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 breakr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 partition :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 filter :: (a -> Bool) -> NESeq a -> Seq a
+sort :: Ord a => NESeq a -> NESeq a
+sortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
+sortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
+unstableSort :: Ord a => NESeq a -> NESeq a
+unstableSortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
+unstableSortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
+lookup :: Int -> NESeq a -> Maybe a
+(!?) :: NESeq a -> Int -> Maybe a
+index :: NESeq a -> Int -> a
+adjust :: (a -> a) -> Int -> NESeq a -> NESeq a
+adjust' :: (a -> a) -> Int -> NESeq a -> NESeq a
+update :: Int -> a -> NESeq a -> NESeq a
+take :: Int -> NESeq a -> Seq a
+drop :: Int -> NESeq a -> Seq a
+insertAt :: Int -> a -> NESeq a -> NESeq a
+deleteAt :: Int -> NESeq a -> Seq a
 splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
+elemIndexL :: Eq a => a -> NESeq a -> Maybe Int
+elemIndicesL :: Eq a => a -> NESeq a -> [Int]
+elemIndexR :: Eq a => a -> NESeq a -> Maybe Int
+elemIndicesR :: Eq a => a -> NESeq a -> [Int]
+findIndexL :: (a -> Bool) -> NESeq a -> Maybe Int
+findIndicesL :: (a -> Bool) -> NESeq a -> [Int]
+findIndexR :: (a -> Bool) -> NESeq a -> Maybe Int
+findIndicesR :: (a -> Bool) -> NESeq a -> [Int]
+foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
+foldlWithIndex :: (b -> Int -> a -> b) -> b -> NESeq a -> b
+foldrWithIndex :: (Int -> a -> b -> b) -> b -> NESeq a -> b
+mapWithIndex :: (Int -> a -> b) -> NESeq a -> NESeq b
+traverseWithIndex :: Applicative f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+traverseWithIndex1 :: Apply f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+reverse :: NESeq a -> NESeq a
+intersperse :: a -> NESeq a -> NESeq a
 zip :: NESeq a -> NESeq b -> NESeq (a, b)
 zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
 zip3 :: NESeq a -> NESeq b -> NESeq c -> NESeq (a, b, c)
@@ -2998,7 +3142,6 @@ zip4 :: NESeq a -> NESeq b -> NESeq c -> NESeq d -> NESeq (a, b, c, d)
 zipWith4 :: (a -> b -> c -> d -> e) -> NESeq a -> NESeq b -> NESeq c -> NESeq d -> NESeq e
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
 unzipWith :: (a -> (b, c)) -> NESeq a -> (NESeq b, NESeq c)
-instance GHC.Show.Show a => GHC.Show.Show (Data.Sequence.NonEmpty.NESeq a)
 
 
 -- | Unsafe internal-use functions used in the implementation of
@@ -4664,6 +4807,7 @@ lookup :: Ord k => k -> NEMap k a -> Maybe a
 --   fromList ((5, 'a') :| [(3, 'b')]) !? 5 == Just 'a'
 --   </pre>
 (!?) :: Ord k => NEMap k a -> k -> Maybe a
+infixl 9 !?
 
 -- | <i>O(log n)</i>. Find the value at a key. Calls <a>error</a> when the
 --   element can not be found.
@@ -4673,6 +4817,7 @@ lookup :: Ord k => k -> NEMap k a -> Maybe a
 --   fromList ((5,'a') :| [(3,'b')]) ! 5 == 'a'
 --   </pre>
 (!) :: Ord k => NEMap k a -> k -> a
+infixl 9 !
 
 -- | <i>O(log n)</i>. The expression <tt>(<a>findWithDefault</a> def k
 --   map)</tt> returns the value at key <tt>k</tt> or returns default value
