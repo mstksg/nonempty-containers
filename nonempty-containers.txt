@@ -14,7 +14,7 @@
 
 -- | Unsafe internal-use functions used in the implementation of
 --   <a>Data.IntMap.NonEmpty</a>. These functions can potentially be used
---   to break the abstraction of <a>NEIntMap</a> and produce unsound sets,
+--   to break the abstraction of <a>NEIntMap</a> and produce unsound maps,
 --   so be wary!
 module Data.IntMap.NonEmpty.Internal
 
@@ -47,7 +47,7 @@ module Data.IntMap.NonEmpty.Internal
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntMap</a> was
 --   empty.</li>
 --   <li>You can use the <a>insertIntMap</a> family of functions to insert
---   a value into a <a>IntMap</a> to create a guarunteed
+--   a value into a <a>IntMap</a> to create a guaranteed
 --   <a>NEIntMap</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntMap</a> to reveal it as either containing a
@@ -90,7 +90,7 @@ singleton :: Key -> a -> NEIntMap a
 --   the possiblity of a <a>IntMap</a> being an <a>NEIntMap</a>.
 --   
 --   <pre>
---   nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+--   nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == Just (fromList ((3,"a") :| [(5,"b")]))
 --   </pre>
 nonEmptyMap :: IntMap a -> Maybe (NEIntMap a)
 
@@ -367,7 +367,7 @@ module Data.IntSet.NonEmpty.Internal
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntSet</a> was
 --   empty.</li>
 --   <li>You can use the <a>insertIntSet</a> family of functions to insert
---   a value into a <a>IntSet</a> to create a guarunteed
+--   a value into a <a>IntSet</a> to create a guaranteed
 --   <a>NEIntSet</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntSet</a> to reveal it as either containing a
@@ -401,7 +401,7 @@ type Key = Int
 --   the possiblity of a <a>IntSet</a> being an <a>NEIntSet</a>.
 --   
 --   <pre>
---   nonEmptySet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+--   nonEmptySet (Data.IntSet.fromList [3,5]) == Just (fromList (3:|[5]))
 --   </pre>
 nonEmptySet :: IntSet -> Maybe NEIntSet
 
@@ -534,7 +534,7 @@ module Data.IntSet.NonEmpty
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntSet</a> was
 --   empty.</li>
 --   <li>You can use the <a>insertIntSet</a> family of functions to insert
---   a value into a <a>IntSet</a> to create a guarunteed
+--   a value into a <a>IntSet</a> to create a guaranteed
 --   <a>NEIntSet</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntSet</a> to reveal it as either containing a
@@ -610,7 +610,7 @@ pattern IsEmpty :: IntSet
 --   the possiblity of a <a>IntSet</a> being an <a>NEIntSet</a>.
 --   
 --   <pre>
---   nonEmptySet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+--   nonEmptySet (Data.IntSet.fromList [3,5]) == Just (fromList (3:|[5]))
 --   </pre>
 nonEmptySet :: IntSet -> Maybe NEIntSet
 
@@ -1123,7 +1123,7 @@ module Data.IntMap.NonEmpty
 --   a)</tt>, returning <a>Nothing</a> if the original <a>IntMap</a> was
 --   empty.</li>
 --   <li>You can use the <a>insertIntMap</a> family of functions to insert
---   a value into a <a>IntMap</a> to create a guarunteed
+--   a value into a <a>IntMap</a> to create a guaranteed
 --   <a>NEIntMap</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>IntMap</a> to reveal it as either containing a
@@ -1199,7 +1199,7 @@ pattern IsEmpty :: IntMap a
 --   the possiblity of a <a>IntMap</a> being an <a>NEIntMap</a>.
 --   
 --   <pre>
---   nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+--   nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == Just (fromList ((3,"a") :| [(5,"b")]))
 --   </pre>
 nonEmptyMap :: IntMap a -> Maybe (NEIntMap a)
 
@@ -2647,7 +2647,7 @@ valid :: NEIntMap a -> Bool
 
 -- | Unsafe internal-use functions used in the implementation of
 --   <a>Data.Map.NonEmpty</a>. These functions can potentially be used to
---   break the abstraction of <a>NEMap</a> and produce unsound sets, so be
+--   break the abstraction of <a>NEMap</a> and produce unsound maps, so be
 --   wary!
 module Data.Map.NonEmpty.Internal
 
@@ -2679,7 +2679,7 @@ module Data.Map.NonEmpty.Internal
 --   a)</tt>, returning <a>Nothing</a> if the original <a>Map</a> was
 --   empty.</li>
 --   <li>You can use the <a>insertMap</a> family of functions to insert a
---   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
+--   value into a <a>Map</a> to create a guaranteed <a>NEMap</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Map</a> to reveal it as either containing a
 --   <a>NEMap</a> or an empty map.</li>
@@ -2720,7 +2720,7 @@ singleton :: k -> a -> NEMap k a
 --   the possiblity of a <a>Map</a> being an <a>NEMap</a>.
 --   
 --   <pre>
---   nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+--   nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == Just (fromList ((3,"a") :| [(5,"b")]))
 --   </pre>
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 
@@ -2953,36 +2953,199 @@ instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
 
+
+-- | Unsafe internal-use functions used in the implementation of
+--   <a>Data.Sequence.NonEmpty</a>. These functions can potentially be used
+--   to break the abstraction of <a>NESeq</a> and produce unsound
+--   sequences, so be wary!
 module Data.Sequence.NonEmpty.Internal
+
+-- | A general-purpose non-empty finite sequence type.
+--   
+--   Non-emptiness means that:
+--   
+--   <ul>
+--   <li>Functions that <i>take</i> an <a>NESeq</a> can safely operate on
+--   it with the assumption that it has at least value.</li>
+--   <li>Functions that <i>return</i> an <a>NESeq</a> provide an assurance
+--   that the result has at least one value.</li>
+--   </ul>
+--   
+--   <a>Data.Sequence.NonEmpty</a> re-exports the API of
+--   <a>Data.Sequence</a>, faithfully reproducing asymptotics, typeclass
+--   constraints, and semantics. Functions that ensure that input and
+--   output maps are both non-empty (like <a>&lt;|</a>) return
+--   <tt>NESequence</tt>, but functions that might potentially return an
+--   empty map (like <a>tail</a>) return a <a>Seq</a> instead.
+--   
+--   You can directly construct an <a>NESeq</a> with the API from
+--   <a>Data.Sequence.NonEmpty</a>; it's more or less the same as
+--   constructing a normal <a>Seq</a>, except you don't have access to
+--   <a>empty</a>. There are also a few ways to construct an <a>NESeq</a>
+--   from a <a>Seq</a>:
+--   
+--   <ol>
+--   <li>The <tt>nonEmptyMap</tt> smart constructor will convert a
+--   <tt><a>Seq</a> a</tt> into a <tt><a>Maybe</a> (<a>NESeq</a> a)</tt>,
+--   returning <a>Nothing</a> if the original <a>Seq</a> was empty.</li>
+--   <li>You can use <a>:&lt;||</a>, <a>:||&gt;</a>, and <a>insertSeqAt</a>
+--   to insert a value into a <a>Seq</a> to create a guaranteed
+--   <a>NESeq</a>.</li>
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>Seq</a> to reveal it as either containing a
+--   <a>NESeq</a> or an empty sequence.</li>
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
+--   deconstructing a <a>Seq</a> and treating it as if it were an
+--   <a>NESeq</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NESeq</a> into a <a>Seq</a> with <a>toSeq</a> or
+--   <a>IsNonEmpty</a>, essentially "obscuring" the non-empty property from
+--   the type.
 data NESeq a
 NESeq :: a -> !Seq a -> NESeq a
 [nesHead] :: NESeq a -> a
 [nesTail] :: NESeq a -> !Seq a
 infixr 5 `NESeq`
 infixr 5 `NESeq`
+
+-- | <i>O(1)</i>. An abstract constructor for an <a>NESeq</a> that consists
+--   of a "head" <tt>a</tt> and a "tail" <tt><a>Seq</a> a</tt>. Similar to
+--   <a>:|</a> for <a>NonEmpty</a>.
+--   
+--   Can be used to match on the head and tail of an <a>NESeq</a>, and also
+--   used to <i>construct</i> an <a>NESeq</a> by consing an item to the
+--   beginnong of a <a>Seq</a>, ensuring that the result is non-empty.
 pattern (:<||) :: a -> Seq a -> NESeq a
 infixr 5 :<||
+
+-- | <i>O(1)</i>. An abstract constructor for an <a>NESeq</a> that consists
+--   of a "init" <tt><a>Seq</a> a</tt> and a "last" <tt>a</tt>. Similar to
+--   <a>:|</a> for <a>NonEmpty</a>, but at the end of the list instead of
+--   at the beginning.
+--   
+--   Can be used to match on the init and last of an <a>NESeq</a>, and also
+--   used to <i>construct</i> an <a>NESeq</a> by snocing an item to the end
+--   of a <a>Seq</a>, ensuring that the result is non-empty.
 pattern (:||>) :: Seq a -> a -> NESeq a
 infixl 5 :||>
+
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>Seq</a> as if it were an <a>NESeq</a>. <tt><a>withNonEmpty</a> def
+--   f</tt> will take a <a>Seq</a>. If map is empty, it will evaluate to
+--   <tt>def</tt>. Otherwise, a non-empty map <a>NESeq</a> will be fed to
+--   the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptySeq</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
 withNonEmpty :: r -> (NESeq a -> r) -> Seq a -> r
+
+-- | <i>O(1)</i>. Convert a non-empty sequence back into a normal
+--   possibly-empty sequence, for usage with functions that expect
+--   <a>Seq</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the map in its
+--   type. See the <a>IsNotEmpty</a> pattern.
+--   
+--   <tt>nonEmptySeq</tt> and <tt><a>maybe</a> <a>empty</a>
+--   <a>toSeq</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
 toSeq :: NESeq a -> Seq a
-toList :: NESeq a -> NonEmpty a
+
+-- | &lt;math&gt;. A singleton sequence.
 singleton :: a -> NESeq a
+
+-- | &lt;math&gt;. The number of elements in the sequence.
 length :: NESeq a -> Int
+
+-- | &lt;math&gt;. Create a sequence from a finite list of elements. There
+--   is a function <a>toNonEmpty</a> in the opposite direction for all
+--   instances of the <a>Foldable1</a> class, including <a>NESeq</a>.
 fromList :: NonEmpty a -> NESeq a
+
+-- | &lt;math&gt;. Convert a given sequence length and a function
+--   representing that sequence into a sequence.
 fromFunction :: Int -> (Int -> a) -> NESeq a
+
+-- | &lt;math&gt;. The element at the specified position, counting from 0.
+--   The argument should thus be a non-negative integer less than the size
+--   of the sequence. If the position is out of range, <a>index</a> fails
+--   with an error.
+--   
+--   <pre>
+--   xs `index` i = toList xs !! i
+--   </pre>
+--   
+--   Caution: <a>index</a> necessarily delays retrieving the requested
+--   element until the result is forced. It can therefore lead to a space
+--   leak if the result is stored, unforced, in another structure. To
+--   retrieve an element immediately without forcing it, use <a>lookup</a>
+--   or '(!?)'.
 index :: NESeq a -> Int -> a
+
+-- | &lt;math&gt;. Add an element to the left end of a non-empty sequence.
+--   Mnemonic: a triangle with the single element at the pointy end.
 (<|) :: a -> NESeq a -> NESeq a
 infixr 5 <|
+
+-- | &lt;math&gt;. Concatenate two non-empty sequences.
 (><) :: NESeq a -> NESeq a -> NESeq a
 infixr 5 ><
+
+-- | &lt;math&gt;. Concatenate a non-empty sequence with a potentially
+--   empty sequence (<a>Seq</a>), to produce a guaranteed non-empty
+--   sequence. Mnemonic: like <a>&gt;&lt;</a>, but a pipe for the
+--   guarunteed non-empty side.
 (|><) :: NESeq a -> Seq a -> NESeq a
 infixr 5 |><
+
+-- | <i>O(n)</i>. A generalization of <a>foldMap1</a>,
+--   <a>foldMapWithIndex</a> takes a folding function that also depends on
+--   the element's index, and applies it to every element in the sequence.
 foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
+
+-- | <i>O(n)</i>. <a>traverseWithIndex1</a> is a version of
+--   <a>traverse1</a> that also offers access to the index of each element.
 traverseWithIndex1 :: Apply f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+
+-- | &lt;math&gt;. Returns a sequence of all non-empty suffixes of this
+--   sequence, longest first. For example,
+--   
+--   <pre>
+--   tails (fromList (1:|[2,3])) = fromList (fromList (1:|[2,3]) :| [fromList (2:|[3]), fromList (3:|[])])
+--   </pre>
+--   
+--   Evaluating the &lt;math&gt;th suffix takes &lt;math&gt;, but
+--   evaluating every suffix in the sequence takes &lt;math&gt; due to
+--   sharing.
 tails :: NESeq a -> NESeq (NESeq a)
+
+-- | &lt;math&gt;. <a>zip</a> takes two sequences and returns a sequence of
+--   corresponding pairs. If one input is short, excess elements are
+--   discarded from the right end of the longer sequence.
 zip :: NESeq a -> NESeq b -> NESeq (a, b)
+
+-- | &lt;math&gt;. <a>zipWith</a> generalizes <a>zip</a> by zipping with
+--   the function given as the first argument, instead of a tupling
+--   function. For example, <tt>zipWith (+)</tt> is applied to two
+--   sequences to take the sequence of corresponding sums.
 zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
+
+-- | Unzip a sequence of pairs.
+--   
+--   <pre>
+--   unzip ps = ps `<a>seq</a>` (<a>fmap</a> <a>fst</a> ps) (<a>fmap</a> <a>snd</a> ps)
+--   </pre>
+--   
+--   Example:
+--   
+--   <pre>
+--   unzip $ fromList ((1,"a") :| [(2,"b"), (3,"c")]) =
+--     (fromList (1:|[2,3]), fromList ("a":|["b","c"]))
+--   </pre>
+--   
+--   See the note about efficiency at <tt>unzipWith</tt>.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
 instance Data.Traversable.Traversable Data.Sequence.NonEmpty.Internal.NESeq
 instance GHC.Base.Functor Data.Sequence.NonEmpty.Internal.NESeq
@@ -3009,9 +3172,121 @@ instance Control.Monad.Zip.MonadZip Data.Sequence.NonEmpty.Internal.NESeq
 instance Control.Monad.Fix.MonadFix Data.Sequence.NonEmpty.Internal.NESeq
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Sequence.NonEmpty.Internal.NESeq a)
 
+
+-- | <h1>Non-Empty Finite Sequences</h1>
+--   
+--   | An <tt><a>NESeq</a> a</tt> is a non-empty (but finite) sequence of
+--   values of type <tt>a</tt>. Generally has the same interface as
+--   <tt>NonEmpty</tt>. This is a non-empty version of <a>Seq</a> from
+--   <a>Data.Sequence</a>.
+--   
+--   The main differences between this type and <tt>NonEmpty</tt> are:
+--   
+--   <ul>
+--   <li>You cannot have infinite <a>NESeq</a>s</li>
+--   <li>You have constant-time consing from either end, and constant-time
+--   unconsing as well (through <a>&lt;|</a>, <a>|&gt;</a>, <a>:&lt;||</a>,
+--   and <a>:||&gt;</a>)</li>
+--   <li>Concatenation (<a>&gt;&lt;</a>, <a>|&gt;&lt;</a>,
+--   <a>&gt;&lt;|</a>) is logarithmic-time.</li>
+--   <li>You have logarithmic-time indexing and updating at a given
+--   index.</li>
+--   </ul>
+--   
+--   While asymptotics are often better than for <tt>NonEmpty</tt>, there
+--   is a decent constant factor involved in most operations.
+--   
+--   See documentation for <a>NESeq</a> for information on how to convert
+--   and manipulate such non-empty sequences
+--   
+--   This module essentially re-imports the API of
+--   <a>Data.Sequence.Lazy</a> and its <a>Seq</a> type, along with
+--   semantics and asymptotics.
+--   
+--   Because <a>NESeq</a> is implemented using <a>Seq</a>, all of the
+--   caveats of using <a>Seq</a> apply.
+--   
+--   All functions take non-empty sequences as inputs. In situations where
+--   their results can be guarunteed to also be non-empty, they also return
+--   non-empty maps. In situations where their results could potentially be
+--   empty, <a>Seq</a> is returned instead.
+--   
+--   Some functions (like <a>spanl</a>, <a>spanr</a>, <a>breakl</a>,
+--   <a>breakr</a>, <a>partition</a>, <a>splitAt</a>) have modified return
+--   types to account for possible configurations of non-emptiness.
+--   
+--   Some functions (<a>head</a>, <a>last</a>, <a>tail</a>, <a>init</a>)
+--   are provided because they are total for non-empty sequences.
+--   
+--   This module is intended to be imported qualified, to avoid name
+--   clashes with <a>Prelude</a> and <a>Data.Sequence</a> functions:
+--   
+--   <pre>
+--   import qualified Data.Sequence.NonEmpty as NESeq
+--   </pre>
 module Data.Sequence.NonEmpty
+
+-- | A general-purpose non-empty finite sequence type.
+--   
+--   Non-emptiness means that:
+--   
+--   <ul>
+--   <li>Functions that <i>take</i> an <a>NESeq</a> can safely operate on
+--   it with the assumption that it has at least value.</li>
+--   <li>Functions that <i>return</i> an <a>NESeq</a> provide an assurance
+--   that the result has at least one value.</li>
+--   </ul>
+--   
+--   <a>Data.Sequence.NonEmpty</a> re-exports the API of
+--   <a>Data.Sequence</a>, faithfully reproducing asymptotics, typeclass
+--   constraints, and semantics. Functions that ensure that input and
+--   output maps are both non-empty (like <a>&lt;|</a>) return
+--   <tt>NESequence</tt>, but functions that might potentially return an
+--   empty map (like <a>tail</a>) return a <a>Seq</a> instead.
+--   
+--   You can directly construct an <a>NESeq</a> with the API from
+--   <a>Data.Sequence.NonEmpty</a>; it's more or less the same as
+--   constructing a normal <a>Seq</a>, except you don't have access to
+--   <a>empty</a>. There are also a few ways to construct an <a>NESeq</a>
+--   from a <a>Seq</a>:
+--   
+--   <ol>
+--   <li>The <tt>nonEmptyMap</tt> smart constructor will convert a
+--   <tt><a>Seq</a> a</tt> into a <tt><a>Maybe</a> (<a>NESeq</a> a)</tt>,
+--   returning <a>Nothing</a> if the original <a>Seq</a> was empty.</li>
+--   <li>You can use <a>:&lt;||</a>, <a>:||&gt;</a>, and <a>insertSeqAt</a>
+--   to insert a value into a <a>Seq</a> to create a guaranteed
+--   <a>NESeq</a>.</li>
+--   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
+--   "pattern match" on a <a>Seq</a> to reveal it as either containing a
+--   <a>NESeq</a> or an empty sequence.</li>
+--   <li><a>withNonEmpty</a> offers a continuation-based interface for
+--   deconstructing a <a>Seq</a> and treating it as if it were an
+--   <a>NESeq</a>.</li>
+--   </ol>
+--   
+--   You can convert an <a>NESeq</a> into a <a>Seq</a> with <a>toSeq</a> or
+--   <a>IsNonEmpty</a>, essentially "obscuring" the non-empty property from
+--   the type.
 data NESeq a
+
+-- | <i>O(1)</i>. An abstract constructor for an <a>NESeq</a> that consists
+--   of a "head" <tt>a</tt> and a "tail" <tt><a>Seq</a> a</tt>. Similar to
+--   <a>:|</a> for <a>NonEmpty</a>.
+--   
+--   Can be used to match on the head and tail of an <a>NESeq</a>, and also
+--   used to <i>construct</i> an <a>NESeq</a> by consing an item to the
+--   beginnong of a <a>Seq</a>, ensuring that the result is non-empty.
 pattern (:<||) :: a -> Seq a -> NESeq a
+
+-- | <i>O(1)</i>. An abstract constructor for an <a>NESeq</a> that consists
+--   of a "init" <tt><a>Seq</a> a</tt> and a "last" <tt>a</tt>. Similar to
+--   <a>:|</a> for <a>NonEmpty</a>, but at the end of the list instead of
+--   at the beginning.
+--   
+--   Can be used to match on the init and last of an <a>NESeq</a>, and also
+--   used to <i>construct</i> an <a>NESeq</a> by snocing an item to the end
+--   of a <a>Seq</a>, ensuring that the result is non-empty.
 pattern (:||>) :: Seq a -> a -> NESeq a
 infixr 5 `NESeq`
 infixr 5 :<||
@@ -3056,91 +3331,646 @@ pattern IsNonEmpty :: NESeq a -> Seq a
 --   
 --   See <a>IsNonEmpty</a> for more information.
 pattern IsEmpty :: Seq a
+
+-- | <i>O(1)</i>. Smart constructor for an <a>NESeq</a> from a <a>Seq</a>.
+--   Returns <a>Nothing</a> if the <a>Seq</a> was originally actually
+--   empty, and <tt><a>Just</a> n</tt> with an <a>NESeq</a>, if the
+--   <a>Seq</a> was not empty.
+--   
+--   <a>nonEmptySeq</a> and <tt><a>maybe</a> <a>empty</a> <a>toSeq</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
+--   
+--   See <a>IsNonEmpty</a> for a pattern synonym that lets you "match on"
+--   the possiblity of a <a>Seq</a> being an <a>NESeq</a>.
+--   
+--   <pre>
+--   nonEmptySeq (Data.Sequence.fromList [1,2,3]) == Just (fromList (1) :| [2,3])
+--   </pre>
 nonEmptySeq :: Seq a -> Maybe (NESeq a)
+
+-- | <i>O(1)</i>. Convert a non-empty sequence back into a normal
+--   possibly-empty sequence, for usage with functions that expect
+--   <a>Seq</a>.
+--   
+--   Can be thought of as "obscuring" the non-emptiness of the map in its
+--   type. See the <a>IsNotEmpty</a> pattern.
+--   
+--   <tt>nonEmptySeq</tt> and <tt><a>maybe</a> <a>empty</a>
+--   <a>toSeq</a></tt> form an isomorphism: they are perfect
+--   structure-preserving inverses of eachother.
 toSeq :: NESeq a -> Seq a
+
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>Seq</a> as if it were an <a>NESeq</a>. <tt><a>withNonEmpty</a> def
+--   f</tt> will take a <a>Seq</a>. If map is empty, it will evaluate to
+--   <tt>def</tt>. Otherwise, a non-empty map <a>NESeq</a> will be fed to
+--   the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptySeq</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
 withNonEmpty :: r -> (NESeq a -> r) -> Seq a -> r
+
+-- | <i>O(1)</i>. Unsafe version of <a>nonEmptySeq</a>. Coerces a
+--   <a>Seq</a> into an <a>NESeq</a>, but is undefined (throws a runtime
+--   exception when evaluation is attempted) for an empty <a>Seq</a>.
 unsafeFromSeq :: Seq a -> NESeq a
+
+-- | Turn a <a>Seq</a> into a guarantted non-empty <a>NESeq</a> by adding
+--   an element at a given index.
+--   
+--   <pre>
+--   insertSeqAt 1 0 (Data.Sequence.fromList [1,2,3]) == fromList (1 :| [0,2,3])
+--   </pre>
 insertSeqAt :: Int -> a -> Seq a -> NESeq a
+
+-- | &lt;math&gt;. A singleton sequence.
 singleton :: a -> NESeq a
+
+-- | &lt;math&gt;. Add an element to the left end of a non-empty sequence.
+--   Mnemonic: a triangle with the single element at the pointy end.
 (<|) :: a -> NESeq a -> NESeq a
 infixr 5 <|
+
+-- | &lt;math&gt;. Add an element to the right end of a non-empty sequence.
+--   Mnemonic: a triangle with the single element at the pointy end.
 (|>) :: NESeq a -> a -> NESeq a
 infixl 5 |>
+
+-- | &lt;math&gt;. Concatenate two non-empty sequences.
 (><) :: NESeq a -> NESeq a -> NESeq a
 infixr 5 ><
+
+-- | &lt;math&gt;. Concatenate a non-empty sequence with a potentially
+--   empty sequence (<a>Seq</a>), to produce a guaranteed non-empty
+--   sequence. Mnemonic: like <a>&gt;&lt;</a>, but a pipe for the
+--   guarunteed non-empty side.
 (|><) :: NESeq a -> Seq a -> NESeq a
 infixr 5 |><
+
+-- | &lt;math&gt;. Concatenate a non-empty sequence with a potentially
+--   empty sequence (<a>Seq</a>), to produce a guaranteed non-empty
+--   sequence. Mnemonic: like <a>&gt;&lt;</a>, but a pipe for the
+--   guarunteed non-empty side.
 (><|) :: Seq a -> NESeq a -> NESeq a
 infixr 5 ><|
+
+-- | &lt;math&gt;. Create a sequence from a finite list of elements. There
+--   is a function <a>toNonEmpty</a> in the opposite direction for all
+--   instances of the <a>Foldable1</a> class, including <a>NESeq</a>.
 fromList :: NonEmpty a -> NESeq a
+
+-- | &lt;math&gt;. Convert a given sequence length and a function
+--   representing that sequence into a sequence.
 fromFunction :: Int -> (Int -> a) -> NESeq a
+
+-- | &lt;math&gt;. <tt>replicate n x</tt> is a sequence consisting of
+--   <tt>n</tt> copies of <tt>x</tt>. Is only defined when <tt>n</tt> is
+--   positive.
 replicate :: Int -> a -> NESeq a
+
+-- | <a>replicateA</a> is an <a>Applicative</a> version of
+--   <a>replicate</a>, and makes ( O(log n) ) calls to <a>liftA2</a> and
+--   <a>pure</a>. Is only defined when <tt>n</tt> is positive.
+--   
+--   <pre>
+--   replicateA n x = sequenceA (replicate n x)
+--   </pre>
+--   
+--   Is a more restrictive version of <a>replicateA1</a>.
+--   <a>replicateA1</a> should be preferred whenever possible.
 replicateA :: Applicative f => Int -> f a -> f (NESeq a)
+
+-- | <a>replicateA</a> is an <a>Apply</a> version of <a>replicate</a>, and
+--   makes ( O(log n) ) calls to <a>&lt;.&gt;</a>. Is only defined when
+--   <tt>n</tt> is positive.
+--   
+--   <pre>
+--   replicateA1 n x = sequence1 (replicate n x)
+--   </pre>
 replicateA1 :: Apply f => Int -> f a -> f (NESeq a)
+
+-- | An alias of <a>replicateA</a>.
 replicateM :: Applicative m => Int -> m a -> m (NESeq a)
+
+-- | <i>O(</i>log<i> k)</i>. <tt><a>cycleTaking</a> k xs</tt> forms a
+--   sequence of length <tt>k</tt> by repeatedly concatenating <tt>xs</tt>
+--   with itself. Is only defined when <tt>k</tt> is positive.
+--   
+--   <pre>
+--   cycleTaking k = fromList . fromJust . nonEmpty . take k . cycle . toList
+--   </pre>
 cycleTaking :: Int -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. Constructs a sequence by repeated application of a
+--   function to a seed value. Is only defined if given a positive value.
+--   
+--   <pre>
+--   iterateN n f x = fromList (fromJust (nonEmpty ((Prelude.take n (Prelude.iterate f x)))))
+--   </pre>
 iterateN :: Int -> (a -> a) -> a -> NESeq a
+
+-- | Builds a sequence from a seed value. Takes time linear in the number
+--   of generated elements. <i>WARNING:</i> If the number of generated
+--   elements is infinite, this method will not terminate.
 unfoldr :: (a -> (b, Maybe a)) -> a -> NESeq b
+
+-- | <tt><a>unfoldl</a> f x</tt> is equivalent to <tt><a>reverse</a>
+--   (<a>unfoldr</a> (<a>fmap</a> swap . f) x)</tt>.
 unfoldl :: (a -> (b, Maybe a)) -> a -> NESeq b
-toList :: NESeq a -> NonEmpty a
+
+-- | <i>O(1)</i>. Retrieve the left-most item in a non-empty sequence. Note
+--   that this function is total.
+head :: NESeq a -> a
+
+-- | <i>O(1)</i>. Delete the left-most item in a non-empty sequence.
+--   Returns a potentially empty sequence (<a>Seq</a>) in the case that the
+--   original <a>NESeq</a> contained only a single element. Note that this
+--   function is total.
+tail :: NESeq a -> Seq a
+
+-- | <i>O(1)</i>. Retrieve the right-most item in a non-empty sequence.
+--   Note that this function is total.
+last :: NESeq a -> a
+
+-- | <i>O(1)</i>. Delete the right-most item in a non-empty sequence.
+--   Returns a potentially empty sequence (<a>Seq</a>) in the case that the
+--   original <a>NESeq</a> contained only a single element. Note that this
+--   function is total.
+init :: NESeq a -> Seq a
+
+-- | &lt;math&gt;. The number of elements in the sequence.
 length :: NESeq a -> Int
+
+-- | <a>scanl</a> is similar to <a>foldl</a>, but returns a sequence of
+--   reduced values from the left:
+--   
+--   <pre>
+--   scanl f z (fromList [x1, x2, ...]) = fromList [z, z `f` x1, (z `f` x1) `f` x2, ...]
+--   </pre>
 scanl :: (a -> b -> a) -> a -> NESeq b -> NESeq a
+
+-- | <a>scanl1</a> is a variant of <a>scanl</a> that has no starting value
+--   argument:
+--   
+--   <pre>
+--   scanl1 f (fromList [x1, x2, ...]) = fromList [x1, x1 `f` x2, ...]
+--   </pre>
 scanl1 :: (a -> a -> a) -> NESeq a -> NESeq a
+
+-- | <a>scanr</a> is the right-to-left dual of <a>scanl</a>.
 scanr :: (a -> b -> b) -> b -> NESeq a -> NESeq b
+
+-- | <a>scanr1</a> is a variant of <a>scanr</a> that has no starting value
+--   argument.
 scanr1 :: (a -> a -> a) -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. Returns a sequence of all non-empty suffixes of this
+--   sequence, longest first. For example,
+--   
+--   <pre>
+--   tails (fromList (1:|[2,3])) = fromList (fromList (1:|[2,3]) :| [fromList (2:|[3]), fromList (3:|[])])
+--   </pre>
+--   
+--   Evaluating the &lt;math&gt;th suffix takes &lt;math&gt;, but
+--   evaluating every suffix in the sequence takes &lt;math&gt; due to
+--   sharing.
 tails :: NESeq a -> NESeq (NESeq a)
+
+-- | &lt;math&gt;. Returns a sequence of all non-empty prefixes of this
+--   sequence, shortest first. For example,
+--   
+--   <pre>
+--   tails (fromList (1:|[2,3])) = fromList (fromList (1:|[]) :| [fromList (1:|[2]), fromList (1:|[2,3]))
+--   </pre>
+--   
+--   Evaluating the &lt;math&gt;th prefix takes &lt;math&gt;, but
+--   evaluating every prefix in the sequence takes &lt;math&gt; due to
+--   sharing.
 inits :: NESeq a -> NESeq (NESeq a)
+
+-- | &lt;math&gt;. <tt>chunksOf c xs</tt> splits <tt>xs</tt> into chunks of
+--   size <tt>c&gt;0</tt>. If <tt>c</tt> does not divide the length of
+--   <tt>xs</tt> evenly, then the last element of the result will be short.
+--   Is only defined if <tt>c</tt> is a positive number.
+--   
+--   Side note: the given performance bound is missing some messy terms
+--   that only really affect edge cases. Performance degrades smoothly from
+--   &lt;math&gt; (for &lt;math&gt;) to &lt;math&gt; (for &lt;math&gt;).
+--   The true bound is more like &lt;math&gt;
 chunksOf :: Int -> NESeq a -> NESeq (NESeq a)
+
+-- | &lt;math&gt; where &lt;math&gt; is the prefix length.
+--   <a>takeWhileL</a>, applied to a predicate <tt>p</tt> and a sequence
+--   <tt>xs</tt>, returns the longest prefix (possibly empty) of
+--   <tt>xs</tt> of elements that satisfy <tt>p</tt>.
+--   
+--   Returns a possibly empty sequence (<a>Seq</a>) in the case that the
+--   predicate fails on the first item.
 takeWhileL :: (a -> Bool) -> NESeq a -> Seq a
+
+-- | &lt;math&gt; where &lt;math&gt; is the suffix length.
+--   <a>takeWhileR</a>, applied to a predicate <tt>p</tt> and a sequence
+--   <tt>xs</tt>, returns the longest suffix (possibly empty) of
+--   <tt>xs</tt> of elements that satisfy <tt>p</tt>.
+--   
+--   Returns a possibly empty sequence (<a>Seq</a>) in the case that the
+--   predicate fails on the first item.
+--   
+--   <tt><a>takeWhileR</a> p xs</tt> is equivalent to <tt><a>reverse</a>
+--   (<a>takeWhileL</a> p (<a>reverse</a> xs))</tt>.
 takeWhileR :: (a -> Bool) -> NESeq a -> Seq a
+
+-- | &lt;math&gt; where &lt;math&gt; is the prefix length.
+--   <tt><a>dropWhileL</a> p xs</tt> returns the suffix remaining after
+--   <tt><a>takeWhileL</a> p xs</tt>.
+--   
+--   Returns a possibly empty sequence (<a>Seq</a>) in the case that the
+--   predicate passes for all items.
 dropWhileL :: (a -> Bool) -> NESeq a -> Seq a
+
+-- | &lt;math&gt; where &lt;math&gt; is the suffix length.
+--   <tt><a>dropWhileR</a> p xs</tt> returns the prefix remaining after
+--   <tt><a>takeWhileR</a> p xs</tt>.
+--   
+--   Returns a possibly empty sequence (<a>Seq</a>) in the case that the
+--   predicate passes for all items.
+--   
+--   <tt><a>dropWhileR</a> p xs</tt> is equivalent to <tt><a>reverse</a>
+--   (<a>dropWhileL</a> p (<a>reverse</a> xs))</tt>.
 dropWhileR :: (a -> Bool) -> NESeq a -> Seq a
+
+-- | &lt;math&gt; where &lt;math&gt; is the prefix length. <a>spanl</a>,
+--   applied to a predicate <tt>p</tt> and a sequence <tt>xs</tt>, returns
+--   a <a>These</a> based on the point where the predicate fails:
+--   
+--   <ul>
+--   <li><tt><a>This</a> ys</tt> means that the predicate was true for all
+--   items, and <tt>ys</tt> is the entire original sequence.</li>
+--   <li><tt><a>That</a> zs</tt> means that the predicate failed on the
+--   first item, and <tt>zs</tt> is the entire original sequence.</li>
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the prefix of
+--   elements that satisfy the predicae) and <tt>zs</tt> (the remainder of
+--   the sequence)</li>
+--   </ul>
 spanl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+
+-- | &lt;math&gt; where &lt;math&gt; is the suffix length. <a>spanr</a>,
+--   applied to a predicate <tt>p</tt> and a sequence <tt>xs</tt>, returns
+--   a <a>These</a> based on the point where the predicate fails:
+--   
+--   <ul>
+--   <li><tt><a>This</a> ys</tt> means that the predicate was true for all
+--   items, and <tt>ys</tt> is the entire original sequence.</li>
+--   <li><tt><a>That</a> zs</tt> means that the predicate failed on the
+--   first item, and <tt>zs</tt> is the entire original sequence.</li>
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>zs</tt> (the suffix of
+--   elements that satisfy the predicae) and <tt>ys</tt> (the remainder of
+--   the sequence, before the suffix)</li>
+--   </ul>
 spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+
+-- | &lt;math&gt; where &lt;math&gt; is the breakpoint index.
+--   
+--   <tt><a>breakl</a> p</tt> is <tt><a>spanl</a> (not . p)</tt>.
 breakl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+
+-- | &lt;math&gt; where &lt;math&gt; is the breakpoint index.
+--   
+--   <tt><a>breakr</a> p</tt> is <tt><a>spanr</a> (not . p)</tt>.
 breakr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+
+-- | &lt;math&gt;. The <a>partition</a> function takes a predicate
+--   <tt>p</tt> and a sequence <tt>xs</tt> and returns sequences of those
+--   elements which do and do not satisfy the predicate, as a <a>These</a>:
+--   
+--   <ul>
+--   <li><tt><a>This</a> ys</tt> means that the predicate was true for all
+--   items, and <tt>ys</tt> is the entire original sequence.</li>
+--   <li><tt><a>That</a> zs</tt> means that the predicate failed on the
+--   first item, and <tt>zs</tt> is the entire original sequence.</li>
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the sequence of
+--   elements for which the predicate was true) and <tt>zs</tt> (the
+--   sequence of elements for which the predicate was false).</li>
+--   </ul>
 partition :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+
+-- | &lt;math&gt;. The <a>filter</a> function takes a predicate <tt>p</tt>
+--   and a sequence <tt>xs</tt> and returns a sequence of those elements
+--   which satisfy the predicate.
+--   
+--   Returns a potentially empty sequence (<a>Seq</a>) in the case that the
+--   predicate fails for all items in the sequence.
 filter :: (a -> Bool) -> NESeq a -> Seq a
+
+-- | &lt;math&gt;. <a>sort</a> sorts the specified <a>NESeq</a> by the
+--   natural ordering of its elements. The sort is stable. If stability is
+--   not required, <a>unstableSort</a> can be slightly faster.
 sort :: Ord a => NESeq a -> NESeq a
+
+-- | &lt;math&gt;. <a>sortBy</a> sorts the specified <a>NESeq</a> according
+--   to the specified comparator. The sort is stable. If stability is not
+--   required, <a>unstableSortBy</a> can be slightly faster.
 sortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. <a>sortOn</a> sorts the specified <a>NESeq</a> by
+--   comparing the results of a key function applied to each element.
+--   <tt><a>sortOn</a> f</tt> is equivalent to <tt><a>sortBy</a>
+--   (<a>compare</a> `<a>on</a>` f)</tt>, but has the performance advantage
+--   of only evaluating <tt>f</tt> once for each element in the input list.
+--   This is called the decorate-sort-undecorate paradigm, or Schwartzian
+--   transform.
+--   
+--   An example of using <a>sortOn</a> might be to sort a <a>NESeq</a> of
+--   strings according to their length:
+--   
+--   <pre>
+--   sortOn length (fromList ("alligator" :| ["monkey", "zebra"])) == fromList ("zebra" :| ["monkey", "alligator"])
+--   </pre>
+--   
+--   If, instead, <a>sortBy</a> had been used, <a>length</a> would be
+--   evaluated on every comparison, giving &lt;math&gt; evaluations, rather
+--   than &lt;math&gt;.
+--   
+--   If <tt>f</tt> is very cheap (for example a record selector, or
+--   <a>fst</a>), <tt><a>sortBy</a> (<a>compare</a> `<a>on</a>` f)</tt>
+--   will be faster than <tt><a>sortOn</a> f</tt>.
 sortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. <a>unstableSort</a> sorts the specified <a>NESeq</a> by
+--   the natural ordering of its elements, but the sort is not stable. This
+--   algorithm is frequently faster and uses less memory than <a>sort</a>.
 unstableSort :: Ord a => NESeq a -> NESeq a
+
+-- | &lt;math&gt;. A generalization of <a>unstableSort</a>,
+--   <a>unstableSortBy</a> takes an arbitrary comparator and sorts the
+--   specified sequence. The sort is not stable. This algorithm is
+--   frequently faster and uses less memory than <a>sortBy</a>.
 unstableSortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. <a>unstableSortOn</a> sorts the specified <a>NESeq</a>
+--   by comparing the results of a key function applied to each element.
+--   <tt><a>unstableSortOn</a> f</tt> is equivalent to
+--   <tt><a>unstableSortBy</a> (<a>compare</a> `<a>on</a>` f)</tt>, but has
+--   the performance advantage of only evaluating <tt>f</tt> once for each
+--   element in the input list. This is called the decorate-sort-undecorate
+--   paradigm, or Schwartzian transform.
+--   
+--   An example of using <a>unstableSortOn</a> might be to sort a
+--   <a>NESeq</a> of strings according to their length.
+--   
+--   <pre>
+--   unstableSortOn length (fromList ("alligator" :| ["monkey", "zebra"])) == fromList ("zebra" :| ["monkey", "alligator]")
+--   </pre>
+--   
+--   If, instead, <a>unstableSortBy</a> had been used, <a>length</a> would
+--   be evaluated on every comparison, giving &lt;math&gt; evaluations,
+--   rather than &lt;math&gt;.
+--   
+--   If <tt>f</tt> is very cheap (for example a record selector, or
+--   <a>fst</a>), <tt><a>unstableSortBy</a> (<a>compare</a> `<a>on</a>`
+--   f)</tt> will be faster than <tt><a>unstableSortOn</a> f</tt>.
 unstableSortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. The element at the specified position, counting from 0.
+--   If the specified position is negative or at least the length of the
+--   sequence, <a>lookup</a> returns <a>Nothing</a>.
+--   
+--   Unlike <a>index</a>, this can be used to retrieve an element without
+--   forcing it.
 lookup :: Int -> NESeq a -> Maybe a
+
+-- | &lt;math&gt;. A flipped, infix version of <a>lookup</a>.
 (!?) :: NESeq a -> Int -> Maybe a
+
+-- | &lt;math&gt;. The element at the specified position, counting from 0.
+--   The argument should thus be a non-negative integer less than the size
+--   of the sequence. If the position is out of range, <a>index</a> fails
+--   with an error.
+--   
+--   <pre>
+--   xs `index` i = toList xs !! i
+--   </pre>
+--   
+--   Caution: <a>index</a> necessarily delays retrieving the requested
+--   element until the result is forced. It can therefore lead to a space
+--   leak if the result is stored, unforced, in another structure. To
+--   retrieve an element immediately without forcing it, use <a>lookup</a>
+--   or '(!?)'.
 index :: NESeq a -> Int -> a
+
+-- | &lt;math&gt;. Update the element at the specified position. If the
+--   position is out of range, the original sequence is returned.
+--   <a>adjust</a> can lead to poor performance and even memory leaks,
+--   because it does not force the new value before installing it in the
+--   sequence. <a>adjust'</a> should usually be preferred.
 adjust :: (a -> a) -> Int -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. Update the element at the specified position. If the
+--   position is out of range, the original sequence is returned. The new
+--   value is forced before it is installed in the sequence.
+--   
+--   <pre>
+--   adjust' f i xs =
+--    case xs !? i of
+--      Nothing -&gt; xs
+--      Just x -&gt; let !x' = f x
+--                in update i x' xs
+--   </pre>
 adjust' :: (a -> a) -> Int -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. Replace the element at the specified position. If the
+--   position is out of range, the original sequence is returned.
 update :: Int -> a -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. The first <tt>i</tt> elements of a sequence. If
+--   <tt>i</tt> is negative, <tt><a>take</a> i s</tt> yields the empty
+--   sequence. If the sequence contains fewer than <tt>i</tt> elements, the
+--   whole sequence is returned.
 take :: Int -> NESeq a -> Seq a
+
+-- | &lt;math&gt;. Elements of a sequence after the first <tt>i</tt>. If
+--   <tt>i</tt> is negative, <tt><a>drop</a> i s</tt> yields the whole
+--   sequence. If the sequence contains fewer than <tt>i</tt> elements, the
+--   empty sequence is returned.
 drop :: Int -> NESeq a -> Seq a
+
+-- | &lt;math&gt;. <tt><a>insertAt</a> i x xs</tt> inserts <tt>x</tt> into
+--   <tt>xs</tt> at the index <tt>i</tt>, shifting the rest of the sequence
+--   over.
+--   
+--   <pre>
+--   insertAt 2 x (fromList (a:|[b,c,d])) = fromList (a:|[b,x,c,d])
+--   insertAt 4 x (fromList (a:|[b,c,d])) = insertAt 10 x (fromList (a:|[b,c,d]))
+--                                        = fromList (a:|[b,c,d,x])
+--   </pre>
+--   
+--   <pre>
+--   insertAt i x xs = take i xs &gt;&lt; singleton x &gt;&lt; drop i xs
+--   </pre>
 insertAt :: Int -> a -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. Delete the element of a sequence at a given index.
+--   Return the original sequence if the index is out of range.
+--   
+--   <pre>
+--   deleteAt 2 (a:|[b,c,d]) = a:|[b,d]
+--   deleteAt 4 (a:|[b,c,d]) = deleteAt (-1) (a:|[b,c,d]) = a:|[b,c,d]
+--   </pre>
 deleteAt :: Int -> NESeq a -> Seq a
+
+-- | &lt;math&gt;. Split a sequence at a given position.
+--   
+--   <ul>
+--   <li><tt><a>This</a> ys</tt> means that the given position was longer
+--   than the length of the list, and <tt>ys</tt> is the entire original
+--   system.</li>
+--   <li><tt><a>That</a> zs</tt> means that the given position was zero or
+--   smaller, and so <tt>zs</tt> is the entire original sequence.</li>
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the sequence of
+--   elements before the given position, <tt>take n xs</tt>) and
+--   <tt>zs</tt> (the sequence of elements after the given position,
+--   <tt>drop n xs</tt>).</li>
+--   </ul>
 splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
+
+-- | <a>elemIndexL</a> finds the leftmost index of the specified element,
+--   if it is present, and otherwise <a>Nothing</a>.
 elemIndexL :: Eq a => a -> NESeq a -> Maybe Int
+
+-- | <a>elemIndicesL</a> finds the indices of the specified element, from
+--   left to right (i.e. in ascending order).
 elemIndicesL :: Eq a => a -> NESeq a -> [Int]
+
+-- | <a>elemIndexR</a> finds the rightmost index of the specified element,
+--   if it is present, and otherwise <a>Nothing</a>.
 elemIndexR :: Eq a => a -> NESeq a -> Maybe Int
+
+-- | <a>elemIndicesR</a> finds the indices of the specified element, from
+--   right to left (i.e. in descending order).
 elemIndicesR :: Eq a => a -> NESeq a -> [Int]
+
+-- | <tt><a>findIndexL</a> p xs</tt> finds the index of the leftmost
+--   element that satisfies <tt>p</tt>, if any exist.
 findIndexL :: (a -> Bool) -> NESeq a -> Maybe Int
+
+-- | <tt><a>findIndicesL</a> p</tt> finds all indices of elements that
+--   satisfy <tt>p</tt>, in ascending order.
 findIndicesL :: (a -> Bool) -> NESeq a -> [Int]
+
+-- | <tt><a>findIndexR</a> p xs</tt> finds the index of the rightmost
+--   element that satisfies <tt>p</tt>, if any exist.
 findIndexR :: (a -> Bool) -> NESeq a -> Maybe Int
+
+-- | <tt><a>findIndicesR</a> p</tt> finds all indices of elements that
+--   satisfy <tt>p</tt>, in descending order.
 findIndicesR :: (a -> Bool) -> NESeq a -> [Int]
+
+-- | <i>O(n)</i>. A generalization of <a>foldMap1</a>,
+--   <a>foldMapWithIndex</a> takes a folding function that also depends on
+--   the element's index, and applies it to every element in the sequence.
 foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
+
+-- | <a>foldlWithIndex</a> is a version of <a>foldl</a> that also provides
+--   access to the index of each element.
 foldlWithIndex :: (b -> Int -> a -> b) -> b -> NESeq a -> b
+
+-- | <a>foldrWithIndex</a> is a version of <a>foldr</a> that also provides
+--   access to the index of each element.
 foldrWithIndex :: (Int -> a -> b -> b) -> b -> NESeq a -> b
+
+-- | A generalization of <a>fmap</a>, <a>mapWithIndex</a> takes a mapping
+--   function that also depends on the element's index, and applies it to
+--   every element in the sequence.
 mapWithIndex :: (Int -> a -> b) -> NESeq a -> NESeq b
+
+-- | <a>traverseWithIndex</a> is a version of <a>traverse</a> that also
+--   offers access to the index of each element.
+--   
+--   Is a more restrictive version of <a>traverseWithIndex1</a>;
+--   <a>traverseWithIndex1</a> should be used whenever possible.
 traverseWithIndex :: Applicative f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+
+-- | <i>O(n)</i>. <a>traverseWithIndex1</a> is a version of
+--   <a>traverse1</a> that also offers access to the index of each element.
 traverseWithIndex1 :: Apply f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
+
+-- | &lt;math&gt;. The reverse of a sequence.
 reverse :: NESeq a -> NESeq a
+
+-- | &lt;math&gt;. Intersperse an element between the elements of a
+--   sequence.
+--   
+--   <pre>
+--   intersperse a empty = empty
+--   intersperse a (singleton x) = singleton x
+--   intersperse a (fromList [x,y]) = fromList [x,a,y]
+--   intersperse a (fromList [x,y,z]) = fromList [x,a,y,a,z]
+--   </pre>
 intersperse :: a -> NESeq a -> NESeq a
+
+-- | &lt;math&gt;. <a>zip</a> takes two sequences and returns a sequence of
+--   corresponding pairs. If one input is short, excess elements are
+--   discarded from the right end of the longer sequence.
 zip :: NESeq a -> NESeq b -> NESeq (a, b)
+
+-- | &lt;math&gt;. <a>zipWith</a> generalizes <a>zip</a> by zipping with
+--   the function given as the first argument, instead of a tupling
+--   function. For example, <tt>zipWith (+)</tt> is applied to two
+--   sequences to take the sequence of corresponding sums.
 zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
+
+-- | &lt;math&gt;. <a>zip3</a> takes three sequences and returns a sequence
+--   of triples, analogous to <a>zip</a>.
 zip3 :: NESeq a -> NESeq b -> NESeq c -> NESeq (a, b, c)
+
+-- | &lt;math&gt;. <a>zipWith3</a> takes a function which combines three
+--   elements, as well as three sequences and returns a sequence of their
+--   point-wise combinations, analogous to <a>zipWith</a>.
 zipWith3 :: (a -> b -> c -> d) -> NESeq a -> NESeq b -> NESeq c -> NESeq d
+
+-- | &lt;math&gt;. <a>zip4</a> takes four sequences and returns a sequence
+--   of quadruples, analogous to <a>zip</a>.
 zip4 :: NESeq a -> NESeq b -> NESeq c -> NESeq d -> NESeq (a, b, c, d)
+
+-- | &lt;math&gt;. <a>zipWith4</a> takes a function which combines four
+--   elements, as well as four sequences and returns a sequence of their
+--   point-wise combinations, analogous to <a>zipWith</a>.
 zipWith4 :: (a -> b -> c -> d -> e) -> NESeq a -> NESeq b -> NESeq c -> NESeq d -> NESeq e
+
+-- | Unzip a sequence of pairs.
+--   
+--   <pre>
+--   unzip ps = ps `<a>seq</a>` (<a>fmap</a> <a>fst</a> ps) (<a>fmap</a> <a>snd</a> ps)
+--   </pre>
+--   
+--   Example:
+--   
+--   <pre>
+--   unzip $ fromList ((1,"a") :| [(2,"b"), (3,"c")]) =
+--     (fromList (1:|[2,3]), fromList ("a":|["b","c"]))
+--   </pre>
+--   
+--   See the note about efficiency at <tt>unzipWith</tt>.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
+
+-- | &lt;math&gt;. Unzip a sequence using a function to divide elements.
+--   
+--   <pre>
+--   unzipWith f xs == <a>unzip</a> (<a>fmap</a> f xs)
+--   </pre>
+--   
+--   Efficiency note:
+--   
+--   <tt>unzipWith</tt> produces its two results in lockstep. If you
+--   calculate <tt> unzipWith f xs </tt> and fully force <i>either</i> of
+--   the results, then the entire structure of the <i>other</i> one will be
+--   built as well. This behavior allows the garbage collector to collect
+--   each calculated pair component as soon as it dies, without having to
+--   wait for its mate to die. If you do not need this behavior, you may be
+--   better off simply calculating the sequence of pairs and using
+--   <a>fmap</a> to extract each component sequence.
 unzipWith :: (a -> (b, c)) -> NESeq a -> (NESeq b, NESeq c)
 
 
@@ -3176,7 +4006,7 @@ module Data.Set.NonEmpty.Internal
 --   <tt><a>Set</a> a</tt> into a <tt><a>Maybe</a> (<a>NESet</a> a)</tt>,
 --   returning <a>Nothing</a> if the original <a>Set</a> was empty.</li>
 --   <li>You can use the <a>insertSet</a> family of functions to insert a
---   value into a <a>Set</a> to create a guarunteed <a>NESet</a>.</li>
+--   value into a <a>Set</a> to create a guaranteed <a>NESet</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Set</a> to reveal it as either containing a
 --   <a>NESet</a> or an empty map.</li>
@@ -3208,7 +4038,7 @@ NESet :: !a -> !Set a -> NESet a
 --   the possiblity of a <a>Set</a> being an <a>NESet</a>.
 --   
 --   <pre>
---   nonEmptySet (Data.Set.fromList [3,5]) == fromList (3:|[5])
+--   nonEmptySet (Data.Set.fromList [3,5]) == Just (fromList (3:|[5]))
 --   </pre>
 nonEmptySet :: Set a -> Maybe (NESet a)
 
@@ -3385,7 +4215,7 @@ module Data.Set.NonEmpty
 --   <tt><a>Set</a> a</tt> into a <tt><a>Maybe</a> (<a>NESet</a> a)</tt>,
 --   returning <a>Nothing</a> if the original <a>Set</a> was empty.</li>
 --   <li>You can use the <a>insertSet</a> family of functions to insert a
---   value into a <a>Set</a> to create a guarunteed <a>NESet</a>.</li>
+--   value into a <a>Set</a> to create a guaranteed <a>NESet</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Set</a> to reveal it as either containing a
 --   <a>NESet</a> or an empty map.</li>
@@ -3458,7 +4288,7 @@ pattern IsEmpty :: Set a
 --   the possiblity of a <a>Set</a> being an <a>NESet</a>.
 --   
 --   <pre>
---   nonEmptySet (Data.Set.fromList [3,5]) == fromList (3:|[5])
+--   nonEmptySet (Data.Set.fromList [3,5]) == Just (fromList (3:|[5]))
 --   </pre>
 nonEmptySet :: Set a -> Maybe (NESet a)
 
@@ -4191,7 +5021,7 @@ module Data.Map.NonEmpty
 --   a)</tt>, returning <a>Nothing</a> if the original <a>Map</a> was
 --   empty.</li>
 --   <li>You can use the <a>insertMap</a> family of functions to insert a
---   value into a <a>Map</a> to create a guarunteed <a>NEMap</a>.</li>
+--   value into a <a>Map</a> to create a guaranteed <a>NEMap</a>.</li>
 --   <li>You can use the <a>IsNonEmpty</a> and <a>IsEmpty</a> patterns to
 --   "pattern match" on a <a>Map</a> to reveal it as either containing a
 --   <a>NEMap</a> or an empty map.</li>
@@ -4264,7 +5094,7 @@ pattern IsEmpty :: Map k a
 --   the possiblity of a <a>Map</a> being an <a>NEMap</a>.
 --   
 --   <pre>
---   nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+--   nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == Just (fromList ((3,"a") :| [(5,"b")]))
 --   </pre>
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 
