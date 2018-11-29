@@ -34,12 +34,12 @@ dependencies:
 - containers
 - these
 - semigroupoids
+- comonad
 
 library:
   source-dirs: src
   dependencies:
   - deepseq
-  - comonad
 
 tests:
   nonempty-containers-test:

@@ -1,9 +1,11 @@
+
 import           Test.Tasty
 import           Test.Tasty.Hedgehog
 import           Test.Tasty.Ingredients.ConsoleReporter
 import           Tests.IntMap
 import           Tests.IntSet
 import           Tests.Map
+import           Tests.Sequence
 import           Tests.Set
 
 setOpts :: TestTree -> TestTree
@@ -17,5 +19,6 @@ main = defaultMain . setOpts $
                               , setTests
                               , intMapTests
                               , intSetTests
+                              , sequenceTests
                               ]
 

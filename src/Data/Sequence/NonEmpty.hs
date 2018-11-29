@@ -345,7 +345,7 @@ iterateN n f x
 -- | Builds a sequence from a seed value.  Takes time linear in the
 -- number of generated elements.  /WARNING:/ If the number of generated
 -- elements is infinite, this method will not terminate.
-unfoldr :: (a -> (b, Maybe a)) -> a -> NESeq b
+unfoldr :: (b -> (a, Maybe b)) -> b -> NESeq a
 unfoldr f = go
   where
     go x0 = y :<|| maybe Seq.empty (toSeq . go) x1
@@ -354,12 +354,12 @@ unfoldr f = go
 {-# INLINE unfoldr #-}
 
 -- | @'unfoldl' f x@ is equivalent to @'reverse' ('unfoldr' ('fmap' swap . f) x)@.
-unfoldl :: (a -> (b, Maybe a)) -> a -> NESeq b
+unfoldl :: (b -> (Maybe b, a)) -> b -> NESeq a
 unfoldl f = go
   where
     go x0 = maybe Seq.empty (toSeq . go) x1 :||> y
       where
-        (y, x1) = f x0
+        (x1, y) = f x0
 {-# INLINE unfoldl #-}
 
 -- | /O(1)/. Retrieve the left-most item in a non-empty sequence.  Note

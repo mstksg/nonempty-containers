@@ -10,13 +10,13 @@ import           Data.Foldable
 import           Data.Functor.Identity
 import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup.Foldable
+import           Data.Text               (Text)
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
 import qualified Data.IntMap             as M
 import qualified Data.IntMap.NonEmpty    as NEM
 import qualified Data.List.NonEmpty      as NE
-import qualified Data.Text               as T
 import qualified Hedgehog.Gen            as Gen
 import qualified Hedgehog.Range          as Range
 
@@ -334,8 +334,8 @@ prop_map_rules_map = ttProp (gf1 valGen :?> gf1 valGen :?> GTNEIntMap :-> TTNEIn
 
 prop_map_rules_coerce :: Property
 prop_map_rules_coerce = ttProp (GTNEIntMap :-> TTNEIntMap)
-    (M.map   @T.Text @T.Text coerce)
-    (NEM.map @T.Text @T.Text coerce)
+    (M.map   @Text @Text coerce)
+    (NEM.map @Text @Text coerce)
 
 prop_map_rules_mapWithKey :: Property
 prop_map_rules_mapWithKey = ttProp (gf1 valGen :?> gf2 valGen :?> GTNEIntMap :-> TTNEIntMap)

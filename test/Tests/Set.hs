@@ -256,27 +256,27 @@ prop_lookupIndex = ttProp (GTKey :-> GTNESet :-> TTMaybe TTOther)
     NES.lookupIndex
 
 prop_elemAt :: Property
-prop_elemAt = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTKey)
+prop_elemAt = ttProp (GTSize :-> GTNESet :-> TTKey)
     (\i m -> S.elemAt   (i `mod` S.size   m) m)
     (\i m -> NES.elemAt (i `mod` NES.size m) m)
 
 prop_deleteAt :: Property
-prop_deleteAt = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTSet)
+prop_deleteAt = ttProp (GTSize :-> GTNESet :-> TTSet)
     (\i m -> S.deleteAt   (i `mod` S.size   m) m)
     (\i m -> NES.deleteAt (i `mod` NES.size m) m)
 
 prop_take :: Property
-prop_take = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTSet)
+prop_take = ttProp (GTSize :-> GTNESet :-> TTSet)
     S.take
     NES.take
 
 prop_drop :: Property
-prop_drop = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTSet)
+prop_drop = ttProp (GTSize :-> GTNESet :-> TTSet)
     S.drop
     NES.drop
 
 prop_splitAt :: Property
-prop_splitAt = ttProp (GTOther (Gen.int mapSize) :-> GTNESet :-> TTThese TTNESet TTNESet)
+prop_splitAt = ttProp (GTSize :-> GTNESet :-> TTThese TTNESet TTNESet)
     S.splitAt
     NES.splitAt
 

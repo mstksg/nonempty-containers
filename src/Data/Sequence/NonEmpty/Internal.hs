@@ -384,6 +384,8 @@ instance Comonad NESeq where
     extend = extended
     {-# INLINE extend #-}
 
+-- | 'foldr1', 'foldl', 'maximum', and 'minimum' are all total, unlike for
+-- 'Seq'.
 instance Foldable NESeq where
     fold (x :<|| xs) = x <> F.fold xs
     {-# INLINE fold #-}

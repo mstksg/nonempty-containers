@@ -11,6 +11,7 @@ import           Data.Functor.Identity
 import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
+import           Data.Text                  (Text)
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
@@ -18,7 +19,6 @@ import qualified Data.List.NonEmpty         as NE
 import qualified Data.Map                   as M
 import qualified Data.Map.NonEmpty          as NEM
 import qualified Data.Map.NonEmpty.Internal as NEM
-import qualified Data.Text                  as T
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
@@ -350,8 +350,8 @@ prop_map_rules_map = ttProp (gf1 valGen :?> gf1 valGen :?> GTNEMap :-> TTNEMap)
 
 prop_map_rules_coerce :: Property
 prop_map_rules_coerce = ttProp (GTNEMap :-> TTNEMap)
-    (M.map   @T.Text @T.Text coerce)
-    (NEM.map @T.Text @T.Text coerce)
+    (M.map   @Text @Text coerce)
+    (NEM.map @Text @Text coerce)
 
 prop_map_rules_mapWithKey :: Property
 prop_map_rules_mapWithKey = ttProp (gf1 valGen :?> gf2 valGen :?> GTNEMap :-> TTNEMap)
@@ -374,24 +374,24 @@ prop_mapWithKey_rules_map = ttProp (gf2 valGen :?> gf1 valGen :?> GTNEMap :-> TT
     (\f g xs -> NEM.mapWithKey f (NEM.map g xs))
 
 prop_traverseWithKey1 :: Property
-prop_traverseWithKey1 = ttProp (gf1 valGen :?> GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
-    (\f -> M.traverseWithKey    (\k -> (`More` Done (f . (k,)))))
-    (\f -> NEM.traverseWithKey1 (\k -> (`More` Done (f . (k,)))))
+prop_traverseWithKey1 = ttProp (gf2 valGen :?> GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
+    (\f -> M.traverseWithKey    (\k -> (`More` Done (f k))))
+    (\f -> NEM.traverseWithKey1 (\k -> (`More` Done (f k))))
 
 prop_traverseWithKey :: Property
-prop_traverseWithKey = ttProp (gf1 valGen :?> GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
-    (\f -> M.traverseWithKey   (\k -> (`More` Done (f . (k,)))))
-    (\f -> NEM.traverseWithKey (\k -> (`More` Done (f . (k,)))))
+prop_traverseWithKey = ttProp (gf2 valGen :?> GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
+    (\f -> M.traverseWithKey   (\k -> (`More` Done (f k))))
+    (\f -> NEM.traverseWithKey (\k -> (`More` Done (f k))))
 
 prop_traverseMaybeWithKey1 :: Property
-prop_traverseMaybeWithKey1 = ttProp (gf1 valGen :?> GTNEMap :-> TTBazaar (GTMaybe GTVal) TTMap TTVal)
-    (\f -> M.traverseMaybeWithKey    (\k -> (`More` Done (fmap (f . (k,))))))
-    (\f -> NEM.traverseMaybeWithKey1 (\k -> (`More` Done (fmap (f . (k,))))))
+prop_traverseMaybeWithKey1 = ttProp (gf2 valGen :?> GTNEMap :-> TTBazaar (GTMaybe GTVal) TTMap TTVal)
+    (\f -> M.traverseMaybeWithKey    (\k -> (`More` Done (fmap (f k)))))
+    (\f -> NEM.traverseMaybeWithKey1 (\k -> (`More` Done (fmap (f k)))))
 
 prop_traverseMaybeWithKey :: Property
-prop_traverseMaybeWithKey = ttProp (gf1 valGen :?> GTNEMap :-> TTBazaar (GTMaybe GTVal) TTMap TTVal)
-    (\f -> M.traverseMaybeWithKey   (\k -> (`More` Done (fmap (f . (k,))))))
-    (\f -> NEM.traverseMaybeWithKey (\k -> (`More` Done (fmap (f . (k,))))))
+prop_traverseMaybeWithKey = ttProp (gf2 valGen :?> GTNEMap :-> TTBazaar (GTMaybe GTVal) TTMap TTVal)
+    (\f -> M.traverseMaybeWithKey   (\k -> (`More` Done (fmap (f k)))))
+    (\f -> NEM.traverseMaybeWithKey (\k -> (`More` Done (fmap (f k)))))
 
 prop_sequence1 :: Property
 prop_sequence1 = ttProp (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
@@ -660,37 +660,37 @@ prop_lookupIndex = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTOther)
     NEM.lookupIndex
 
 prop_elemAt :: Property
-prop_elemAt = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTKey :*: TTVal)
+prop_elemAt = ttProp (GTSize :-> GTNEMap :-> TTKey :*: TTVal)
     (\i m -> M.elemAt   (i `mod` M.size   m) m)
     (\i m -> NEM.elemAt (i `mod` NEM.size m) m)
 
 prop_adjustAt :: Property
-prop_adjustAt = ttProp (gf2 valGen :?> GTOther (Gen.int mapSize) :-> GTNEMap :-> TTNEMap)
+prop_adjustAt = ttProp (gf2 valGen :?> GTSize :-> GTNEMap :-> TTNEMap)
     (\f i m -> M.updateAt   (\k -> Just . f k) (i `mod` M.size   m) m)
     (\f i m -> NEM.adjustAt f                  (i `mod` NEM.size m) m)
 
 prop_updateAt :: Property
-prop_updateAt = ttProp (gf2 (Gen.maybe valGen) :?> GTOther (Gen.int mapSize) :-> GTNEMap :-> TTMap)
+prop_updateAt = ttProp (gf2 (Gen.maybe valGen) :?> GTSize :-> GTNEMap :-> TTMap)
     (\f i m -> M.updateAt   f (i `mod` M.size   m) m)
     (\f i m -> NEM.updateAt f (i `mod` NEM.size m) m)
 
 prop_deleteAt :: Property
-prop_deleteAt = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTMap)
+prop_deleteAt = ttProp (GTSize :-> GTNEMap :-> TTMap)
     (\i m -> M.deleteAt   (i `mod` M.size   m) m)
     (\i m -> NEM.deleteAt (i `mod` NEM.size m) m)
 
 prop_take :: Property
-prop_take = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTMap)
+prop_take = ttProp (GTSize :-> GTNEMap :-> TTMap)
     M.take
     NEM.take
 
 prop_drop :: Property
-prop_drop = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTMap)
+prop_drop = ttProp (GTSize :-> GTNEMap :-> TTMap)
     M.drop
     NEM.drop
 
 prop_splitAt :: Property
-prop_splitAt = ttProp (GTOther (Gen.int mapSize) :-> GTNEMap :-> TTThese TTNEMap TTNEMap)
+prop_splitAt = ttProp (GTSize :-> GTNEMap :-> TTThese TTNEMap TTNEMap)
     M.splitAt
     NEM.splitAt
 
