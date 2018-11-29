@@ -2975,8 +2975,8 @@ module Data.Sequence.NonEmpty.Internal
 --   <a>Data.Sequence</a>, faithfully reproducing asymptotics, typeclass
 --   constraints, and semantics. Functions that ensure that input and
 --   output maps are both non-empty (like <a>&lt;|</a>) return
---   <tt>NESequence</tt>, but functions that might potentially return an
---   empty map (like <a>tail</a>) return a <a>Seq</a> instead.
+--   <a>NESeq</a>, but functions that might potentially return an empty map
+--   (like <a>tail</a>) return a <a>Seq</a> instead.
 --   
 --   You can directly construct an <a>NESeq</a> with the API from
 --   <a>Data.Sequence.NonEmpty</a>; it's more or less the same as
@@ -2985,7 +2985,7 @@ module Data.Sequence.NonEmpty.Internal
 --   from a <a>Seq</a>:
 --   
 --   <ol>
---   <li>The <tt>nonEmptyMap</tt> smart constructor will convert a
+--   <li>The <a>nonEmptySeq</a> smart constructor will convert a
 --   <tt><a>Seq</a> a</tt> into a <tt><a>Maybe</a> (<a>NESeq</a> a)</tt>,
 --   returning <a>Nothing</a> if the original <a>Seq</a> was empty.</li>
 --   <li>You can use <a>:&lt;||</a>, <a>:||&gt;</a>, and <a>insertSeqAt</a>
@@ -3048,9 +3048,9 @@ withNonEmpty :: r -> (NESeq a -> r) -> Seq a -> r
 --   Can be thought of as "obscuring" the non-emptiness of the map in its
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
---   <tt>nonEmptySeq</tt> and <tt><a>maybe</a> <a>empty</a>
---   <a>toSeq</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySeq</a> and <tt><a>maybe</a> <a>empty</a> <a>toSeq</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 toSeq :: NESeq a -> Seq a
 
 -- | &lt;math&gt;. A singleton sequence.
@@ -3145,7 +3145,7 @@ zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
 --     (fromList (1:|[2,3]), fromList ("a":|["b","c"]))
 --   </pre>
 --   
---   See the note about efficiency at <tt>unzipWith</tt>.
+--   See the note about efficiency at <a>unzipWith</a>.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
 instance Data.Traversable.Traversable Data.Sequence.NonEmpty.Internal.NESeq
 instance GHC.Base.Functor Data.Sequence.NonEmpty.Internal.NESeq
@@ -3177,10 +3177,10 @@ instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Sequence.NonEm
 --   
 --   | An <tt><a>NESeq</a> a</tt> is a non-empty (but finite) sequence of
 --   values of type <tt>a</tt>. Generally has the same interface as
---   <tt>NonEmpty</tt>. This is a non-empty version of <a>Seq</a> from
+--   <a>NonEmpty</a>. This is a non-empty version of <a>Seq</a> from
 --   <a>Data.Sequence</a>.
 --   
---   The main differences between this type and <tt>NonEmpty</tt> are:
+--   The main differences between this type and <a>NonEmpty</a> are:
 --   
 --   <ul>
 --   <li>You cannot have infinite <a>NESeq</a>s</li>
@@ -3193,8 +3193,8 @@ instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Sequence.NonEm
 --   index.</li>
 --   </ul>
 --   
---   While asymptotics are often better than for <tt>NonEmpty</tt>, there
---   is a decent constant factor involved in most operations.
+--   While asymptotics are often better than for <a>NonEmpty</a>, there is
+--   a decent constant factor involved in most operations.
 --   
 --   See documentation for <a>NESeq</a> for information on how to convert
 --   and manipulate such non-empty sequences
@@ -3241,8 +3241,8 @@ module Data.Sequence.NonEmpty
 --   <a>Data.Sequence</a>, faithfully reproducing asymptotics, typeclass
 --   constraints, and semantics. Functions that ensure that input and
 --   output maps are both non-empty (like <a>&lt;|</a>) return
---   <tt>NESequence</tt>, but functions that might potentially return an
---   empty map (like <a>tail</a>) return a <a>Seq</a> instead.
+--   <a>NESeq</a>, but functions that might potentially return an empty map
+--   (like <a>tail</a>) return a <a>Seq</a> instead.
 --   
 --   You can directly construct an <a>NESeq</a> with the API from
 --   <a>Data.Sequence.NonEmpty</a>; it's more or less the same as
@@ -3251,7 +3251,7 @@ module Data.Sequence.NonEmpty
 --   from a <a>Seq</a>:
 --   
 --   <ol>
---   <li>The <tt>nonEmptyMap</tt> smart constructor will convert a
+--   <li>The <a>nonEmptySeq</a> smart constructor will convert a
 --   <tt><a>Seq</a> a</tt> into a <tt><a>Maybe</a> (<a>NESeq</a> a)</tt>,
 --   returning <a>Nothing</a> if the original <a>Seq</a> was empty.</li>
 --   <li>You can use <a>:&lt;||</a>, <a>:||&gt;</a>, and <a>insertSeqAt</a>
@@ -3356,9 +3356,9 @@ nonEmptySeq :: Seq a -> Maybe (NESeq a)
 --   Can be thought of as "obscuring" the non-emptiness of the map in its
 --   type. See the <a>IsNotEmpty</a> pattern.
 --   
---   <tt>nonEmptySeq</tt> and <tt><a>maybe</a> <a>empty</a>
---   <a>toSeq</a></tt> form an isomorphism: they are perfect
---   structure-preserving inverses of eachother.
+--   <a>nonEmptySeq</a> and <tt><a>maybe</a> <a>empty</a> <a>toSeq</a></tt>
+--   form an isomorphism: they are perfect structure-preserving inverses of
+--   eachother.
 toSeq :: NESeq a -> Seq a
 
 -- | <i>O(log n)</i>. A general continuation-based way to consume a
@@ -3952,7 +3952,7 @@ zipWith4 :: (a -> b -> c -> d -> e) -> NESeq a -> NESeq b -> NESeq c -> NESeq d 
 --     (fromList (1:|[2,3]), fromList ("a":|["b","c"]))
 --   </pre>
 --   
---   See the note about efficiency at <tt>unzipWith</tt>.
+--   See the note about efficiency at <a>unzipWith</a>.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
 
 -- | &lt;math&gt;. Unzip a sequence using a function to divide elements.

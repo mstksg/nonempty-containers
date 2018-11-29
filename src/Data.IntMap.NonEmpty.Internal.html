@@ -471,9 +471,9 @@
 </span><a name="line-471"></a><span>
 </span><a name="line-472"></a><span class="hs-comment">-- | Traverses elements in order of ascending keys.</span><span>
 </span><a name="line-473"></a><span class="hs-comment">--</span><span>
-</span><a name="line-474"></a><span class="hs-comment">-- __WARNING:__ 'fold' and 'foldMap' are different than for the 'IntMap'</span><span>
-</span><a name="line-475"></a><span class="hs-comment">-- instance.  They traverse elements in order of ascending keys, while</span><span>
-</span><a name="line-476"></a><span class="hs-comment">-- 'IntMap' traverses positive keys first, then negative keys.</span><span>
+</span><a name="line-474"></a><span class="hs-comment">-- __WARNING:__ 'F.fold' and 'F.foldMap' are different than for the</span><span>
+</span><a name="line-475"></a><span class="hs-comment">-- 'IntMap' instance.  They traverse elements in order of ascending keys,</span><span>
+</span><a name="line-476"></a><span class="hs-comment">-- while 'IntMap' traverses positive keys first, then negative keys.</span><span>
 </span><a name="line-477"></a><span class="hs-comment">--</span><span>
 </span><a name="line-478"></a><span class="hs-comment">-- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',</span><span>
 </span><a name="line-479"></a><span class="hs-comment">-- 'Data.Foldable.maximum' are all total.</span><span>
@@ -516,8 +516,8 @@
 </span><a name="line-516"></a><span>
 </span><a name="line-517"></a><span class="hs-comment">-- | Traverses elements in order of ascending keys</span><span>
 </span><a name="line-518"></a><span class="hs-comment">--</span><span>
-</span><a name="line-519"></a><span class="hs-comment">-- __WARNING:__ 'fold1' and 'foldMap1' are different than 'fold' and</span><span>
-</span><a name="line-520"></a><span class="hs-comment">-- 'foldMap' for the 'IntMap' instance of 'Foldable'.  They traverse</span><span>
+</span><a name="line-519"></a><span class="hs-comment">-- __WARNING:__ 'F1.fold1' and 'F1.foldMap1' are different than 'F.fold' and</span><span>
+</span><a name="line-520"></a><span class="hs-comment">-- 'F.foldMap' for the 'IntMap' instance of 'Foldable'.  They traverse</span><span>
 </span><a name="line-521"></a><span class="hs-comment">-- elements in order of ascending keys, while 'IntMap' traverses positive</span><span>
 </span><a name="line-522"></a><span class="hs-comment">-- keys first, then negative keys.</span><span>
 </span><a name="line-523"></a><span class="hs-keyword">instance</span><span> </span><span class="hs-identifier hs-type">Foldable1</span><span> </span><a href="Data.IntMap.NonEmpty.Internal.html#NEIntMap"><span class="hs-identifier hs-type">NEIntMap</span></a><span> </span><span class="hs-keyword">where</span><span>
