@@ -3068,6 +3068,11 @@ fromList :: NonEmpty a -> NESeq a
 --   representing that sequence into a sequence.
 fromFunction :: Int -> (Int -> a) -> NESeq a
 
+-- | &lt;math&gt;. <tt>replicate n x</tt> is a sequence consisting of
+--   <tt>n</tt> copies of <tt>x</tt>. Is only defined when <tt>n</tt> is
+--   positive.
+replicate :: Int -> a -> NESeq a
+
 -- | &lt;math&gt;. The element at the specified position, counting from 0.
 --   The argument should thus be a non-negative integer less than the size
 --   of the sequence. If the position is out of range, <a>index</a> fails
@@ -3099,6 +3104,7 @@ infixr 5 ><
 --   guarunteed non-empty side.
 (|><) :: NESeq a -> Seq a -> NESeq a
 infixr 5 |><
+map :: (a -> b) -> NESeq a -> NESeq b
 
 -- | <i>O(n)</i>. A generalization of <a>foldMap1</a>,
 --   <a>foldMapWithIndex</a> takes a folding function that also depends on
@@ -3148,7 +3154,6 @@ zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
 --   See the note about efficiency at <a>unzipWith</a>.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
 instance Data.Traversable.Traversable Data.Sequence.NonEmpty.Internal.NESeq
-instance GHC.Base.Functor Data.Sequence.NonEmpty.Internal.NESeq
 instance GHC.Show.Show a => GHC.Show.Show (Data.Sequence.NonEmpty.Internal.NESeq a)
 instance GHC.Read.Read a => GHC.Read.Read (Data.Sequence.NonEmpty.Internal.NESeq a)
 instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Sequence.NonEmpty.Internal.NESeq a)
@@ -3158,6 +3163,7 @@ instance Data.Functor.Classes.Eq1 Data.Sequence.NonEmpty.Internal.NESeq
 instance Data.Functor.Classes.Ord1 Data.Sequence.NonEmpty.Internal.NESeq
 instance Data.Data.Data a => Data.Data.Data (Data.Sequence.NonEmpty.Internal.NESeq a)
 instance GHC.Base.Semigroup (Data.Sequence.NonEmpty.Internal.NESeq a)
+instance GHC.Base.Functor Data.Sequence.NonEmpty.Internal.NESeq
 instance Data.Functor.Bind.Class.Apply Data.Sequence.NonEmpty.Internal.NESeq
 instance GHC.Base.Applicative Data.Sequence.NonEmpty.Internal.NESeq
 instance Data.Functor.Alt.Alt Data.Sequence.NonEmpty.Internal.NESeq
