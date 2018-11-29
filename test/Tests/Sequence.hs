@@ -7,14 +7,17 @@ module Tests.Sequence (sequenceTests) where
 import           Control.Applicative
 import           Control.Comonad
 import           Control.Monad
+import           Data.Bifunctor
 import           Data.Functor.Identity
 import           Data.Ord
 import           Data.Sequence              (Seq(..))
 import           Data.Sequence.NonEmpty     (NESeq(..))
+import           Data.Tuple
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
 import qualified Data.Foldable              as F
+import qualified Data.List.NonEmpty         as NE
 import qualified Data.Semigroup.Foldable    as F1
 import qualified Data.Semigroup.Traversable as T1
 import qualified Data.Sequence              as Seq
@@ -100,9 +103,15 @@ prop_replicate = ttProp (GTSize :-> GTVal :-> TTNESeq)
     (Seq.replicate   . (+ 1))
     (NESeq.replicate . (+ 1))
 
-  -- , replicateA
-  -- , replicateA1
-  -- , replicateM
+prop_replicateA :: Property
+prop_replicateA = ttProp (GTSize :-> GTVal :-> TTBazaar GTVal TTNESeq TTVal)
+    (\i x -> Seq.replicateA   (i + 1) (x `More` Done id))
+    (\i x -> NESeq.replicateA (i + 1) (x `More` Done id))
+
+prop_replicateA1 :: Property
+prop_replicateA1 = ttProp (GTSize :-> GTVal :-> TTBazaar GTVal TTNESeq TTVal)
+    (\i x -> Seq.replicateA    (i + 1) (x `More` Done id))
+    (\i x -> NESeq.replicateA1 (i + 1) (x `More` Done id))
 
 prop_cycleTaking :: Property
 prop_cycleTaking = ttProp (GTSize :-> GTNESeq :-> TTNESeq)
@@ -112,27 +121,35 @@ prop_cycleTaking = ttProp (GTSize :-> GTNESeq :-> TTNESeq)
 prop_iterateN :: Property
 prop_iterateN = ttProp (GTSize :-> gf1 valGen :?> GTVal :-> TTNESeq)
     (Seq.iterateN   . (+ 1))
-    (NESeq.iterateN . (+ 2))
+    (NESeq.iterateN . (+ 1))
 
 prop_unfoldr :: Property
-prop_unfoldr = ttProp ( gf1 ((,) <$> valGen <*> Gen.maybe intKeyGen)
+prop_unfoldr = ttProp ( GTSize
+                    :-> gf1 ((,) <$> valGen <*> Gen.maybe intKeyGen)
                     :?> GTIntKey
-                    :-> TTNESeq
+                    :-> TTNESeqList
                       )
-    (Seq.unfoldr . fmap floop)
-    NESeq.unfoldr
-  where
-    floop (x, y) = (x,) <$> y
+    (\i f -> NE.unfoldr    (limiter f) . (i,))
+    (\i f -> NESeq.unfoldr (limiter f) . (i,))
 
 prop_unfoldl :: Property
-prop_unfoldl = ttProp ( gf1 ((,) <$> Gen.maybe intKeyGen <*> valGen)
+prop_unfoldl = ttProp ( GTSize
+                    :-> gf1 ((,) <$> valGen <*> Gen.maybe intKeyGen)
                     :?> GTIntKey
-                    :-> TTNESeq
+                    :-> TTNESeqList
                       )
-    (Seq.unfoldl . fmap floop)
-    NESeq.unfoldl
+    (\i f -> NE.reverse . NE.unfoldr    (       limiter f) . (i,))
+    (\i f ->              NESeq.unfoldl (swap . limiter f) . (i,))
+
+limiter
+    :: (a -> (b, Maybe a))
+    -> (Int, a)
+    -> (b, Maybe (Int, a))
+limiter f (n, x) = second (go =<<) $ f x
   where
-    floop (x, y) = (,y) <$> x
+    go y
+      | n <= 0    = Nothing
+      | otherwise = Just (n - 1, y)
 
 prop_head :: Property
 prop_head = ttProp (GTNESeq :-> TTMaybe TTVal)
@@ -181,18 +198,18 @@ prop_scanr1 = ttProp (gf2 valGen :?> GTNESeq :-> TTNESeq)
 
 prop_tails :: Property
 prop_tails = ttProp (GTNESeq :-> TTNESeq)
-    Seq.tails
+    (Seq.filter (not . null) . Seq.tails)
     (fmap NESeq.toSeq . NESeq.tails)
 
 prop_inits :: Property
 prop_inits = ttProp (GTNESeq :-> TTNESeq)
-    Seq.inits
+    (Seq.filter (not . null) . Seq.inits)
     (fmap NESeq.toSeq . NESeq.inits)
 
 prop_chunksOf :: Property
 prop_chunksOf = ttProp (GTSize :-> GTNESeq :-> TTNESeq)
-    (\i -> Seq.chunksOf (i + 1))      -- some may be empty?
-    (\i -> fmap NESeq.toSeq . NESeq.chunksOf (i + 1))
+    (\i -> Seq.filter (not . null) . Seq.chunksOf   (i + 1))
+    (\i -> fmap NESeq.toSeq        . NESeq.chunksOf (i + 1))
 
 prop_takeWhileL :: Property
 prop_takeWhileL = ttProp (gf1 Gen.bool :?> GTNESeq :-> TTOther)
@@ -279,7 +296,10 @@ prop_lookup = ttProp (GTIntKey :-> GTNESeq :-> TTMaybe TTVal)
     Seq.lookup
     NESeq.lookup
 
-  -- , index
+prop_index :: Property
+prop_index = ttProp (GTNESeq :-> GTIntKey :-> TTVal)
+    (\xs i -> xs `Seq.index`   (i `mod` Seq.length xs  ))
+    (\xs i -> xs `NESeq.index` (i `mod` NESeq.length xs))
 
 prop_adjust :: Property
 prop_adjust = ttProp (gf1 valGen :?> GTIntKey :-> GTNESeq :-> TTNESeq)
@@ -455,9 +475,9 @@ prop_liftM2 = ttProp (gf2 valGen :?> GTNESeq :-> GTNESeq :-> TTNESeq)
     liftM2
 
 prop_duplicate :: Property
-prop_duplicate = ttProp (GTOther neSeqGen :-> TTOther)
-    (NESeq.fromList . fmap NESeq.fromList . duplicate . F1.toNonEmpty)
+prop_duplicate = ttProp (GTNESeqList :-> TTNESeqList)
     duplicate
+    (fmap F1.toNonEmpty . duplicate)
 
 prop_foldMap :: Property
 prop_foldMap = ttProp (gf1 valGen :?> GTNESeq :-> TTOther)

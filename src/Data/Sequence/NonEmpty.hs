@@ -530,15 +530,15 @@ spanl p xs0@(x :<|| xs)
 --     @ys@ is the entire original sequence.
 -- *   @'That' zs@ means that the predicate failed on the first item, and
 --     @zs@ is the entire original sequence.
--- *   @'These' ys zs@ gives @zs@ (the suffix of elements that satisfy the
---     predicae) and @ys@ (the remainder of the sequence, before the suffix)
+-- *   @'These' ys zs@ gives @ys@ (the suffix of elements that satisfy the
+--     predicae) and @zs@ (the remainder of the sequence, before the suffix)
 spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 spanr p xs0@(xs :||> x)
     | p x       = case (nonEmptySeq ys, nonEmptySeq zs) of
-        (Nothing , Nothing ) -> That  (singleton x)
-        (Just ys', Nothing ) -> These ys'           (singleton x)
-        (Nothing , Just _  ) -> That  xs0
-        (Just ys', Just zs') -> These ys'           (zs' |> x)
+        (Nothing , Nothing ) -> This  (singleton x)
+        (Just _  , Nothing ) -> This  xs0
+        (Nothing , Just zs') -> These (singleton x) zs'
+        (Just ys', Just zs') -> These (ys' |> x   ) zs'
     | otherwise = That xs0
   where
     (ys, zs) = Seq.spanr p xs
@@ -651,10 +651,13 @@ unstableSort = unstableSortBy compare
 -- 'unstableSortBy' takes an arbitrary comparator and sorts the specified
 -- sequence.  The sort is not stable.  This algorithm is frequently faster
 -- and uses less memory than 'sortBy'.
+
+-- TODO: figure out how to make it match 'Data.Sequence.unstableSortBy'.
 unstableSortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
-unstableSortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
-                     . Seq.unstableSortBy c
-                     $ xs
+unstableSortBy c = unsafeFromSeq . Seq.unstableSortBy c . toSeq
+-- unstableSortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
+--                      . Seq.unstableSortBy c
+--                      $ xs
 {-# INLINE unstableSortBy #-}
 
 -- | \( O(n \log n) \). 'unstableSortOn' sorts the specified 'NESeq' by
@@ -676,10 +679,13 @@ unstableSortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
 -- If @f@ is very cheap (for example a record selector, or 'fst'),
 -- @'unstableSortBy' ('compare' ``Data.Function.on`` f)@ will be faster than
 -- @'unstableSortOn' f@.
+
+-- TODO: figure out how to make it match 'Data.Sequence.unstableSortBy'.
 unstableSortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
-unstableSortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)
-                             . Seq.unstableSortOn f
-                             $ xs
+unstableSortOn f = unsafeFromSeq . Seq.unstableSortOn f . toSeq
+-- unstableSortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)
+--                              . Seq.unstableSortOn f
+--                              $ xs
 {-# INLINE unstableSortOn #-}
 
 insertBy :: (a -> a -> Ordering) -> a -> NESeq a -> NESeq a
@@ -688,7 +694,7 @@ insertBy c x xs = case spanl ltx xs of
     That     zs -> x <| zs
     These ys zs -> ys >< (x <| zs)
   where
-    ltx y = c x y == LT
+    ltx y = c x y == GT
 {-# INLINABLE insertBy #-}
 
 insertOn :: Ord b => (a -> b) -> a -> NESeq a -> NESeq a
@@ -698,7 +704,7 @@ insertOn f x xs = case spanl ltx xs of
     These ys zs -> ys >< (x <| zs)
   where
     fx = f x
-    ltx y = fx < f y
+    ltx y = fx > f y
 {-# INLINABLE insertOn #-}
 
 -- | \( O(\log(\min(i,n-i))) \). The element at the specified position,
@@ -794,9 +800,10 @@ insertAt i y xs0@(x :<|| xs)
 -- deleteAt 4 (a:|[b,c,d]) = deleteAt (-1) (a:|[b,c,d]) = a:|[b,c,d]
 -- @
 deleteAt :: Int -> NESeq a -> Seq a
-deleteAt i (x :<|| xs)
-    | i <= 0    = xs
-    | otherwise = x Seq.<| Seq.deleteAt (i - 1) xs
+deleteAt i xs0@(x :<|| xs) = case compare i 0 of
+    LT -> toSeq xs0
+    EQ -> xs
+    GT -> x Seq.<| Seq.deleteAt (i - 1) xs
 {-# INLINE deleteAt #-}
 
 -- | \( O(\log(\min(i,n-i))) \). Split a sequence at a given position.
@@ -859,7 +866,7 @@ findIndexR :: (a -> Bool) -> NESeq a -> Maybe Int
 findIndexR p (xs :||> x) = here_ <|> there_
   where
     here_  = Seq.length xs <$ guard (p x)
-    there_ = Seq.findIndexL p xs
+    there_ = Seq.findIndexR p xs
 {-# INLINE findIndexR #-}
 
 -- | @'findIndicesL' p@ finds all indices of elements that satisfy @p@,
@@ -883,7 +890,7 @@ findIndicesR p (xs :||> x)
     | p x       = Seq.length xs : ixs
     | otherwise = ixs
   where
-    ixs = Seq.findIndicesL p xs
+    ixs = Seq.findIndicesR p xs
 {-# INLINE findIndicesR #-}
 
 -- | 'foldlWithIndex' is a version of 'foldl' that also provides access
