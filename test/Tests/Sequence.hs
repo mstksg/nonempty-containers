@@ -10,19 +10,20 @@ import           Control.Monad
 import           Data.Bifunctor
 import           Data.Functor.Identity
 import           Data.Ord
-import           Data.Sequence              (Seq(..))
-import           Data.Sequence.NonEmpty     (NESeq(..))
+import           Data.Sequence                   (Seq(..))
+import           Data.Sequence.NonEmpty          (NESeq(..))
 import           Data.Tuple
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
-import qualified Data.Foldable              as F
-import qualified Data.List.NonEmpty         as NE
-import qualified Data.Semigroup.Foldable    as F1
-import qualified Data.Semigroup.Traversable as T1
-import qualified Data.Sequence              as Seq
-import qualified Data.Sequence.NonEmpty     as NESeq
-import qualified Hedgehog.Gen               as Gen
+import qualified Data.Foldable                   as F
+import qualified Data.List.NonEmpty              as NE
+import qualified Data.Semigroup.Foldable         as F1
+import qualified Data.Semigroup.Traversable      as T1
+import qualified Data.Sequence                   as Seq
+import qualified Data.Sequence.NonEmpty          as NESeq
+import qualified Data.Sequence.NonEmpty.Internal as NESeq
+import qualified Hedgehog.Gen                    as Gen
 
 sequenceTests :: TestTree
 sequenceTests = groupTree $$(discover)
@@ -282,7 +283,7 @@ prop_sortBy = ttProp (gf1 valGen :?> GTNESeq :-> TTNESeq)
 
 prop_sortOn :: Property
 prop_sortOn = ttProp (gf1 valGen :?> GTNESeq :-> TTNESeq)
-    Seq.sortOn
+    NESeq.sortOnSeq
     NESeq.sortOn
 
 prop_unstableSort :: Property
@@ -297,7 +298,7 @@ prop_unstableSortBy = ttProp (gf1 valGen :?> GTNESeq :-> TTNESeq)
 
 prop_unstableSortOn :: Property
 prop_unstableSortOn = ttProp (gf1 valGen :?> GTNESeq :-> TTNESeq)
-    Seq.unstableSortOn
+    NESeq.unstableSortOnSeq
     NESeq.unstableSortOn
 
 prop_lookup :: Property
@@ -462,15 +463,15 @@ prop_zipWith4 = ttProp (gf4 valGen :?> GTNESeq :-> GTNESeq :-> GTNESeq :-> GTNES
 
 prop_unzip :: Property
 prop_unzip = ttProp (GTNESeq :-> GTNESeq :-> TTNESeq :*: TTNESeq)
-    (\xs -> Seq.unzip   . Seq.zip   xs)
-    (\xs -> NESeq.unzip . NESeq.zip xs)
+    (\xs -> NESeq.unzipSeq . Seq.zip   xs)
+    (\xs -> NESeq.unzip    . NESeq.zip xs)
 
 prop_unzipWith :: Property
 prop_unzipWith = ttProp ( gf1 ((,) <$> valGen <*> valGen)
                       :?> GTNESeq
                       :-> TTNESeq :*: TTNESeq
                         )
-    Seq.unzipWith
+    NESeq.unzipWithSeq
     NESeq.unzipWith
 
 prop_liftA2 :: Property

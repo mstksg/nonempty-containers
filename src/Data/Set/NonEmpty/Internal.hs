@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE ViewPatterns       #-}
@@ -31,27 +32,33 @@ module Data.Set.NonEmpty.Internal (
   , foldl
   , foldr'
   , foldl'
+  , MergeNESet(..)
   , merge
   , valid
   , insertMinSet
   , insertMaxSet
+  , disjointSet
+  , powerSetSet
+  , disjointUnionSet
+  , cartesianProductSet
   ) where
 
 import           Control.DeepSeq
 import           Data.Data
 import           Data.Function
 import           Data.Functor.Classes
-import           Data.List.NonEmpty      (NonEmpty(..))
+import           Data.List.NonEmpty                   (NonEmpty(..))
 import           Data.Semigroup
-import           Data.Semigroup.Foldable (Foldable1)
-import           Data.Set.Internal       (Set(..))
-import           Data.Typeable           (Typeable)
-import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
+import           Data.Semigroup.Foldable              (Foldable1)
+import           Data.Set.Internal                    (Set(..))
+import           Data.Typeable                        (Typeable)
+import           Prelude hiding                       (foldr, foldr1, foldl, foldl1)
 import           Text.Read
-import qualified Data.Foldable           as F
-import qualified Data.Semigroup.Foldable as F1
-import qualified Data.Set                as S
-import qualified Data.Set.Internal       as S
+import           Utils.Containers.Internal.StrictPair
+import qualified Data.Foldable                        as F
+import qualified Data.Semigroup.Foldable              as F1
+import qualified Data.Set                             as S
+import qualified Data.Set.Internal                    as S
 
 -- | A non-empty set of values @a@.  At least one value exists in an
 -- @'NESet' a@ at all times.
@@ -318,10 +325,17 @@ instance Ord a => Semigroup (NESet a) where
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
 instance Foldable NESet where
+#if MIN_VERSION_base(4,11,0)
     fold      (NESet x s) = x <> F.fold s
     {-# INLINE fold #-}
     foldMap f (NESet x s) = f x <> foldMap f s
     {-# INLINE foldMap #-}
+#else
+    fold      (NESet x s) = x `mappend` F.fold s
+    {-# INLINE fold #-}
+    foldMap f (NESet x s) = f x `mappend` foldMap f s
+    {-# INLINE foldMap #-}
+#endif
     foldr   = foldr
     {-# INLINE foldr #-}
     foldr'  = foldr'
@@ -366,9 +380,12 @@ instance Foldable1 NESet where
     {-# INLINE toNonEmpty #-}
 
 
+-- | Used for 'cartesianProduct'
+newtype MergeNESet a = MergeNESet { getMergeNESet :: NESet a }
 
-
-
+instance Semigroup (MergeNESet a) where
+    MergeNESet n1 <> MergeNESet n2 = MergeNESet (merge n1 n2)
+    {-# INLINE (<>) #-}
 
 -- | Unsafely merge two disjoint sets.  Only legal if all items in the
 -- first set are less than all items in the second set
@@ -379,9 +396,6 @@ merge (NESet x1 s1) n2 = NESet x1 $ s1 `S.merge` toSet n2
 valid :: Ord a => NESet a -> Bool
 valid (NESet x s) = S.valid s
                   && all ((x <) . fst) (S.minView s)
-
-
-
 
 
 
@@ -416,26 +430,82 @@ insertMaxSet x = \case
     Bin _ y l r -> balanceR y l (insertMaxSet x r)
 {-# INLINABLE insertMaxSet #-}
 
-balanceL :: a -> Set a -> Set a -> Set a
-balanceL x l r = case r of
-    Tip -> case l of
-      Tip -> Bin 1 x Tip Tip
-      Bin _ _ Tip Tip -> Bin 2 x l Tip
-      Bin _ lx Tip (Bin _ lrx _ _) -> Bin 3 lrx (Bin 1 lx Tip Tip) (Bin 1 x Tip Tip)
-      Bin _ lx ll@Bin{} Tip -> Bin 3 lx ll (Bin 1 x Tip Tip)
-      Bin ls lx ll@(Bin lls _ _ _) lr@(Bin lrs lrx lrl lrr)
-        | lrs < ratio*lls -> Bin (1+ls) lx ll (Bin (1+lrs) x lr Tip)
-        | otherwise -> Bin (1+ls) lrx (Bin (1+lls+S.size lrl) lx ll lrl) (Bin (1+S.size lrr) x lrr Tip)
-    Bin rs _ _ _ -> case l of
-             Tip -> Bin (1+rs) x Tip r
-             Bin ls lx ll lr
-                | ls > delta*rs  -> case (ll, lr) of
-                     (Bin lls _ _ _, Bin lrs lrx lrl lrr)
-                       | lrs < ratio*lls -> Bin (1+ls+rs) lx ll (Bin (1+rs+lrs) x lr r)
-                       | otherwise -> Bin (1+ls+rs) lrx (Bin (1+lls+S.size lrl) lx ll lrl) (Bin (1+rs+S.size lrr) x lrr r)
-                     (_, _) -> error "Failure in Data.Set.NonEmpty.Internal.balanceL"
-                | otherwise -> Bin (1+ls+rs) x l r
-{-# NOINLINE balanceL #-}
+-- ---------------------------------------------
+-- | CPP for new functions not in old containers
+-- ---------------------------------------------
+
+-- | Comptability layer for 'Data.Set.disjoint'.
+disjointSet :: Ord a => Set a -> Set a -> Bool
+#if MIN_VERSION_containers(0,5,11)
+disjointSet = S.disjoint
+#else
+disjointSet xs = S.null . S.intersection xs
+#endif
+{-# INLINE disjointSet #-}
+
+-- | Comptability layer for 'Data.Set.powerSet'.
+powerSetSet :: Set a -> Set (Set a)
+#if MIN_VERSION_containers(0,5,11)
+powerSetSet = S.powerSet
+{-# INLINE powerSetSet #-}
+#else
+powerSetSet xs0 = insertMinSet S.empty (S.foldr' step' Tip xs0) where
+  step' x pxs = insertMinSet (S.singleton x) (insertMinSet x `S.mapMonotonic` pxs) `glue` pxs
+{-# INLINABLE powerSetSet #-}
+
+minViewSure :: a -> Set a -> Set a -> StrictPair a (Set a)
+minViewSure = go
+  where
+    go x Tip r = x :*: r
+    go x (Bin _ xl ll lr) r =
+      case go xl ll lr of
+        xm :*: l' -> xm :*: balanceR x l' r
+
+maxViewSure :: a -> Set a -> Set a -> StrictPair a (Set a)
+maxViewSure = go
+  where
+    go x l Tip = x :*: l
+    go x l (Bin _ xr rl rr) =
+      case go xr rl rr of
+        xm :*: r' -> xm :*: balanceL x l r'
+
+glue :: Set a -> Set a -> Set a
+glue Tip r = r
+glue l Tip = l
+glue l@(Bin sl xl ll lr) r@(Bin sr xr rl rr)
+  | sl > sr = let !(m :*: l') = maxViewSure xl ll lr in balanceR m l' r
+  | otherwise = let !(m :*: r') = minViewSure xr rl rr in balanceL m l r'
+#endif
+
+-- | Comptability layer for 'Data.Set.disjointUnion'.
+disjointUnionSet :: Set a -> Set b -> Set (Either a b)
+#if MIN_VERSION_containers(0,5,11)
+disjointUnionSet = S.disjointUnion
+#else
+disjointUnionSet as bs = S.merge (S.mapMonotonic Left as) (S.mapMonotonic Right bs)
+#endif
+{-# INLINE disjointUnionSet #-}
+
+-- | Comptability layer for 'Data.Set.cartesianProduct'.
+cartesianProductSet :: Set a -> Set b -> Set (a, b)
+#if MIN_VERSION_containers(0,5,11)
+cartesianProductSet = S.cartesianProduct
+#else
+cartesianProductSet as bs =
+  getMergeSet $ foldMap (\a -> MergeSet $ S.mapMonotonic ((,) a) bs) as
+
+newtype MergeSet a = MergeSet { getMergeSet :: Set a }
+
+instance Semigroup (MergeSet a) where
+    MergeSet xs <> MergeSet ys = MergeSet (S.merge xs ys)
+
+instance Monoid (MergeSet a) where
+    mempty = MergeSet S.empty
+    mappend = (<>)
+#endif
+{-# INLINE cartesianProductSet #-}
+
+
 
 -- ------------------------------------------
 -- | Unexported code from "Data.Set.Internal"
@@ -461,6 +531,27 @@ balanceR x l r = case l of
               (_, _) -> error "Failure in Data.Map.balanceR"
                 | otherwise -> Bin (1+ls+rs) x l r
 {-# NOINLINE balanceR #-}
+
+balanceL :: a -> Set a -> Set a -> Set a
+balanceL x l r = case r of
+    Tip -> case l of
+      Tip -> Bin 1 x Tip Tip
+      Bin _ _ Tip Tip -> Bin 2 x l Tip
+      Bin _ lx Tip (Bin _ lrx _ _) -> Bin 3 lrx (Bin 1 lx Tip Tip) (Bin 1 x Tip Tip)
+      Bin _ lx ll@Bin{} Tip -> Bin 3 lx ll (Bin 1 x Tip Tip)
+      Bin ls lx ll@(Bin lls _ _ _) lr@(Bin lrs lrx lrl lrr)
+        | lrs < ratio*lls -> Bin (1+ls) lx ll (Bin (1+lrs) x lr Tip)
+        | otherwise -> Bin (1+ls) lrx (Bin (1+lls+S.size lrl) lx ll lrl) (Bin (1+S.size lrr) x lrr Tip)
+    Bin rs _ _ _ -> case l of
+             Tip -> Bin (1+rs) x Tip r
+             Bin ls lx ll lr
+                | ls > delta*rs  -> case (ll, lr) of
+                     (Bin lls _ _ _, Bin lrs lrx lrl lrr)
+                       | lrs < ratio*lls -> Bin (1+ls+rs) lx ll (Bin (1+rs+lrs) x lr r)
+                       | otherwise -> Bin (1+ls+rs) lrx (Bin (1+lls+S.size lrl) lx ll lrl) (Bin (1+rs+S.size lrr) x lrr r)
+                     (_, _) -> error "Failure in Data.Set.NonEmpty.Internal.balanceL"
+                | otherwise -> Bin (1+ls+rs) x l r
+{-# NOINLINE balanceL #-}
 
 delta,ratio :: Int
 delta = 3

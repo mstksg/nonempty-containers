@@ -330,7 +330,7 @@ powerSet (NESet x s0) = case nonEmptySet p1 of
   where
     -- powerset should never be empty
     p0 :: NESet (Set a)
-    p0@(NESet _ p0s) = forSure $ S.powerSet s0
+    p0@(NESet _ p0s) = forSure $ powerSetSet s0
     p1 :: Set (NESet a)
     p1 = S.mapMonotonic forSure p0s  -- only minimal element is empty, so the rest aren't
     forSure = withNonEmpty (errorWithoutStackTrace "NESet.powerSet: internal error")
@@ -451,11 +451,11 @@ disjoint
     -> Bool
 disjoint n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
     -- x1 is not in n2
-    LT -> s1 `S.disjoint` toSet n2
+    LT -> s1 `disjointSet` toSet n2
     -- k1 and k2 are a part of the result
     EQ -> False
     -- k2 is not in n1
-    GT -> toSet n1 `S.disjoint` s2
+    GT -> toSet n1 `disjointSet` s2
 {-# INLINE disjoint #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two sets.
@@ -553,7 +553,7 @@ disjointUnion
     -> NESet b
     -> NESet (Either a b)
 disjointUnion (NESet x1 s1) n2 = NESet (Left x1)
-                                       (s1 `S.disjointUnion` toSet n2)
+                                       (s1 `disjointUnionSet` toSet n2)
 {-# INLINE disjointUnion #-}
 
 -- | /O(n)/. Filter all elements that satisfy the predicate.
@@ -1038,11 +1038,3 @@ combineEq (x :| xs) = go x xs
     go z (y:ys)
       | z == y    = go z ys
       | otherwise = z NE.<| go y ys
-
-
--- | Used for 'cartesianProduct'
-newtype MergeNESet a = MergeNESet { getMergeNESet :: NESet a }
-
-instance Semigroup (MergeNESet a) where
-    MergeNESet n1 <> MergeNESet n2 = MergeNESet (merge n1 n2)
-    {-# INLINE (<>) #-}

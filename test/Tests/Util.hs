@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                  #-}
 {-# LANGUAGE DeriveFunctor        #-}
 {-# LANGUAGE DeriveGeneric        #-}
 {-# LANGUAGE FlexibleInstances    #-}
@@ -72,6 +73,10 @@ import qualified Data.Text                  as T
 import qualified Hedgehog.Gen               as Gen
 import qualified Hedgehog.Range             as Range
 
+#if !MIN_VERSION_base(4,11,0)
+import           Data.Semigroup             (Semigroup(..))
+#endif
+
 groupTree :: Group -> TestTree
 groupTree Group{..} = testGroup (unGroupName groupName)
                                 (map (uncurry go) groupProperties)
@@ -114,7 +119,11 @@ dummyKey :: KeyType
 dummyKey = K 0 "hello"
 
 
+#if MIN_VERSION_base(4,11,0)
 instance (Num a, Monoid b) => Num (K a b) where
+#else
+instance (Num a, Semigroup b, Monoid b) => Num (K a b) where
+#endif
     K x1 y1 + K x2 y2 = K (x1 + x2) (y1 <> y2)
     K x1 y1 - K x2 y2 = K (x1 - x2) (y1 <> y2)
     K x1 y1 * K x2 y2 = K (x1 * x2) (y1 <> y2)
@@ -131,9 +140,15 @@ data Bazaar a b t = Done t
     deriving Functor
 
 instance Apply (Bazaar a b) where
+#if MIN_VERSION_semigroupoids(5,2,2)
     liftF2 f = \case
       Done x   -> fmap (f x)
       More x b -> More x . liftA2 (\g r y -> f (g y) r) b
+#else
+    (<.>) = \case
+        Done x   -> fmap x
+        More x b -> More x . liftA2 (\g r y -> g y r) b
+#endif
 
 instance Applicative (Bazaar a b) where
     pure   = Done

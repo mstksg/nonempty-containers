@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ViewPatterns       #-}
 {-# OPTIONS_HADDOCK not-home    #-}
@@ -49,6 +50,9 @@ module Data.IntMap.NonEmpty.Internal (
   , insertMaxMap
   -- * Debug
   , valid
+  -- * CPP compatibility
+  , lookupMinMap
+  , lookupMaxMap
   ) where
 
 import           Control.Applicative
@@ -167,13 +171,13 @@ instance NFData a => NFData (NEIntMap a) where
 --                (c) Andriy Palamarchuk 2008
 --                (c) wren romano 2016
 instance Data a => Data (NEIntMap a) where
-  gfoldl f z im = z fromList `f` (toList im)
+  gfoldl f z im = z fromList `f` toList im
   toConstr _     = fromListConstr
   gunfold k z c  = case constrIndex c of
     1 -> k (z fromList)
     _ -> error "gunfold"
   dataTypeOf _   = intMapDataType
-  dataCast1 f    = gcast1 f
+  dataCast1      = gcast1
 
 fromListConstr :: Constr
 fromListConstr = mkConstr intMapDataType "fromList" [] Prefix
@@ -494,10 +498,17 @@ instance Functor NEIntMap where
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
 instance Foldable NEIntMap where
+#if MIN_VERSION_base(4,11,0)
     fold      (NEIntMap _ v m) = v <> F.fold (M.elems m)
     {-# INLINE fold #-}
     foldMap f (NEIntMap _ v m) = f v <> foldMap f (M.elems m)
     {-# INLINE foldMap #-}
+#else
+    fold      (NEIntMap _ v m) = v `mappend` F.fold (M.elems m)
+    {-# INLINE fold #-}
+    foldMap f (NEIntMap _ v m) = f v `mappend` foldMap f (M.elems m)
+    {-# INLINE foldMap #-}
+#endif
     foldr   = foldr
     {-# INLINE foldr #-}
     foldr'  = foldr'
@@ -603,4 +614,26 @@ traverseMapWithKey f = go
     go (Tip k v) = Tip k <$> f k v
     go (Bin p m l r) = liftA2 (flip (Bin p m)) (go r) (go l)
 {-# INLINE traverseMapWithKey #-}
+
+-- ---------------------------------------------
+-- | CPP for new functions not in old containers
+-- ---------------------------------------------
+
+-- | Compatibility layer for 'Data.IntMap.Lazy.lookupMinMap'.
+lookupMinMap :: IntMap a -> Maybe (Key, a)
+#if MIN_VERSION_containers(0,5,11)
+lookupMinMap = M.lookupMin
+#else
+lookupMinMap = fmap fst . M.minViewWithKey
+#endif
+{-# INLINE lookupMinMap #-}
+
+-- | Compatibility layer for 'Data.IntMap.Lazy.lookupMaxMap'.
+lookupMaxMap :: IntMap a -> Maybe (Key, a)
+#if MIN_VERSION_containers(0,5,11)
+lookupMaxMap = M.lookupMax
+#else
+lookupMaxMap = fmap fst . M.maxViewWithKey
+#endif
+{-# INLINE lookupMaxMap #-}
 

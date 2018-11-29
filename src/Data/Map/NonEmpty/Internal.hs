@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE ViewPatterns       #-}
@@ -490,10 +491,17 @@ instance Functor (NEMap k) where
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
 instance Foldable (NEMap k) where
+#if MIN_VERSION_base(4,11,0)
     fold      (NEMap _ v m) = v <> F.fold m
     {-# INLINE fold #-}
     foldMap f (NEMap _ v m) = f v <> foldMap f m
     {-# INLINE foldMap #-}
+#else
+    fold      (NEMap _ v m) = v `mappend` F.fold m
+    {-# INLINE fold #-}
+    foldMap f (NEMap _ v m) = f v `mappend` foldMap f m
+    {-# INLINE foldMap #-}
+#endif
     foldr   = foldr
     {-# INLINE foldr #-}
     foldr'  = foldr'

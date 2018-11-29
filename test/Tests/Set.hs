@@ -128,8 +128,8 @@ prop_fromList = ttProp (GTNEList Nothing GTKey :-> TTNESet)
 
 prop_powerSet :: Property
 prop_powerSet = ttProp (GTNESet :-> TTNEList TTNESet)
-    (S.toList   . S.drop 1 . S.powerSet  )
-    (NES.toList            . NES.powerSet)
+    (S.toList   . S.drop 1 . NES.powerSetSet)
+    (NES.toList            . NES.powerSet   )
 
 prop_insert :: Property
 prop_insert = ttProp (GTKey :-> GTNESet :-> TTNESet)
@@ -188,7 +188,7 @@ prop_isProperSubsetOf = ttProp (GTNESet :-> GTNESet :-> TTOther)
 
 prop_disjoint :: Property
 prop_disjoint = ttProp (GTNESet :-> GTNESet :-> TTOther)
-    S.disjoint
+    NES.disjointSet
     NES.disjoint
 
 prop_union :: Property
@@ -213,13 +213,13 @@ prop_intersection = ttProp (GTNESet :-> GTNESet :-> TTSet)
 
 prop_cartesianProduct :: Property
 prop_cartesianProduct = ttProp (GTNESet :-> GTNESet :-> TTNEList (TTKey :*: TTKey))
-    (\xs -> S.toList   . S.cartesianProduct   xs)
-    (\xs -> NES.toList . NES.cartesianProduct xs)
+    (\xs -> S.toList   . NES.cartesianProductSet xs)
+    (\xs -> NES.toList . NES.cartesianProduct    xs)
 
 prop_disjointUnion :: Property
 prop_disjointUnion = ttProp (GTNESet :-> GTNESet :-> TTNEList (TTEither TTKey TTKey))
-    (\xs -> S.toList   . S.disjointUnion   xs)
-    (\xs -> NES.toList . NES.disjointUnion xs)
+    (\xs -> S.toList   . NES.disjointUnionSet xs)
+    (\xs -> NES.toList . NES.disjointUnion    xs)
 
 prop_filter :: Property
 prop_filter = ttProp (gf1 Gen.bool :?> GTNESet :-> TTSet)

@@ -41,6 +41,13 @@ extra-deps:
 - hedgehog-0.6.1
 - hedgehog-fn-0.6
 - tasty-hedgehog-0.2.0.0
+# - base-compat-0.9.3
+# - aeson-1.4.2.0
+# - scientific-0.3.6.2
+# - text-1.2.3.1
+# - th-abstraction-0.2.8.0
+# - time-locale-compat-0.1.1.5
+# - time-1.4.2
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

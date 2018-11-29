@@ -3,16 +3,17 @@
 module Tests.IntSet (intSetTests) where
 
 import           Data.Functor.Identity
-import           Data.List.NonEmpty      (NonEmpty(..))
+import           Data.List.NonEmpty            (NonEmpty(..))
 import           Data.Semigroup.Foldable
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
-import qualified Data.IntSet             as S
-import qualified Data.IntSet.NonEmpty    as NES
-import qualified Data.List.NonEmpty      as NE
-import qualified Hedgehog.Gen            as Gen
-import qualified Hedgehog.Range          as Range
+import qualified Data.IntSet                   as S
+import qualified Data.IntSet.NonEmpty          as NES
+import qualified Data.IntSet.NonEmpty.Internal as NES
+import qualified Data.List.NonEmpty            as NE
+import qualified Hedgehog.Gen                  as Gen
+import qualified Hedgehog.Range                as Range
 
 intSetTests :: TestTree
 intSetTests = groupTree $$(discover)
@@ -184,7 +185,7 @@ prop_isProperSubsetOf = ttProp (GTNEIntSet :-> GTNEIntSet :-> TTOther)
 
 prop_disjoint :: Property
 prop_disjoint = ttProp (GTNEIntSet :-> GTNEIntSet :-> TTOther)
-    S.disjoint
+    NES.disjointSet
     NES.disjoint
 
 prop_union :: Property

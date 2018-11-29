@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ViewPatterns       #-}
 {-# OPTIONS_HADDOCK not-home    #-}
@@ -28,6 +29,7 @@ module Data.IntSet.NonEmpty.Internal (
   , valid
   , insertMinSet
   , insertMaxSet
+  , disjointSet
   ) where
 
 import           Control.DeepSeq
@@ -263,4 +265,17 @@ insertMinSet = S.insert
 insertMaxSet :: Key -> IntSet -> IntSet
 insertMaxSet = S.insert
 {-# INLINABLE insertMaxSet #-}
+
+-- ---------------------------------------------
+-- | CPP for new functions not in old containers
+-- ---------------------------------------------
+
+-- | Comptability layer for 'Data.IntSet.disjoint'.
+disjointSet :: IntSet -> IntSet -> Bool
+#if MIN_VERSION_containers(0,5,11)
+disjointSet = S.disjoint
+#else
+disjointSet xs = S.null . S.intersection xs
+#endif
+{-# INLINE disjointSet #-}
 

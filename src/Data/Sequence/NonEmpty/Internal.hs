@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveTraversable  #-}
 {-# LANGUAGE LambdaCase         #-}
@@ -39,6 +40,10 @@ module Data.Sequence.NonEmpty.Internal (
   , zip
   , zipWith
   , unzip
+  , sortOnSeq
+  , unstableSortOnSeq
+  , unzipSeq
+  , unzipWithSeq
   ) where
 
 import           Control.Comonad
@@ -339,6 +344,17 @@ zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
 zipWith f (x :<|| xs) (y :<|| ys) = f x y :<|| Seq.zipWith f xs ys
 {-# INLINE zipWith #-}
 
+unzipSeq :: Seq (a, b) -> (Seq a, Seq b)
+#if MIN_VERSION_containers(0,5,11)
+unzipSeq = Seq.unzip
+{-# INLINE unzipSeq #-}
+#else
+unzipSeq = \case
+    (x, y) :<| xys -> bimap (x :<|) (y :<|) . unzipSeq $ xys
+    Empty          -> (Empty, Empty)
+{-# INLINABLE unzipSeq #-}
+#endif
+
 -- | Unzip a sequence of pairs.
 --
 -- @
@@ -354,7 +370,7 @@ zipWith f (x :<|| xs) (y :<|| ys) = f x y :<|| Seq.zipWith f xs ys
 --
 -- See the note about efficiency at 'Data.Sequence.NonEmpty.unzipWith'.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
-unzip ((x, y) :<|| xys) = bimap (x :<||) (y :<||) . Seq.unzip $ xys
+unzip ((x, y) :<|| xys) = bimap (x :<||) (y :<||) . unzipSeq $ xys
 {-# INLINE unzip #-}
 
 instance Semigroup (NESeq a) where
@@ -413,10 +429,17 @@ instance Comonad NESeq where
 -- | 'foldr1', 'foldl', 'maximum', and 'minimum' are all total, unlike for
 -- 'Seq'.
 instance Foldable NESeq where
+#if MIN_VERSION_base(4,11,0)
     fold (x :<|| xs) = x <> F.fold xs
     {-# INLINE fold #-}
     foldMap f (x :<|| xs) = f x <> F.foldMap f xs
     {-# INLINE foldMap #-}
+#else
+    fold (x :<|| xs) = x `mappend` F.fold xs
+    {-# INLINE fold #-}
+    foldMap f (x :<|| xs) = f x `mappend` F.foldMap f xs
+    {-# INLINE foldMap #-}
+#endif
     foldr f z (x :<|| xs) = x `f` foldr f z xs
     {-# INLINE foldr #-}
     foldr' f z (xs :||> x) = F.foldr' f y xs
@@ -477,3 +500,40 @@ mfixSeq f = fromFunction (length (f err)) (\k -> fix (\xk -> f xk `index` k))
 
 instance NFData a => NFData (NESeq a) where
     rnf (x :<|| xs) = rnf x `seq` rnf xs `seq` ()
+
+-- ---------------------------------------------
+-- | CPP for new functions not in old containers
+-- ---------------------------------------------
+
+-- | Compatibility layer for 'Data.Sequence.sortOn'.
+sortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
+#if MIN_VERSION_containers(0,5,11)
+sortOnSeq = Seq.sortOn
+#else
+sortOnSeq f = Seq.sortBy (\x y -> f x `compare` f y)
+#endif
+{-# INLINE sortOnSeq #-}
+
+-- | Compatibility layer for 'Data.Sequence.unstableSortOn'.
+unstableSortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
+#if MIN_VERSION_containers(0,5,11)
+unstableSortOnSeq = Seq.unstableSortOn
+#else
+unstableSortOnSeq f = Seq.unstableSortBy (\x y -> f x `compare` f y)
+#endif
+{-# INLINE unstableSortOnSeq #-}
+
+-- | Compatibility layer for 'Data.Sequence.unzipWith'.
+unzipWithSeq :: (a -> (b, c)) -> Seq a -> (Seq b, Seq c)
+#if MIN_VERSION_containers(0,5,11)
+unzipWithSeq = Seq.unzipWith
+{-# INLINE unzipWithSeq #-}
+#else
+unzipWithSeq f = go
+  where
+    go = \case
+      x :<| xs -> let ~(y, z) = f x
+                  in  bimap (y :<|) (z :<|) . go $ xs
+      Empty    -> (Empty, Empty)
+{-# INLINABLE unzipWithSeq #-}
+#endif

@@ -8,17 +8,18 @@ import           Control.Applicative
 import           Data.Coerce
 import           Data.Foldable
 import           Data.Functor.Identity
-import           Data.List.NonEmpty      (NonEmpty(..))
+import           Data.List.NonEmpty            (NonEmpty(..))
 import           Data.Semigroup.Foldable
-import           Data.Text               (Text)
+import           Data.Text                     (Text)
 import           Hedgehog
 import           Test.Tasty
 import           Tests.Util
-import qualified Data.IntMap             as M
-import qualified Data.IntMap.NonEmpty    as NEM
-import qualified Data.List.NonEmpty      as NE
-import qualified Hedgehog.Gen            as Gen
-import qualified Hedgehog.Range          as Range
+import qualified Data.IntMap                   as M
+import qualified Data.IntMap.NonEmpty          as NEM
+import qualified Data.IntMap.NonEmpty.Internal as NEM
+import qualified Data.List.NonEmpty            as NE
+import qualified Hedgehog.Gen                  as Gen
+import qualified Hedgehog.Range                as Range
 
 intMapTests :: TestTree
 intMapTests = groupTree $$(discover)
@@ -58,7 +59,7 @@ prop_valid_insertMapMin :: Property
 prop_valid_insertMapMin = property $ do
     n  <- forAll $ do
         m <- intMapGen
-        let k = maybe 0 (subtract 1 . fst) $ M.lookupMin m
+        let k = maybe 0 (subtract 1 . fst) $ NEM.lookupMinMap m
         v <- valGen
         pure $ NEM.insertMapMin k v m
     assert $ NEM.valid n
@@ -67,7 +68,7 @@ prop_valid_insertMapMax :: Property
 prop_valid_insertMapMax = property $ do
     n  <- forAll $ do
         m <- intMapGen
-        let k = maybe 0 ((+ 1) . fst) $ M.lookupMax m
+        let k = maybe 0 ((+ 1) . fst) $ NEM.lookupMaxMap m
         v <- valGen
         pure $ NEM.insertMapMax k v m
     assert $ NEM.valid n
