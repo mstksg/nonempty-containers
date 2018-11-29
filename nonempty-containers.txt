@@ -326,6 +326,15 @@ insertMaxMap :: Key -> a -> IntMap a -> IntMap a
 
 -- | <i>O(n)</i>. Test if the internal map structure is valid.
 valid :: NEIntMap a -> Bool
+
+-- | CPP for new functions not in old containers
+--   ---------------------------------------------
+--   
+--   Compatibility layer for <a>lookupMinMap</a>.
+lookupMinMap :: IntMap a -> Maybe (Key, a)
+
+-- | Compatibility layer for <a>lookupMaxMap</a>.
+lookupMaxMap :: IntMap a -> Maybe (Key, a)
 instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.IntMap.NonEmpty.Internal.NEIntMap a)
 instance GHC.Classes.Ord a => GHC.Classes.Ord (Data.IntMap.NonEmpty.Internal.NEIntMap a)
 instance Data.Functor.Classes.Eq1 Data.IntMap.NonEmpty.Internal.NEIntMap
@@ -481,6 +490,12 @@ insertMinSet :: Key -> IntSet -> IntSet
 --   but it's left here as a placeholder in case this eventually gets
 --   implemented in a more efficient way.
 insertMaxSet :: Key -> IntSet -> IntSet
+
+-- | CPP for new functions not in old containers
+--   ---------------------------------------------
+--   
+--   Comptability layer for <a>disjoint</a>.
+disjointSet :: IntSet -> IntSet -> Bool
 instance GHC.Classes.Eq Data.IntSet.NonEmpty.Internal.NEIntSet
 instance GHC.Classes.Ord Data.IntSet.NonEmpty.Internal.NEIntSet
 instance GHC.Show.Show Data.IntSet.NonEmpty.Internal.NEIntSet
@@ -3186,6 +3201,19 @@ zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
 --   
 --   See the note about efficiency at <a>unzipWith</a>.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
+
+-- | CPP for new functions not in old containers
+--   ---------------------------------------------
+--   
+--   Compatibility layer for <a>sortOn</a>.
+sortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
+
+-- | Compatibility layer for <a>unstableSortOn</a>.
+unstableSortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
+unzipSeq :: Seq (a, b) -> (Seq a, Seq b)
+
+-- | Compatibility layer for <a>unzipWith</a>.
+unzipWithSeq :: (a -> (b, c)) -> Seq a -> (Seq b, Seq c)
 instance Data.Traversable.Traversable Data.Sequence.NonEmpty.Internal.NESeq
 instance GHC.Show.Show a => GHC.Show.Show (Data.Sequence.NonEmpty.Internal.NESeq a)
 instance GHC.Read.Read a => GHC.Read.Read (Data.Sequence.NonEmpty.Internal.NESeq a)
@@ -4159,6 +4187,11 @@ foldr' :: (a -> b -> b) -> b -> NESet a -> b
 --   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
 
+-- | Used for <tt>cartesianProduct</tt>
+newtype MergeNESet a
+MergeNESet :: NESet a -> MergeNESet a
+[getMergeNESet] :: MergeNESet a -> NESet a
+
 -- | Unsafely merge two disjoint sets. Only legal if all items in the first
 --   set are less than all items in the second set
 merge :: NESet a -> NESet a -> NESet a
@@ -4187,6 +4220,22 @@ insertMinSet :: a -> Set a -> Set a
 --   comparison is expensive) and also does not require an <a>Ord</a>
 --   instance for the value type.
 insertMaxSet :: a -> Set a -> Set a
+
+-- | CPP for new functions not in old containers
+--   ---------------------------------------------
+--   
+--   Comptability layer for <a>disjoint</a>.
+disjointSet :: Ord a => Set a -> Set a -> Bool
+
+-- | Comptability layer for <a>powerSet</a>.
+powerSetSet :: Set a -> Set (Set a)
+
+-- | Comptability layer for <a>disjointUnion</a>.
+disjointUnionSet :: Set a -> Set b -> Set (Either a b)
+
+-- | Comptability layer for <a>cartesianProduct</a>.
+cartesianProductSet :: Set a -> Set b -> Set (a, b)
+instance GHC.Base.Semigroup (Data.Set.NonEmpty.Internal.MergeNESet a)
 instance GHC.Classes.Eq a => GHC.Classes.Eq (Data.Set.NonEmpty.Internal.NESet a)
 instance GHC.Classes.Ord a => GHC.Classes.Ord (Data.Set.NonEmpty.Internal.NESet a)
 instance GHC.Show.Show a => GHC.Show.Show (Data.Set.NonEmpty.Internal.NESet a)
@@ -4996,7 +5045,6 @@ toDescList :: NESet a -> NonEmpty a
 
 -- | <i>O(n)</i>. Test if the internal set structure is valid.
 valid :: Ord a => NESet a -> Bool
-instance GHC.Base.Semigroup (Data.Set.NonEmpty.MergeNESet a)
 
 
 -- | <h1>Non-Empty Finite Maps (lazy interface)</h1>
