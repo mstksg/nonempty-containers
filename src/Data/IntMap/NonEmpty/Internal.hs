@@ -471,9 +471,9 @@ instance Functor NEIntMap where
 
 -- | Traverses elements in order of ascending keys.
 --
--- __WARNING:__ 'fold' and 'foldMap' are different than for the 'IntMap'
--- instance.  They traverse elements in order of ascending keys, while
--- 'IntMap' traverses positive keys first, then negative keys.
+-- __WARNING:__ 'F.fold' and 'F.foldMap' are different than for the
+-- 'IntMap' instance.  They traverse elements in order of ascending keys,
+-- while 'IntMap' traverses positive keys first, then negative keys.
 --
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
@@ -516,8 +516,8 @@ instance Traversable NEIntMap where
 
 -- | Traverses elements in order of ascending keys
 --
--- __WARNING:__ 'fold1' and 'foldMap1' are different than 'fold' and
--- 'foldMap' for the 'IntMap' instance of 'Foldable'.  They traverse
+-- __WARNING:__ 'F1.fold1' and 'F1.foldMap1' are different than 'F.fold' and
+-- 'F.foldMap' for the 'IntMap' instance of 'Foldable'.  They traverse
 -- elements in order of ascending keys, while 'IntMap' traverses positive
 -- keys first, then negative keys.
 instance Foldable1 NEIntMap where

@@ -15,10 +15,11 @@
 -- = Non-Empty Finite Sequences
 --
 -- | An @'NESeq' a@ is a non-empty (but finite) sequence of values of type
--- @a@.  Generally has the same interface as 'NonEmpty'.  This is
--- a non-empty version of 'Data.Sequence.Seq' from "Data.Sequence".
+-- @a@.  Generally has the same interface as 'Data.List.NonEmpty.NonEmpty'.
+-- This is a non-empty version of 'Data.Sequence.Seq' from "Data.Sequence".
 --
--- The main differences between this type and 'NonEmpty' are:
+-- The main differences between this type and 'Data.List.NonEmpty.NonEmpty'
+-- are:
 --
 -- *   You cannot have infinite 'NESeq's
 -- *   You have constant-time consing from either end, and constant-time
@@ -26,7 +27,7 @@
 -- *   Concatenation ('><', '|><', '><|') is logarithmic-time.
 -- *   You have logarithmic-time indexing and updating at a given index.
 --
--- While asymptotics are often better than for 'NonEmpty', there is
+-- While asymptotics are often better than for 'Data.List.NonEmpty.NonEmpty', there is
 -- a decent constant factor involved in most operations.
 --
 -- See documentation for 'NESeq' for information on how to convert and

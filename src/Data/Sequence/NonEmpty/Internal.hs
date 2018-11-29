@@ -56,7 +56,6 @@ import           Data.Semigroup
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Data.Sequence              (Seq(..))
-import           Data.Typeable
 import           Prelude hiding             (length, zipWith, unzip, zip)
 import           Text.Read
 import qualified Data.Foldable              as F
@@ -74,7 +73,7 @@ import qualified Data.Sequence              as Seq
 -- "Data.Sequence.NonEmpty" re-exports the API of "Data.Sequence",
 -- faithfully reproducing asymptotics, typeclass constraints, and
 -- semantics.  Functions that ensure that input and output maps are both
--- non-empty (like 'Data.Sequence.NonEmpty.<|') return 'NESequence', but
+-- non-empty (like 'Data.Sequence.NonEmpty.<|') return 'NESeq', but
 -- functions that might potentially return an empty map (like
 -- 'Data.Sequence.NonEmpty.tail') return a 'Seq' instead.
 --
@@ -83,9 +82,9 @@ import qualified Data.Sequence              as Seq
 -- a normal 'Seq', except you don't have access to 'Data.Seq.empty'.  There
 -- are also a few ways to construct an 'NESeq' from a 'Seq':
 --
--- 1.  The 'nonEmptyMap' smart constructor will convert a @'Seq' a@ into
---     a @'Maybe' ('NESeq' a)@, returning 'Nothing' if the original 'Seq'
---     was empty.
+-- 1.  The 'Data.Sequence.NonEmpty.nonEmptySeq' smart constructor will
+--     convert a @'Seq' a@ into a @'Maybe' ('NESeq' a)@, returning 'Nothing' if
+--     the original 'Seq' was empty.
 -- 2.  You can use 'Data.Sequence.NonEmpty.:<||',
 --     'Data.Sequence.NonEmpty.:||>', and
 --     'Data.Sequence.NonEmpty.insertSeqAt' to insert a value into a 'Seq'
@@ -202,9 +201,9 @@ withNonEmpty def f = \case
 -- Can be thought of as "obscuring" the non-emptiness of the map in its
 -- type.  See the 'Data.Sequence.NonEmpty.IsNotEmpty' pattern.
 --
--- 'nonEmptySeq' and @'maybe' 'Data.Seq.empty' 'toSeq'@ form an
--- isomorphism: they are perfect structure-preserving inverses of
--- eachother.
+-- 'Data.Sequence.NonEmpty.nonEmptySeq' and @'maybe' 'Data.Seq.empty'
+-- 'toSeq'@ form an isomorphism: they are perfect structure-preserving
+-- inverses of eachother.
 toSeq :: NESeq a -> Seq a
 toSeq (x :<|| xs) = x :<| xs
 {-# INLINE toSeq #-}
@@ -333,7 +332,7 @@ zipWith f (x :<|| xs) (y :<|| ys) = f x y :<|| Seq.zipWith f xs ys
 --   (fromList (1:|[2,3]), fromList ("a":|["b","c"]))
 -- @
 --
--- See the note about efficiency at 'unzipWith'.
+-- See the note about efficiency at 'Data.Sequence.NonEmpty.unzipWith'.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
 unzip ((x, y) :<|| xys) = bimap (x :<||) (y :<||) . Seq.unzip $ xys
 {-# INLINE unzip #-}
