@@ -85,6 +85,12 @@ prop_toMapIso2 = property $ do
     tripping m0 (maybe M.empty NEM.toMap)
                 (Identity . NEM.nonEmptyMap)
 
+prop_read_show :: Property
+prop_read_show = readShow neMapGen
+
+prop_read1_show1 :: Property
+prop_read1_show1 = readShow1 neMapGen
+
 prop_splitRoot :: Property
 prop_splitRoot = property $ do
     n <- forAll neMapGen

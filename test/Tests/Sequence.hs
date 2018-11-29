@@ -39,6 +39,13 @@ prop_toSeqIso2 = property $ do
     tripping m0 (maybe Seq.empty NESeq.toSeq)
                 (Identity . NESeq.nonEmptySeq)
 
+prop_read_show :: Property
+prop_read_show = readShow neSeqGen
+
+prop_read1_show1 :: Property
+prop_read1_show1 = readShow1 neSeqGen
+
+
 
 
 

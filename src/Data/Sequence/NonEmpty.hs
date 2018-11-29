@@ -609,6 +609,8 @@ sort = sortBy compare
 -- | \( O(n \log n) \).  'sortBy' sorts the specified 'NESeq' according to
 -- the specified comparator.  The sort is stable.  If stability is not
 -- required, 'unstableSortBy' can be slightly faster.
+
+-- TODO: benchmark against just unsafe unwrapping and wrapping
 sortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
 sortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
                      . Seq.sortBy c
@@ -634,6 +636,8 @@ sortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
 -- If @f@ is very cheap (for example a record selector, or 'fst'),
 -- @'sortBy' ('compare' ``Data.Function.on`` f)@ will be faster than
 -- @'sortOn' f@.
+
+-- TODO: benchmark against just unsafe unwrapping and wrapping
 sortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
 sortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)
                      . Seq.sortOn f

@@ -73,6 +73,9 @@ prop_toSetIso2 = property $ do
     tripping m0 (maybe S.empty NES.toSet)
                 (Identity . NES.nonEmptySet)
 
+prop_read_show :: Property
+prop_read_show = readShow neSetGen
+
 prop_splitRoot :: Property
 prop_splitRoot = property $ do
     n <- forAll neSetGen

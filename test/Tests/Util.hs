@@ -20,6 +20,7 @@ module Tests.Util (
   , TestType(..)
   , ttProp
   , groupTree
+  , readShow, readShow1
   , Context(..)
   , Bazaar(..)
   , keyGen, valGen, mapSize, mapGen, neMapGen, setGen, neSetGen
@@ -34,6 +35,7 @@ import           Data.Char
 import           Data.Foldable
 import           Data.Function
 import           Data.Functor.Apply
+import           Data.Functor.Classes
 import           Data.IntMap                (IntMap)
 import           Data.IntMap.NonEmpty       (NEIntMap)
 import           Data.IntSet                (IntSet, Key)
@@ -55,6 +57,7 @@ import           Hedgehog.Function hiding   ((:*:))
 import           Hedgehog.Internal.Property
 import           Test.Tasty
 import           Test.Tasty.Hedgehog
+import           Text.Read
 import qualified Data.IntMap                as IM
 import qualified Data.IntMap.NonEmpty       as NEIM
 import qualified Data.IntSet                as IS
@@ -81,7 +84,7 @@ groupTree Group{..} = testGroup (unGroupName groupName)
 
 -- | test for stability
 data K a b = K { getKX :: !a, getKY :: !b }
-    deriving (Show, Generic)
+    deriving (Show, Read, Generic)
 
 withK :: (a -> b -> c) -> K a b -> c
 withK f (K x y) = f x y
@@ -416,8 +419,36 @@ testBazaar gNew tRes0 tView = go [] [] tRes0
           go (xView:xs) (yView:ys) (gNew :-> tRes) xNext yNext
 
 
+-- ---------------------
+-- Properties
+-- ---------------------
+
 ttProp :: TestType a b -> a -> b -> Property
 ttProp tt x = property . runTT tt x
+
+readShow
+    :: (Show a, Read a, Eq a)
+    => Gen a
+    -> Property
+readShow g = property $ do
+    m0 <- forAll g
+    tripping m0 show readMaybe
+
+readShow1
+    :: (Eq (f a), Show1 f, Show a, Show (f a), Read1 f, Read a)
+    => Gen (f a)
+    -> Property
+readShow1 g = property $ do
+    m0 <- forAll g
+    tripping m0 (($ "")  . showsPrec1 0) (fmap fst . listToMaybe . readsPrec1 0)
+
+-- readShow2
+--     :: (Eq (f a b), Show2 f, Show a, Show b, Show (f a b), Read2 f, Read a, Read b)
+--     => Gen (f a b)
+--     -> Property
+-- readShow2 g = property $ do
+--     m0 <- forAll g
+--     tripping m0 (($ "")  . showsPrec2 0) (fmap fst . listToMaybe . readsPrec2 0)
 
 -- ---------------------
 -- Generators
