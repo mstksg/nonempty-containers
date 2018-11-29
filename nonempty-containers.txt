@@ -94,6 +94,17 @@ singleton :: Key -> a -> NEIntMap a
 --   </pre>
 nonEmptyMap :: IntMap a -> Maybe (NEIntMap a)
 
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>IntMap</a> as if it were an <a>NEIntMap</a>.
+--   <tt><a>withNonEmpty</a> def f</tt> will take a <a>IntMap</a>. If map
+--   is empty, it will evaluate to <tt>def</tt>. Otherwise, a non-empty map
+--   <a>NEIntMap</a> will be fed to the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptyMap</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
+withNonEmpty :: r -> (NEIntMap a -> r) -> IntMap a -> r
+
 -- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
 --   key/value pairs. See also <a>fromAscList</a>. If the list contains
 --   more than one value for the same key, the last value for the key is
@@ -404,6 +415,17 @@ type Key = Int
 --   nonEmptySet (Data.IntSet.fromList [3,5]) == Just (fromList (3:|[5]))
 --   </pre>
 nonEmptySet :: IntSet -> Maybe NEIntSet
+
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>IntSet</a> as if it were an <a>NEIntSet</a>.
+--   <tt><a>withNonEmpty</a> def f</tt> will take a <a>IntSet</a>. If set
+--   is empty, it will evaluate to <tt>def</tt>. Otherwise, a non-empty set
+--   <a>NEIntSet</a> will be fed to the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptySet</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
+withNonEmpty :: r -> (NEIntSet -> r) -> IntSet -> r
 
 -- | <i>O(log n)</i>. Convert a non-empty set back into a normal
 --   possibly-empty map, for usage with functions that expect
@@ -2724,6 +2746,17 @@ singleton :: k -> a -> NEMap k a
 --   </pre>
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>Map</a> as if it were an <a>NEMap</a>. <tt><a>withNonEmpty</a> def
+--   f</tt> will take a <a>Map</a>. If map is empty, it will evaluate to
+--   <tt>def</tt>. Otherwise, a non-empty map <a>NEMap</a> will be fed to
+--   the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptyMap</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
+withNonEmpty :: r -> (NEMap k a -> r) -> Map k a -> r
+
 -- | <i>O(n*log n)</i>. Build a non-empty map from a non-empty list of
 --   key/value pairs. See also <a>fromAscList</a>. If the list contains
 --   more than one value for the same key, the last value for the key is
@@ -4047,6 +4080,17 @@ NESet :: !a -> !Set a -> NESet a
 --   nonEmptySet (Data.Set.fromList [3,5]) == Just (fromList (3:|[5]))
 --   </pre>
 nonEmptySet :: Set a -> Maybe (NESet a)
+
+-- | <i>O(log n)</i>. A general continuation-based way to consume a
+--   <a>Set</a> as if it were an <a>NESet</a>. <tt><a>withNonEmpty</a> def
+--   f</tt> will take a <a>Set</a>. If set is empty, it will evaluate to
+--   <tt>def</tt>. Otherwise, a non-empty set <a>NESet</a> will be fed to
+--   the function <tt>f</tt> instead.
+--   
+--   <pre>
+--   <a>nonEmptySet</a> == <a>withNonEmpty</a> <a>Nothing</a> <a>Just</a>
+--   </pre>
+withNonEmpty :: r -> (NESet a -> r) -> Set a -> r
 
 -- | <i>O(log n)</i>. Convert a non-empty set back into a normal
 --   possibly-empty map, for usage with functions that expect <a>Set</a>.
