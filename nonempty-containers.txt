@@ -3474,11 +3474,11 @@ iterateN :: Int -> (a -> a) -> a -> NESeq a
 -- | Builds a sequence from a seed value. Takes time linear in the number
 --   of generated elements. <i>WARNING:</i> If the number of generated
 --   elements is infinite, this method will not terminate.
-unfoldr :: (a -> (b, Maybe a)) -> a -> NESeq b
+unfoldr :: (b -> (a, Maybe b)) -> b -> NESeq a
 
 -- | <tt><a>unfoldl</a> f x</tt> is equivalent to <tt><a>reverse</a>
 --   (<a>unfoldr</a> (<a>fmap</a> swap . f) x)</tt>.
-unfoldl :: (a -> (b, Maybe a)) -> a -> NESeq b
+unfoldl :: (b -> (Maybe b, a)) -> b -> NESeq a
 
 -- | <i>O(1)</i>. Retrieve the left-most item in a non-empty sequence. Note
 --   that this function is total.
@@ -3625,8 +3625,8 @@ spanl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 --   items, and <tt>ys</tt> is the entire original sequence.</li>
 --   <li><tt><a>That</a> zs</tt> means that the predicate failed on the
 --   first item, and <tt>zs</tt> is the entire original sequence.</li>
---   <li><tt><a>These</a> ys zs</tt> gives <tt>zs</tt> (the suffix of
---   elements that satisfy the predicae) and <tt>ys</tt> (the remainder of
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the suffix of
+--   elements that satisfy the predicae) and <tt>zs</tt> (the remainder of
 --   the sequence, before the suffix)</li>
 --   </ul>
 spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
