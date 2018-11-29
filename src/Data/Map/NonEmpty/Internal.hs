@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE ViewPatterns       #-}
+{-# OPTIONS_HADDOCK not-home    #-}
 
 -- |
 -- Module      : Data.Map.NonEmpty.Internal
@@ -14,7 +15,7 @@
 --
 -- Unsafe internal-use functions used in the implementation of
 -- "Data.Map.NonEmpty".  These functions can potentially be used to break
--- the abstraction of 'NEMap' and produce unsound sets, so be wary!
+-- the abstraction of 'NEMap' and produce unsound maps, so be wary!
 module Data.Map.NonEmpty.Internal (
   -- * Non-Empty Map type
     NEMap(..)
@@ -93,7 +94,7 @@ import qualified Data.Semigroup.Foldable    as F1
 --     a @'Maybe' ('NEMap' k a)@, returning 'Nothing' if the original 'Map'
 --     was empty.
 -- 2.  You can use the 'Data.Map.NonEmpty.insertMap' family of functions to
---     insert a value into a 'Map' to create a guarunteed 'NEMap'.
+--     insert a value into a 'Map' to create a guaranteed 'NEMap'.
 -- 3.  You can use the 'Data.Map.NonEmpty.IsNonEmpty' and
 --     'Data.Map.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Map'
 --     to reveal it as either containing a 'NEMap' or an empty map.
@@ -402,7 +403,7 @@ toList (NEMap k v m) = (k,v) :| M.toList m
 -- See 'Data.Map.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
 -- "match on" the possiblity of a 'Map' being an 'NEMap'.
 --
--- > nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+-- > nonEmptyMap (Data.Map.fromList [(3,"a"), (5,"b")]) == Just (fromList ((3,"a") :| [(5,"b")]))
 nonEmptyMap :: Map k a -> Maybe (NEMap k a)
 nonEmptyMap = (fmap . uncurry . uncurry) NEMap . M.minViewWithKey
 {-# INLINE nonEmptyMap #-}
@@ -497,6 +498,7 @@ instance Foldable (NEMap k) where
     elem x (NEMap _ v m) = F.elem x m
                         || x == v
     {-# INLINE elem #-}
+    -- TODO: use build
     toList  = F.toList . elems
     {-# INLINE toList #-}
 

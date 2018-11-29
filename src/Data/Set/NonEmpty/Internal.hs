@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE ViewPatterns       #-}
+{-# OPTIONS_HADDOCK not-home    #-}
 
 -- |
 -- Module      : Data.Set.NonEmpty.Internal
@@ -76,7 +77,7 @@ import qualified Data.Set.Internal       as S
 --     a @'Maybe' ('NESet' a)@, returning 'Nothing' if the original 'Set'
 --     was empty.
 -- 2.  You can use the 'Data.Set.NonEmpty.insertSet' family of functions to
---     insert a value into a 'Set' to create a guarunteed 'NESet'.
+--     insert a value into a 'Set' to create a guaranteed 'NESet'.
 -- 3.  You can use the 'Data.Set.NonEmpty.IsNonEmpty' and
 --     'Data.Set.NonEmpty.IsEmpty' patterns to "pattern match" on a 'Set'
 --     to reveal it as either containing a 'NESet' or an empty map.
@@ -163,7 +164,7 @@ setDataType = mkDataType "Data.Set.NonEmpty.Internal.NESet" [fromListConstr]
 -- See 'Data.Set.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
 -- "match on" the possiblity of a 'Set' being an 'NESet'.
 --
--- > nonEmptySet (Data.Set.fromList [3,5]) == fromList (3:|[5])
+-- > nonEmptySet (Data.Set.fromList [3,5]) == Just (fromList (3:|[5]))
 nonEmptySet :: Set a -> Maybe (NESet a)
 nonEmptySet = (fmap . uncurry) NESet . S.minView
 {-# INLINE nonEmptySet #-}
@@ -329,6 +330,7 @@ instance Foldable NESet where
     {-# INLINE minimum #-}
     maximum (NESet x s) = maybe x fst . S.maxView $ s
     {-# INLINE maximum #-}
+    -- TODO: use build
     toList  = F.toList . toList
     {-# INLINE toList #-}
 

@@ -1,17 +1,31 @@
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE PatternSynonyms   #-}
-{-# LANGUAGE ViewPatterns      #-}
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE DeriveTraversable  #-}
+{-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE PatternSynonyms    #-}
+{-# LANGUAGE ViewPatterns       #-}
+{-# OPTIONS_HADDOCK not-home    #-}
 
+-- |
+-- Module      : Data.Sequence.NonEmpty.Internal
+-- Copyright   : (c) Justin Le 2018
+-- License     : BSD3
+--
+-- Maintainer  : justin@jle.im
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- Unsafe internal-use functions used in the implementation of
+-- "Data.Sequence.NonEmpty".  These functions can potentially be used to
+-- break the abstraction of 'NESeq' and produce unsound sequences, so be
+-- wary!
 module Data.Sequence.NonEmpty.Internal (
     NESeq(..)
   , pattern (:<||)
   , pattern (:||>)
   , withNonEmpty
   , toSeq
-  , toList
   , singleton
   , length
   , fromList
@@ -34,7 +48,6 @@ import           Data.Bifunctor
 import           Data.Data
 import           Data.Foldable              (Foldable)
 import           Data.Functor.Alt
-import           Data.Functor.Apply
 import           Data.Functor.Bind
 import           Data.Functor.Classes
 import           Data.Functor.Extend
@@ -43,16 +56,62 @@ import           Data.Semigroup
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Data.Sequence              (Seq(..))
+import           Data.Typeable
 import           Prelude hiding             (length, zipWith, unzip, zip)
 import           Text.Read
 import qualified Data.Foldable              as F
 import qualified Data.Sequence              as Seq
 
+-- | A general-purpose non-empty finite sequence type.
+--
+-- Non-emptiness means that:
+--
+-- *   Functions that /take/ an 'NESeq' can safely operate on it with the
+--     assumption that it has at least value.
+-- *   Functions that /return/ an 'NESeq' provide an assurance that the
+--     result has at least one value.
+--
+-- "Data.Sequence.NonEmpty" re-exports the API of "Data.Sequence",
+-- faithfully reproducing asymptotics, typeclass constraints, and
+-- semantics.  Functions that ensure that input and output maps are both
+-- non-empty (like 'Data.Sequence.NonEmpty.<|') return 'NESequence', but
+-- functions that might potentially return an empty map (like
+-- 'Data.Sequence.NonEmpty.tail') return a 'Seq' instead.
+--
+-- You can directly construct an 'NESeq' with the API from
+-- "Data.Sequence.NonEmpty"; it's more or less the same as constructing
+-- a normal 'Seq', except you don't have access to 'Data.Seq.empty'.  There
+-- are also a few ways to construct an 'NESeq' from a 'Seq':
+--
+-- 1.  The 'nonEmptyMap' smart constructor will convert a @'Seq' a@ into
+--     a @'Maybe' ('NESeq' a)@, returning 'Nothing' if the original 'Seq'
+--     was empty.
+-- 2.  You can use 'Data.Sequence.NonEmpty.:<||',
+--     'Data.Sequence.NonEmpty.:||>', and
+--     'Data.Sequence.NonEmpty.insertSeqAt' to insert a value into a 'Seq'
+--     to create a guaranteed 'NESeq'.
+-- 3.  You can use the 'Data.Sequence.NonEmpty.IsNonEmpty' and
+--     'Data.Sequence.NonEmpty.IsEmpty' patterns to "pattern match" on
+--     a 'Seq' to reveal it as either containing a 'NESeq' or an empty
+--     sequence.
+-- 4.  'Data.Sequence.NonEmpty.withNonEmpty' offers a continuation-based
+--     interface for deconstructing a 'Seq' and treating it as if it were an
+--     'NESeq'.
+--
+-- You can convert an 'NESeq' into a 'Seq' with 'toSeq' or
+-- 'Data.Sequence.NonEmpty.IsNonEmpty', essentially "obscuring" the
+-- non-empty property from the type.
 data NESeq a = NESeq { nesHead :: a
                      , nesTail :: !(Seq a)
                      }
-  deriving (Functor, Traversable)
+  deriving (Functor, Traversable, Typeable)
 
+-- | /O(1)/. An abstract constructor for an 'NESeq' that consists of
+-- a "head" @a@ and a "tail" @'Seq' a@.  Similar to ':|' for 'NonEmpty'.
+--
+-- Can be used to match on the head and tail of an 'NESeq', and also used
+-- to /construct/ an 'NESeq' by consing an item to the beginnong of
+-- a 'Seq', ensuring that the result is non-empty.
 pattern (:<||) :: a -> Seq a -> NESeq a
 pattern x :<|| xs = NESeq x xs
 {-# COMPLETE (:<||) #-}
@@ -62,6 +121,13 @@ unsnoc (x :<|| (xs :|> y)) = (x :<| xs, y)
 unsnoc (x :<|| Empty     ) = (Empty   , x)
 {-# INLINE unsnoc #-}
 
+-- | /O(1)/. An abstract constructor for an 'NESeq' that consists of
+-- a "init" @'Seq' a@ and a "last" @a@.  Similar to ':|' for 'NonEmpty',
+-- but at the end of the list instead of at the beginning.
+--
+-- Can be used to match on the init and last of an 'NESeq', and also used
+-- to /construct/ an 'NESeq' by snocing an item to the end of a 'Seq',
+-- ensuring that the result is non-empty.
 pattern (:||>) :: Seq a -> a -> NESeq a
 pattern xs :||> x <- (unsnoc->(!xs, x))
   where
@@ -75,7 +141,7 @@ infixl 5 :||>
 
 instance Show a => Show (NESeq a) where
     showsPrec p xs = showParen (p > 10) $
-        showString "fromList (" . shows (toList xs) . showString ")"
+        showString "fromList (" . shows (toNonEmpty xs) . showString ")"
 
 instance Read a => Read (NESeq a) where
     readPrec = parens $ prec 10 $ do
@@ -86,11 +152,11 @@ instance Read a => Read (NESeq a) where
 
 instance Eq a => Eq (NESeq a) where
     xs == ys = length xs == length ys
-            && toList xs == toList ys
+            && toNonEmpty xs == toNonEmpty ys
 
 instance Show1 NESeq where
     liftShowsPrec sp sl d m =
-        showsUnaryWith (liftShowsPrec sp sl) "fromList" d (toList m)
+        showsUnaryWith (liftShowsPrec sp sl) "fromList" d (toNonEmpty m)
 
 instance Read1 NESeq where
     liftReadsPrec _rp readLst p = readParen (p > 10) $ \r -> do
@@ -99,10 +165,10 @@ instance Read1 NESeq where
       pure (fromList xs, t)
 
 instance Eq1 NESeq where
-    liftEq eq xs ys = length xs == length ys && liftEq eq (toList xs) (toList ys)
+    liftEq eq xs ys = length xs == length ys && liftEq eq (toNonEmpty xs) (toNonEmpty ys)
 
 instance Ord1 NESeq where
-    liftCompare cmp xs ys = liftCompare cmp (toList xs) (toList ys)
+    liftCompare cmp xs ys = liftCompare cmp (toNonEmpty xs) (toNonEmpty ys)
 
 instance Data a => Data (NESeq a) where
     gfoldl f z (x :<|| xs)    = z (:<||) `f` x `f` xs
@@ -117,49 +183,87 @@ consConstr  = mkConstr seqDataType ":<||" [] Infix
 seqDataType :: DataType
 seqDataType = mkDataType "Data.Sequence.NonEmpty.Internal.NESeq" [consConstr]
 
+-- | /O(log n)/. A general continuation-based way to consume a 'Seq' as if
+-- it were an 'NESeq'. @'withNonEmpty' def f@ will take a 'Seq'.  If map is
+-- empty, it will evaluate to @def@.  Otherwise, a non-empty map 'NESeq'
+-- will be fed to the function @f@ instead.
+--
+-- @'Data.Sequence.NonEmpty.nonEmptySeq' == 'withNonEmpty' 'Nothing' 'Just'@
 withNonEmpty :: r -> (NESeq a -> r) -> Seq a -> r
 withNonEmpty def f = \case
     x :<| xs -> f (x :<|| xs)
     Empty    -> def
 {-# INLINE withNonEmpty #-}
 
+-- | /O(1)/.
+-- Convert a non-empty sequence back into a normal possibly-empty sequence,
+-- for usage with functions that expect 'Seq'.
+--
+-- Can be thought of as "obscuring" the non-emptiness of the map in its
+-- type.  See the 'Data.Sequence.NonEmpty.IsNotEmpty' pattern.
+--
+-- 'nonEmptySeq' and @'maybe' 'Data.Seq.empty' 'toSeq'@ form an
+-- isomorphism: they are perfect structure-preserving inverses of
+-- eachother.
 toSeq :: NESeq a -> Seq a
 toSeq (x :<|| xs) = x :<| xs
 {-# INLINE toSeq #-}
 
-toList :: NESeq a -> NonEmpty a
-toList (x :<|| xs) = x :| F.toList xs
-
+-- | \( O(1) \). A singleton sequence.
 singleton :: a -> NESeq a
 singleton = (:<|| Seq.empty)
 {-# INLINE singleton #-}
 
+-- | \( O(1) \). The number of elements in the sequence.
 length :: NESeq a -> Int
 length (_ :<|| xs) = 1 + Seq.length xs
 {-# INLINE length #-}
 
+-- | \( O(n) \). Create a sequence from a finite list of elements.  There
+-- is a function 'toNonEmpty' in the opposite direction for all instances
+-- of the 'Foldable1' class, including 'NESeq'.
 fromList :: NonEmpty a -> NESeq a
 fromList (x :| xs) = x :<|| Seq.fromList xs
 {-# INLINE fromList #-}
 
+-- | \( O(n) \). Convert a given sequence length and a function representing that
+-- sequence into a sequence.
 fromFunction :: Int -> (Int -> a) -> NESeq a
 fromFunction n f
     | n < 1     = error "NESeq.fromFunction: must take a positive integer argument"
     | otherwise = f 0 :<|| Seq.fromFunction (n - 1) (f . (+ 1))
 
+-- | \( O(\log(\min(i,n-i))) \). The element at the specified position,
+-- counting from 0.  The argument should thus be a non-negative
+-- integer less than the size of the sequence.
+-- If the position is out of range, 'index' fails with an error.
+--
+-- prop> xs `index` i = toList xs !! i
+--
+-- Caution: 'index' necessarily delays retrieving the requested
+-- element until the result is forced. It can therefore lead to a space
+-- leak if the result is stored, unforced, in another structure. To retrieve
+-- an element immediately without forcing it, use 'lookup' or '(!?)'.
 index :: NESeq a -> Int -> a
 index (x :<|| _ ) 0 = x
 index (_ :<|| xs) i = xs `Seq.index` (i - 1)
 {-# INLINE index #-}
 
+-- | \( O(1) \). Add an element to the left end of a non-empty sequence.
+-- Mnemonic: a triangle with the single element at the pointy end.
 (<|) :: a -> NESeq a -> NESeq a
 x <| xs = x :<|| toSeq xs
 {-# INLINE (<|) #-}
 
+-- | \( O(\log(\min(n_1,n_2))) \). Concatenate two non-empty sequences.
 (><) :: NESeq a -> NESeq a -> NESeq a
 (x :<|| xs) >< ys = x :<|| (xs Seq.>< toSeq ys)
 {-# INLINE (><) #-}
 
+-- | \( O(\log(\min(n_1,n_2))) \). Concatenate a non-empty sequence with
+-- a potentially empty sequence ('Seq'), to produce a guaranteed non-empty
+-- sequence.  Mnemonic: like '><', but a pipe for the guarunteed non-empty
+-- side.
 (|><) :: NESeq a -> Seq a -> NESeq a
 (x :<|| xs) |>< ys = x :<|| (xs Seq.>< ys)
 {-# INLINE (|><) #-}
@@ -168,6 +272,9 @@ infixr 5 <|
 infixr 5 ><
 infixr 5 |><
 
+-- | /O(n)/. A generalization of 'foldMap1', 'foldMapWithIndex' takes
+-- a folding function that also depends on the element's index, and applies
+-- it to every element in the sequence.
 foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
 foldMapWithIndex f (x :<|| xs) = maybe (f 0 x) (f 0 x <>)
                                . getOption
@@ -175,6 +282,8 @@ foldMapWithIndex f (x :<|| xs) = maybe (f 0 x) (f 0 x <>)
                                $ xs
 {-# INLINE foldMapWithIndex #-}
 
+-- | /O(n)/. 'traverseWithIndex1' is a version of 'traverse1' that also
+-- offers access to the index of each element.
 traverseWithIndex1 :: Apply f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
 traverseWithIndex1 f (x :<|| xs) = case runMaybeApply xs' of
     Left  ys -> (:<||)    <$> f 0 x <.> ys
@@ -183,18 +292,48 @@ traverseWithIndex1 f (x :<|| xs) = case runMaybeApply xs' of
     xs' = Seq.traverseWithIndex (\i -> MaybeApply . Left . f (i+1)) xs
 {-# INLINABLE traverseWithIndex1 #-}
 
+-- | \( O(n) \).  Returns a sequence of all non-empty suffixes of this
+-- sequence, longest first.  For example,
+--
+-- > tails (fromList (1:|[2,3])) = fromList (fromList (1:|[2,3]) :| [fromList (2:|[3]), fromList (3:|[])])
+--
+-- Evaluating the \( i \)th suffix takes \( O(\log(\min(i, n-i))) \), but evaluating
+-- every suffix in the sequence takes \( O(n) \) due to sharing.
+
+-- TODO: is this true?
 tails :: NESeq a -> NESeq (NESeq a)
 tails xs@(_ :<|| ys) = withNonEmpty (singleton xs) ((xs <|) . tails) ys
 {-# INLINABLE tails #-}
 
+-- | \( O(\min(n_1,n_2)) \).  'zip' takes two sequences and returns
+-- a sequence of corresponding pairs.  If one input is short, excess
+-- elements are discarded from the right end of the longer sequence.
 zip :: NESeq a -> NESeq b -> NESeq (a, b)
 zip (x :<|| xs) (y :<|| ys) = (x, y) :<|| Seq.zip xs ys
 {-# INLINE zip #-}
 
+-- | \( O(\min(n_1,n_2)) \).  'zipWith' generalizes 'zip' by zipping with the
+-- function given as the first argument, instead of a tupling function.
+-- For example, @zipWith (+)@ is applied to two sequences to take the
+-- sequence of corresponding sums.
 zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
 zipWith f (x :<|| xs) (y :<|| ys) = f x y :<|| Seq.zipWith f xs ys
 {-# INLINE zipWith #-}
 
+-- | Unzip a sequence of pairs.
+--
+-- @
+-- unzip ps = ps ``seq`` ('fmap' 'fst' ps) ('fmap' 'snd' ps)
+-- @
+--
+-- Example:
+--
+-- @
+-- unzip $ fromList ((1,"a") :| [(2,"b"), (3,"c")]) =
+--   (fromList (1:|[2,3]), fromList ("a":|["b","c"]))
+-- @
+--
+-- See the note about efficiency at 'unzipWith'.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
 unzip ((x, y) :<|| xys) = bimap (x :<||) (y :<||) . Seq.unzip $ xys
 {-# INLINE unzip #-}
@@ -280,7 +419,8 @@ instance Foldable1 NESeq where
     {-# INLINE fold1 #-}
     foldMap1 f = foldMapWithIndex (const f)
     {-# INLINE foldMap1 #-}
-    toNonEmpty = toList
+    -- TODO: use build
+    toNonEmpty (x :<|| xs) = x :| F.toList xs
     {-# INLINE toNonEmpty #-}
 
 instance Traversable1 NESeq where

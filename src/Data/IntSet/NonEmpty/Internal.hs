@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ViewPatterns       #-}
+{-# OPTIONS_HADDOCK not-home    #-}
 
 -- |
 -- Module      : Data.IntSet.NonEmpty.Internal
@@ -66,7 +67,7 @@ import qualified Data.Semigroup.Foldable as F1
 --     a @'Maybe' ('NEIntSet' a)@, returning 'Nothing' if the original 'IntSet'
 --     was empty.
 -- 2.  You can use the 'Data.IntSet.NonEmpty.insertIntSet' family of functions to
---     insert a value into a 'IntSet' to create a guarunteed 'NEIntSet'.
+--     insert a value into a 'IntSet' to create a guaranteed 'NEIntSet'.
 -- 3.  You can use the 'Data.IntSet.NonEmpty.IsNonEmpty' and
 --     'Data.IntSet.NonEmpty.IsEmpty' patterns to "pattern match" on a 'IntSet'
 --     to reveal it as either containing a 'NEIntSet' or an empty map.
@@ -141,7 +142,7 @@ intSetDataType = mkDataType "Data.IntSet.NonEmpty.Internal.NEIntSet" [fromListCo
 -- See 'Data.IntSet.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
 -- "match on" the possiblity of a 'IntSet' being an 'NEIntSet'.
 --
--- > nonEmptySet (Data.IntSet.fromList [3,5]) == fromList 3:|[5]
+-- > nonEmptySet (Data.IntSet.fromList [3,5]) == Just (fromList (3:|[5]))
 nonEmptySet :: IntSet -> Maybe NEIntSet
 nonEmptySet = (fmap . uncurry) NEIntSet . S.minView
 {-# INLINE nonEmptySet #-}

@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ViewPatterns       #-}
+{-# OPTIONS_HADDOCK not-home    #-}
 
 -- |
 -- Module      : Data.IntMap.NonEmpty.Internal
@@ -13,7 +14,7 @@
 --
 -- Unsafe internal-use functions used in the implementation of
 -- "Data.IntMap.NonEmpty".  These functions can potentially be used to
--- break the abstraction of 'NEIntMap' and produce unsound sets, so be
+-- break the abstraction of 'NEIntMap' and produce unsound maps, so be
 -- wary!
 module Data.IntMap.NonEmpty.Internal (
   -- * Non-Empty IntMap type
@@ -94,7 +95,7 @@ import qualified Data.Semigroup.Foldable    as F1
 --     a @'Maybe' ('NEIntMap' k a)@, returning 'Nothing' if the original 'IntMap'
 --     was empty.
 -- 2.  You can use the 'Data.IntMap.NonEmpty.insertIntMap' family of functions to
---     insert a value into a 'IntMap' to create a guarunteed 'NEIntMap'.
+--     insert a value into a 'IntMap' to create a guaranteed 'NEIntMap'.
 -- 3.  You can use the 'Data.IntMap.NonEmpty.IsNonEmpty' and
 --     'Data.IntMap.NonEmpty.IsEmpty' patterns to "pattern match" on a 'IntMap'
 --     to reveal it as either containing a 'NEIntMap' or an empty map.
@@ -402,7 +403,7 @@ toList (NEIntMap k v m) = (k,v) :| M.toList m
 -- See 'Data.IntMap.NonEmpty.IsNonEmpty' for a pattern synonym that lets you
 -- "match on" the possiblity of a 'IntMap' being an 'NEIntMap'.
 --
--- > nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == fromList ((3,"a") :| [(5,"b")])
+-- > nonEmptyMap (Data.IntMap.fromList [(3,"a"), (5,"b")]) == Just (fromList ((3,"a") :| [(5,"b")]))
 nonEmptyMap :: IntMap a -> Maybe (NEIntMap a)
 nonEmptyMap = (fmap . uncurry . uncurry) NEIntMap . M.minViewWithKey
 {-# INLINE nonEmptyMap #-}
@@ -500,6 +501,7 @@ instance Foldable NEIntMap where
     elem x (NEIntMap _ v m) = F.elem x m
                            || x == v
     {-# INLINE elem #-}
+    -- TODO: use build
     toList  = F.toList . elems
     {-# INLINE toList #-}
 
