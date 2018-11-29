@@ -147,7 +147,7 @@ instance Read1 NEIntMap where
 instance Read e => Read (NEIntMap e) where
     readPrec = parens $ prec 10 $ do
       Ident "fromList" <- lexP
-      xs <- readPrec
+      xs <- parens . prec 10 $ readPrec
       return (fromList xs)
     readListPrec = readListPrecDefault
 
@@ -176,7 +176,7 @@ fromListConstr :: Constr
 fromListConstr = mkConstr intMapDataType "fromList" [] Prefix
 
 intMapDataType :: DataType
-intMapDataType = mkDataType "Data.IntMap.Internal.IntMap" [fromListConstr]
+intMapDataType = mkDataType "Data.IntMap.NonEmpty.Internal.NEIntMap" [fromListConstr]
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
@@ -382,7 +382,7 @@ traverseWithKey1 f (NEIntMap k0 v m0) = case runMaybeApply m1 of
     Right m2 -> flip (NEIntMap k0) m2 <$> f k0 v
   where
     m1 = traverseMapWithKey (\k -> MaybeApply . Left . f k) m0
-{-# INLINE traverseWithKey1 #-}
+{-# INLINABLE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
 --

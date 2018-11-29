@@ -110,7 +110,7 @@ instance Show a => Show (NESet a) where
 instance (Read a, Ord a) => Read (NESet a) where
     readPrec = parens $ prec 10 $ do
       Ident "fromList" <- lexP
-      xs <- readPrec
+      xs <- parens . prec 10 $ readPrec
       return (fromList xs)
 
     readListPrec = readListPrecDefault
@@ -146,7 +146,7 @@ fromListConstr :: Constr
 fromListConstr = mkConstr setDataType "fromList" [] Prefix
 
 setDataType :: DataType
-setDataType = mkDataType "Data.Set.Internal.Set" [fromListConstr]
+setDataType = mkDataType "Data.Set.NonEmpty.Internal.NESet" [fromListConstr]
 
 
 

@@ -155,7 +155,7 @@ instance (Ord k, Read k) => Read1 (NEMap k) where
 instance (Ord k, Read k, Read e) => Read (NEMap k e) where
     readPrec = parens $ prec 10 $ do
       Ident "fromList" <- lexP
-      xs <- readPrec
+      xs <- parens . prec 10 $ readPrec
       return (fromList xs)
     readListPrec = readListPrecDefault
 
@@ -183,7 +183,7 @@ fromListConstr :: Constr
 fromListConstr = mkConstr mapDataType "fromList" [] Prefix
 
 mapDataType :: DataType
-mapDataType = mkDataType "Data.Map.NonEmpty.Internal.Map" [fromListConstr]
+mapDataType = mkDataType "Data.Map.NonEmpty.NonEmpty.Internal.NEMap" [fromListConstr]
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
@@ -382,7 +382,7 @@ traverseWithKey1 f (NEMap k0 v m0) = case runMaybeApply m1 of
     Right m2 -> flip (NEMap k0) m2 <$> f k0 v
   where
     m1 = M.traverseWithKey (\k -> MaybeApply . Left . f k) m0
-{-# INLINE traverseWithKey1 #-}
+{-# INLINABLE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
 --
@@ -528,7 +528,7 @@ instance Traversable1 (NEMap k) where
         Right m2 -> flip (NEMap k) m2 <$> v
       where
         m1 = traverse (MaybeApply . Left) m0
-    {-# INLINE sequence1 #-}
+    {-# INLINABLE sequence1 #-}
 
 -- | /O(n)/. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool

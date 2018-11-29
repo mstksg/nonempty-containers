@@ -39,6 +39,7 @@ library:
   source-dirs: src
   dependencies:
   - deepseq
+  - comonad
 
 tests:
   nonempty-containers-test:

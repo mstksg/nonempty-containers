@@ -100,7 +100,7 @@ instance Show NEIntSet where
 instance Read NEIntSet where
     readPrec = parens $ prec 10 $ do
       Ident "fromList" <- lexP
-      xs <- readPrec
+      xs <- parens . prec 10 $ readPrec
       return (fromList xs)
 
     readListPrec = readListPrecDefault
@@ -124,7 +124,7 @@ fromListConstr :: Constr
 fromListConstr = mkConstr intSetDataType "fromList" [] Prefix
 
 intSetDataType :: DataType
-intSetDataType = mkDataType "Data.IntSet.Internal.IntSet" [fromListConstr]
+intSetDataType = mkDataType "Data.IntSet.NonEmpty.Internal.NEIntSet" [fromListConstr]
 
 
 
