@@ -85,11 +85,14 @@ Similar packages include:
 
 *   [non-empty-containers][]: Similar approach with similar data types, but API
     is limited to a few choice functions.
+*   [nonemptymap][]: Another similar approach, but is limited only to `Map`,
+    and is also not a complete API port.
 *   [non-empty][]: Similar approach with similar data types, but is meant to be
     more general and work for a variety of more data types.
 *   [nonempty-alternative][]: Similar approach, but is instead a generalized
     data type for all `Alternative` instances.
 
+[nonemptymap]: http://hackage.haskell.org/package/nonemptymap
 [non-empty]: http://hackage.haskell.org/package/non-empty
 [nonempty-alternative]: http://hackage.haskell.org/package/nonempty-alternative
 
