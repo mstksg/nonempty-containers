@@ -4,7 +4,8 @@ Efficient and optimized non-empty (by construction) versions of types from
 *[containers][]*. Inspired by *[non-empty-containers][]* library, except
 attempting a more faithful port (with under-the-hood optimizations) of the full
 *containers* API.  Also contains a convenient typeclass abstraction for
-converting betwewen non-empty and possibly-empty variants.
+converting betwewen non-empty and possibly-empty variants, as well as pattern
+synonym-based conversion methods.
 
 [containers]: http://hackage.haskell.org/package/containers
 [non-empty-containers]: http://hackage.haskell.org/package/non-empty-containers
@@ -16,9 +17,9 @@ collection.
 Unlike similar packages (see below), this package is defined to be a
 *drop-in replacement* for the *containers* API in most situations.  More or
 less every single function is implemented with the same asymptotics and
-typeclass constraints.  Extensive test suite is provided to ensure that
-the behavior of functions are identical to their original *containers*
-counterparts.
+typeclass constraints.  An extensive test suite (with 457 total tests) is
+provided to ensure that the behavior of functions are identical to their
+original *containers* counterparts.
 
 Care is also taken to modify the interface of specific functions to reflect
 non-emptiness and emptiness as concepts, including:

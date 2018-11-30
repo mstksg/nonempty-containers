@@ -11,13 +11,9 @@ extra-source-files:
 - README.md
 - CHANGELOG.md
 
-# Metadata used when publishing your package
 synopsis:            Non-empty variants of containers data types, with full API
 category:            Data Structures
 
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
 description: |
   Efficient and optimized non-empty versions of types from /containers/.
   Inspired by /non-empty-containers/ library, except attempting a more

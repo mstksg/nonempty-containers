@@ -9,9 +9,10 @@ import           Tests.Sequence
 import           Tests.Set
 
 setOpts :: TestTree -> TestTree
-setOpts = localOption (HedgehogTestLimit    (Just 500))
-        . localOption (HedgehogDiscardLimit (Just 500))
-        . localOption (HideSuccesses        True      )
+setOpts = id
+-- setOpts = localOption (HedgehogTestLimit    (Just 500))
+--         . localOption (HedgehogDiscardLimit (Just 500))
+--         . localOption (HideSuccesses        True      )
 
 main :: IO ()
 main = defaultMain . setOpts $
