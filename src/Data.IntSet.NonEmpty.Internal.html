@@ -45,14 +45,14 @@
 </span><a name="line-45"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data.IntSet</span><span>             </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">S</span><span>
 </span><a name="line-46"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data.Semigroup.Foldable</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">F1</span><span>
 </span><a name="line-47"></a><span>
-</span><a name="line-48"></a><span class="hs-comment">-- | A non-empty set of values @a@.  At least one value exists in an</span><span>
-</span><a name="line-49"></a><span class="hs-comment">-- @'NEIntSet' a@ at all times.</span><span>
+</span><a name="line-48"></a><span class="hs-comment">-- | A non-empty (by construction) set of integers.  At least one value</span><span>
+</span><a name="line-49"></a><span class="hs-comment">-- exists in an @'NEIntSet' a@ at all times.</span><span>
 </span><a name="line-50"></a><span class="hs-comment">--</span><span>
 </span><a name="line-51"></a><span class="hs-comment">-- Functions that /take/ an 'NEIntSet' can safely operate on it with the</span><span>
 </span><a name="line-52"></a><span class="hs-comment">-- assumption that it has at least one item.</span><span>
 </span><a name="line-53"></a><span class="hs-comment">--</span><span>
-</span><a name="line-54"></a><span class="hs-comment">-- Functions that /return/ an 'NEIntSet' provide an assurance that the result</span><span>
-</span><a name="line-55"></a><span class="hs-comment">-- has at least one item.</span><span>
+</span><a name="line-54"></a><span class="hs-comment">-- Functions that /return/ an 'NEIntSet' provide an assurance that the</span><span>
+</span><a name="line-55"></a><span class="hs-comment">-- result has at least one item.</span><span>
 </span><a name="line-56"></a><span class="hs-comment">--</span><span>
 </span><a name="line-57"></a><span class="hs-comment">-- &quot;Data.IntSet.NonEmpty&quot; re-exports the API of &quot;Data.IntSet&quot;, faithfully</span><span>
 </span><a name="line-58"></a><span class="hs-comment">-- reproducing asymptotics, typeclass constraints, and semantics.</span><span>

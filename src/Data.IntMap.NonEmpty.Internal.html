@@ -75,8 +75,8 @@
 </span><a name="line-75"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data.IntMap</span><span>                </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">M</span><span>
 </span><a name="line-76"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data.Semigroup.Foldable</span><span>    </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">F1</span><span>
 </span><a name="line-77"></a><span>
-</span><a name="line-78"></a><span class="hs-comment">-- | A non-empty IntMap from keys @k@ to values @a@.  At least one key-value</span><span>
-</span><a name="line-79"></a><span class="hs-comment">-- pair exists in an @'NEIntMap' k v@ at all times.</span><span>
+</span><a name="line-78"></a><span class="hs-comment">-- | A non-empty (by construction) map from integer keys to values @a@.  At</span><span>
+</span><a name="line-79"></a><span class="hs-comment">-- least one key-value pair exists in an @'NEIntMap' v@ at all times.</span><span>
 </span><a name="line-80"></a><span class="hs-comment">--</span><span>
 </span><a name="line-81"></a><span class="hs-comment">-- Functions that /take/ an 'NEIntMap' can safely operate on it with the</span><span>
 </span><a name="line-82"></a><span class="hs-comment">-- assumption that it has at least one key-value pair.</span><span>

@@ -18,9 +18,9 @@
 --   so be wary!
 module Data.IntMap.NonEmpty.Internal
 
--- | A non-empty IntMap from keys <tt>k</tt> to values <tt>a</tt>. At least
---   one key-value pair exists in an <tt><a>NEIntMap</a> k v</tt> at all
---   times.
+-- | A non-empty (by construction) map from integer keys to values
+--   <tt>a</tt>. At least one key-value pair exists in an
+--   <tt><a>NEIntMap</a> v</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NEIntMap</a> can safely operate on it
 --   with the assumption that it has at least one key-value pair.
@@ -359,8 +359,8 @@ instance Data.Semigroup.Traversable.Class.Traversable1 Data.IntMap.NonEmpty.Inte
 --   so be wary!
 module Data.IntSet.NonEmpty.Internal
 
--- | A non-empty set of values <tt>a</tt>. At least one value exists in an
---   <tt><a>NEIntSet</a> a</tt> at all times.
+-- | A non-empty (by construction) set of integers. At least one value
+--   exists in an <tt><a>NEIntSet</a> a</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NEIntSet</a> can safely operate on it
 --   with the assumption that it has at least one item.
@@ -543,8 +543,8 @@ instance GHC.Base.Semigroup Data.IntSet.NonEmpty.Internal.NEIntSet
 --   <tt>W</tt>, all operations are constant-time.
 module Data.IntSet.NonEmpty
 
--- | A non-empty set of values <tt>a</tt>. At least one value exists in an
---   <tt><a>NEIntSet</a> a</tt> at all times.
+-- | A non-empty (by construction) set of integers. At least one value
+--   exists in an <tt><a>NEIntSet</a> a</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NEIntSet</a> can safely operate on it
 --   with the assumption that it has at least one item.
@@ -1129,11 +1129,17 @@ valid :: NEIntSet -> Bool
 --   <i>O(min(W, f(n)))</i>, where <tt>W</tt> is the number of bits in an
 --   <a>Int</a> (32 or 64). That is, if <tt>f(n)</tt> is greater than
 --   <tt>W</tt>, all operations are constant-time.
+--   
+--   At the moment, this package does not provide a variant strict on
+--   values for these functions, like <i>containers</i> does. This is a
+--   planned future implementation (PR's are appreciated). For now, you can
+--   simulate a strict interface by manually forcing values before
+--   returning results.
 module Data.IntMap.NonEmpty
 
--- | A non-empty IntMap from keys <tt>k</tt> to values <tt>a</tt>. At least
---   one key-value pair exists in an <tt><a>NEIntMap</a> k v</tt> at all
---   times.
+-- | A non-empty (by construction) map from integer keys to values
+--   <tt>a</tt>. At least one key-value pair exists in an
+--   <tt><a>NEIntMap</a> v</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NEIntMap</a> can safely operate on it
 --   with the assumption that it has at least one key-value pair.
@@ -2688,9 +2694,9 @@ valid :: NEIntMap a -> Bool
 --   wary!
 module Data.Map.NonEmpty.Internal
 
--- | A non-empty Map from keys <tt>k</tt> to values <tt>a</tt>. At least
---   one key-value pair exists in an <tt><a>NEMap</a> k v</tt> at all
---   times.
+-- | A non-empty (by construction) map from keys <tt>k</tt> to values
+--   <tt>a</tt>. At least one key-value pair exists in an <tt><a>NEMap</a>
+--   k v</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NEMap</a> can safely operate on it
 --   with the assumption that it has at least one key-value pair.
@@ -3008,7 +3014,7 @@ instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Intern
 --   sequences, so be wary!
 module Data.Sequence.NonEmpty.Internal
 
--- | A general-purpose non-empty finite sequence type.
+-- | A general-purpose non-empty (by construction) finite sequence type.
 --   
 --   Non-emptiness means that:
 --   
@@ -3152,6 +3158,8 @@ infixr 5 ><
 --   guarunteed non-empty side.
 (|><) :: NESeq a -> Seq a -> NESeq a
 infixr 5 |><
+
+-- | Defined here but hidden; intended for use with RULES pragma.
 map :: (a -> b) -> NESeq a -> NESeq b
 
 -- | <i>O(n)</i>. A generalization of <a>foldMap1</a>,
@@ -3210,6 +3218,8 @@ sortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
 
 -- | Compatibility layer for <a>unstableSortOn</a>.
 unstableSortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
+
+-- | Compatibility layer for <a>unzip</a>.
 unzipSeq :: Seq (a, b) -> (Seq a, Seq b)
 
 -- | Compatibility layer for <a>unzipWith</a>.
@@ -3293,7 +3303,7 @@ instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Sequence.NonEm
 --   </pre>
 module Data.Sequence.NonEmpty
 
--- | A general-purpose non-empty finite sequence type.
+-- | A general-purpose non-empty (by construction) finite sequence type.
 --   
 --   Non-emptiness means that:
 --   
@@ -4047,8 +4057,8 @@ unzipWith :: (a -> (b, c)) -> NESeq a -> (NESeq b, NESeq c)
 --   wary!
 module Data.Set.NonEmpty.Internal
 
--- | A non-empty set of values <tt>a</tt>. At least one value exists in an
---   <tt><a>NESet</a> a</tt> at all times.
+-- | A non-empty (by construction) set of values <tt>a</tt>. At least one
+--   value exists in an <tt><a>NESet</a> a</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NESet</a> can safely operate on it
 --   with the assumption that it has at least one item.
@@ -4187,7 +4197,7 @@ foldr' :: (a -> b -> b) -> b -> NESet a -> b
 --   This function is strict in the starting value.
 foldl' :: (a -> b -> a) -> a -> NESet b -> a
 
--- | Used for <tt>cartesianProduct</tt>
+-- | Used for <a>cartesianProduct</a>
 newtype MergeNESet a
 MergeNESet :: NESet a -> MergeNESet a
 [getMergeNESet] :: MergeNESet a -> NESet a
@@ -4288,8 +4298,8 @@ instance Data.Semigroup.Foldable.Class.Foldable1 Data.Set.NonEmpty.Internal.NESe
 --   </pre>
 module Data.Set.NonEmpty
 
--- | A non-empty set of values <tt>a</tt>. At least one value exists in an
---   <tt><a>NESet</a> a</tt> at all times.
+-- | A non-empty (by construction) set of values <tt>a</tt>. At least one
+--   value exists in an <tt><a>NESet</a> a</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NESet</a> can safely operate on it
 --   with the assumption that it has at least one item.
@@ -5089,11 +5099,17 @@ valid :: Ord a => NESet a -> Bool
 --   <pre>
 --   import qualified Data.Map.NonEmpty as NEM
 --   </pre>
+--   
+--   At the moment, this package does not provide a variant strict on
+--   values for these functions, like <i>containers</i> does. This is a
+--   planned future implementation (PR's are appreciated). For now, you can
+--   simulate a strict interface by manually forcing values before
+--   returning results.
 module Data.Map.NonEmpty
 
--- | A non-empty Map from keys <tt>k</tt> to values <tt>a</tt>. At least
---   one key-value pair exists in an <tt><a>NEMap</a> k v</tt> at all
---   times.
+-- | A non-empty (by construction) map from keys <tt>k</tt> to values
+--   <tt>a</tt>. At least one key-value pair exists in an <tt><a>NEMap</a>
+--   k v</tt> at all times.
 --   
 --   Functions that <i>take</i> an <a>NEMap</a> can safely operate on it
 --   with the assumption that it has at least one key-value pair.
@@ -6865,6 +6881,10 @@ valid :: Ord k => NEMap k a -> Bool
 --   
 --   Provides the typeclass <a>HasNonEmpty</a>, which abstracts over
 --   different types which have a "non-empty" variant.
+--   
+--   Used to convert between and in between possibly-empty and non-empty
+--   types. Instances are provided for all modules in this package, as well
+--   as for <a>NonEmpty</a> in <i>base</i>.
 module Data.Containers.NonEmpty
 
 -- | If <tt>s</tt> is an instance of <tt>HasNonEmpty</tt>, it means that
