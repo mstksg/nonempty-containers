@@ -11,7 +11,7 @@
 --   convenient typeclass abstraction for converting betwewen non-empty and
 --   possibly-empty variants. See README.md for more information.
 @package nonempty-containers
-@version 0.1.0.0
+@version 0.1.1.0
 
 
 -- | Unsafe internal-use functions used in the implementation of
@@ -353,6 +353,7 @@ instance Data.Foldable.Foldable Data.IntMap.NonEmpty.Internal.NEIntMap
 instance Data.Traversable.Traversable Data.IntMap.NonEmpty.Internal.NEIntMap
 instance Data.Semigroup.Foldable.Class.Foldable1 Data.IntMap.NonEmpty.Internal.NEIntMap
 instance Data.Semigroup.Traversable.Class.Traversable1 Data.IntMap.NonEmpty.Internal.NEIntMap
+instance Control.Comonad.Comonad Data.IntMap.NonEmpty.Internal.NEIntMap
 
 
 -- | Unsafe internal-use functions used in the implementation of
@@ -3008,6 +3009,7 @@ instance Data.Foldable.Foldable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Traversable.Traversable (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Foldable.Class.Foldable1 (Data.Map.NonEmpty.Internal.NEMap k)
 instance Data.Semigroup.Traversable.Class.Traversable1 (Data.Map.NonEmpty.Internal.NEMap k)
+instance Control.Comonad.Comonad (Data.Map.NonEmpty.Internal.NEMap k)
 
 
 -- | Unsafe internal-use functions used in the implementation of
