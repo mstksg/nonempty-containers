@@ -7,7 +7,9 @@
 --   Efficient and optimized non-empty versions of types from
 --   <i>containers</i>. Inspired by <i>non-empty-containers</i> library,
 --   except attempting a more faithful port (with under-the-hood
---   optimizations) of the full <i>containers</i> API.
+--   optimizations) of the full <i>containers</i> API. Also contains a
+--   convenient typeclass abstraction for converting betwewen non-empty and
+--   possibly-empty variants. See README.md for more information.
 @package nonempty-containers
 @version 0.1.0.0
 
