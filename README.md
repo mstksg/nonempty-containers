@@ -1,4 +1,6 @@
-# nonempty-containers
+# [nonempty-containers][]
+
+[nonempty-containers]: http://hackage.haskell.org/package/nonempty-containers
 
 Efficient and optimized non-empty (by construction) versions of types from
 *[containers][]*. Inspired by *[non-empty-containers][]* library, except
