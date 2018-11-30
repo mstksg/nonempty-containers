@@ -1,7 +1,7 @@
 
+-- import           Test.Tasty.Hedgehog
+-- import           Test.Tasty.Ingredients.ConsoleReporter
 import           Test.Tasty
-import           Test.Tasty.Hedgehog
-import           Test.Tasty.Ingredients.ConsoleReporter
 import           Tests.IntMap
 import           Tests.IntSet
 import           Tests.Map

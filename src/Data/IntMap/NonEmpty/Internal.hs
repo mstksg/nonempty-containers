@@ -56,6 +56,7 @@ module Data.IntMap.NonEmpty.Internal (
   ) where
 
 import           Control.Applicative
+import           Control.Comonad
 import           Control.DeepSeq
 import           Data.Coerce
 import           Data.Data
@@ -73,6 +74,7 @@ import           Prelude hiding             (foldr1, foldl1, foldr, foldl, map)
 import           Text.Read
 import qualified Data.Foldable              as F
 import qualified Data.IntMap                as M
+import qualified Data.List                  as L
 import qualified Data.Semigroup.Foldable    as F1
 
 -- | A non-empty (by construction) map from integer keys to values @a@.  At
@@ -568,6 +570,29 @@ instance Foldable1 NEIntMap where
 instance Traversable1 NEIntMap where
     traverse1 f = traverseWithKey1 (const f)
     {-# INLINE traverse1 #-}
+
+-- | 'extract' gets the value at the minimal key, and 'duplicate' produces
+-- a map of maps comprised of all keys from the original map greater than
+-- or equal to the current key.
+--
+-- Credit to
+-- <https://www.reddit.com/r/haskell/comments/a1qjcy/nonemptycontainers_nonempty_variants_of/eat5r4h/ Faucelme>.
+instance Comonad NEIntMap where
+    extract = neimV0
+    {-# INLINE extract #-}
+    -- We'd like to use 'M.mapAccumWithKey', but it traverses things in the
+    -- wrong order.
+    duplicate n0@(NEIntMap k0 _ m0) = NEIntMap k0 n0
+                                    . M.fromDistinctAscList
+                                    . snd
+                                    . L.mapAccumL go m0
+                                    . M.toList
+                                    $ m0
+      where
+        go m (k, v) = (m', (k, NEIntMap k v m'))
+          where
+            !m' = M.deleteMin m
+    {-# INLINE duplicate #-}
 
 -- | /O(n)/. Test if the internal map structure is valid.
 valid :: NEIntMap a -> Bool

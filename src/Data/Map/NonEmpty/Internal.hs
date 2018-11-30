@@ -51,6 +51,7 @@ module Data.Map.NonEmpty.Internal (
   ) where
 
 import           Control.Applicative
+import           Control.Comonad
 import           Control.DeepSeq
 import           Data.Coerce
 import           Data.Data
@@ -554,6 +555,24 @@ instance Traversable1 (NEMap k) where
       where
         m1 = traverse (MaybeApply . Left) m0
     {-# INLINABLE sequence1 #-}
+
+-- | 'extract' gets the value at the minimal key, and 'duplicate' produces
+-- a map of maps comprised of all keys from the original map greater than
+-- or equal to the current key.
+--
+-- Credit to
+-- <https://www.reddit.com/r/haskell/comments/a1qjcy/nonemptycontainers_nonempty_variants_of/eat5r4h/ Faucelme>.
+instance Comonad (NEMap k) where
+    extract = nemV0
+    {-# INLINE extract #-}
+    duplicate n0@(NEMap k0 _ m0) = NEMap k0 n0 . snd
+                                 . M.mapAccumWithKey go m0
+                                 $ m0
+      where
+        go m k v = (m', NEMap k v m')
+          where
+            !m' = M.deleteMin m
+    {-# INLINE duplicate #-}
 
 -- | /O(n)/. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool

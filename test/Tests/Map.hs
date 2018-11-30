@@ -4,6 +4,7 @@
 module Tests.Map (mapTests) where
 
 import           Control.Applicative
+import           Control.Comonad
 import           Data.Coerce
 import           Data.Foldable
 import           Data.Functor.Identity
@@ -110,6 +111,28 @@ prop_splitRoot = property $ do
     ascending (x :| xs) = case NE.nonEmpty xs of
       Nothing          -> True
       Just ys@(y :| _) -> x < y && ascending ys
+
+prop_extract_duplicate :: Property
+prop_extract_duplicate = property $ do
+    n <- forAll neMapGen
+    tripping n duplicate
+               (Identity . extract)
+
+prop_fmap_extract_duplicate :: Property
+prop_fmap_extract_duplicate = property $ do
+    n <- forAll neMapGen
+    tripping n duplicate
+               (Identity . fmap extract)
+
+prop_duplicate_duplicate :: Property
+prop_duplicate_duplicate = property $ do
+    n <- forAll neMapGen
+    let dd1 = duplicate . duplicate      $ n
+        dd2 = fmap duplicate . duplicate $ n
+    assert $ NEM.valid dd1
+    assert $ NEM.valid dd2
+    dd1 === dd2
+
 
 
 

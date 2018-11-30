@@ -416,7 +416,7 @@ instance Comonad NESeq where
     extend = extended
     {-# INLINE extend #-}
 
--- | 'foldr1', 'foldl', 'maximum', and 'minimum' are all total, unlike for
+-- | 'foldr1', 'foldl1', 'maximum', and 'minimum' are all total, unlike for
 -- 'Seq'.
 instance Foldable NESeq where
 #if MIN_VERSION_base(4,11,0)
