@@ -45,14 +45,14 @@ import qualified Data.Foldable           as F
 import qualified Data.IntSet             as S
 import qualified Data.Semigroup.Foldable as F1
 
--- | A non-empty set of values @a@.  At least one value exists in an
--- @'NEIntSet' a@ at all times.
+-- | A non-empty (by construction) set of integers.  At least one value
+-- exists in an @'NEIntSet' a@ at all times.
 --
 -- Functions that /take/ an 'NEIntSet' can safely operate on it with the
 -- assumption that it has at least one item.
 --
--- Functions that /return/ an 'NEIntSet' provide an assurance that the result
--- has at least one item.
+-- Functions that /return/ an 'NEIntSet' provide an assurance that the
+-- result has at least one item.
 --
 -- "Data.IntSet.NonEmpty" re-exports the API of "Data.IntSet", faithfully
 -- reproducing asymptotics, typeclass constraints, and semantics.

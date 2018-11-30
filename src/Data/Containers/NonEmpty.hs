@@ -17,6 +17,10 @@
 --
 -- Provides the typeclass 'HasNonEmpty', which abstracts over different
 -- types which have a "non-empty" variant.
+--
+-- Used to convert between and in between possibly-empty and non-empty
+-- types.  Instances are provided for all modules in this package, as well
+-- as for 'NonEmpty' in /base/.
 module Data.Containers.NonEmpty (
     HasNonEmpty(..)
   , pattern IsNonEmpty, pattern IsEmpty

@@ -54,6 +54,11 @@
 -- /O(min(W, f(n)))/, where @W@ is the number of bits in an 'Int' (32 or
 -- 64).  That is, if @f(n)@ is greater than @W@, all operations are
 -- constant-time.
+--
+-- At the moment, this package does not provide a variant strict on values
+-- for these functions, like /containers/ does.  This is a planned future
+-- implementation (PR's are appreciated).  For now, you can simulate
+-- a strict interface by manually forcing values before returning results.
 module Data.IntMap.NonEmpty (
   -- * Non-Empty IntMap Type
     NEIntMap
@@ -320,8 +325,6 @@ unsafeFromMap = withNonEmpty e id
 --
 -- > insertMap 4 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
 -- > insertMap 4 "c" Data.IntMap.empty == singleton 4 "c"
-
--- TODO: should this be called insertMap?
 insertMap :: Key -> a -> IntMap a -> NEIntMap a
 insertMap k v = withNonEmpty (singleton k v) (insert k v)
 {-# INLINE insertMap #-}

@@ -75,8 +75,8 @@ import qualified Data.Foldable              as F
 import qualified Data.IntMap                as M
 import qualified Data.Semigroup.Foldable    as F1
 
--- | A non-empty IntMap from keys @k@ to values @a@.  At least one key-value
--- pair exists in an @'NEIntMap' k v@ at all times.
+-- | A non-empty (by construction) map from integer keys to values @a@.  At
+-- least one key-value pair exists in an @'NEIntMap' v@ at all times.
 --
 -- Functions that /take/ an 'NEIntMap' can safely operate on it with the
 -- assumption that it has at least one key-value pair.

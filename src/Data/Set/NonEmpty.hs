@@ -527,8 +527,6 @@ intersection n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
 -- cartesianProduct (fromList (1:|[2])) (fromList (\'a\':|[\'b\'])) =
 --   fromList ((1,\'a\') :| [(1,\'b\'), (2,\'a\'), (2,\'b\')])
 -- @
-
--- TODO: can this be better?
 cartesianProduct
     :: NESet a
     -> NESet b

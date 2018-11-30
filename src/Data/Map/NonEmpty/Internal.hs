@@ -71,8 +71,8 @@ import qualified Data.Map                   as M
 import qualified Data.Map.Internal          as M
 import qualified Data.Semigroup.Foldable    as F1
 
--- | A non-empty Map from keys @k@ to values @a@.  At least one key-value
--- pair exists in an @'NEMap' k v@ at all times.
+-- | A non-empty (by construction) map from keys @k@ to values @a@.  At
+-- least one key-value pair exists in an @'NEMap' k v@ at all times.
 --
 -- Functions that /take/ an 'NEMap' can safely operate on it with the
 -- assumption that it has at least one key-value pair.

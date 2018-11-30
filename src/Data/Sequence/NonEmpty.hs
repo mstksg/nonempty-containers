@@ -149,7 +149,7 @@ module Data.Sequence.NonEmpty (
   -- * Folds
   -- | General folds are available via the 'Foldable' instance of 'Seq'.
   , foldMapWithIndex
-  , foldlWithIndex      -- TODO: foldlWithIndex1
+  , foldlWithIndex
   , foldrWithIndex
   -- * Transformations
   , mapWithIndex
@@ -648,7 +648,8 @@ unstableSort = unstableSortBy compare
 -- sequence.  The sort is not stable.  This algorithm is frequently faster
 -- and uses less memory than 'sortBy'.
 
--- TODO: figure out how to make it match 'Data.Sequence.unstableSortBy'.
+-- TODO: figure out how to make it match 'Data.Sequence.unstableSortBy'
+-- without unsafe wrapping/unwrapping
 unstableSortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
 unstableSortBy c = unsafeFromSeq . Seq.unstableSortBy c . toSeq
 -- unstableSortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
@@ -676,7 +677,8 @@ unstableSortBy c = unsafeFromSeq . Seq.unstableSortBy c . toSeq
 -- @'unstableSortBy' ('compare' ``Data.Function.on`` f)@ will be faster than
 -- @'unstableSortOn' f@.
 
--- TODO: figure out how to make it match 'Data.Sequence.unstableSortBy'.
+-- TODO: figure out how to make it match 'Data.Sequence.unstableSortBy'
+-- without unsafe wrapping/unwrapping
 unstableSortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
 unstableSortOn f = unsafeFromSeq . unstableSortOnSeq f . toSeq
 -- unstableSortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)

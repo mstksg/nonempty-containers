@@ -50,6 +50,11 @@
 -- "Prelude" and "Data.Map" functions:
 --
 -- > import qualified Data.Map.NonEmpty as NEM
+--
+-- At the moment, this package does not provide a variant strict on values
+-- for these functions, like /containers/ does.  This is a planned future
+-- implementation (PR's are appreciated).  For now, you can simulate
+-- a strict interface by manually forcing values before returning results.
 module Data.Map.NonEmpty (
   -- * Non-Empty Map type
     NEMap
@@ -164,7 +169,7 @@ module Data.Map.NonEmpty (
   , foldl
   , foldr1
   , foldl1
-  , foldrWithKey            -- TODO: foldr1WithKey
+  , foldrWithKey
   , foldlWithKey
   , foldMapWithKey
 
@@ -1454,8 +1459,8 @@ mapAccumRWithKey f z0 (NEMap k v m) = (z2, NEMap k v' m')
     ~(z1, m') = M.mapAccumRWithKey f z0 m
     ~(z2, v') = f z1 k v
 {-# INLINE mapAccumRWithKey #-}
-
--- TODO: what other lazy tuples can we do
+-- TODO: what other situations can we take advantage of lazy tuple pattern
+-- matching?
 
 -- | /O(n*log n)/.
 -- @'mapKeys' f s@ is the map obtained by applying @f@ to each key of @s@.

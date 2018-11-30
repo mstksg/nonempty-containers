@@ -54,14 +54,17 @@ import           Data.Set.Internal                    (Set(..))
 import           Data.Typeable                        (Typeable)
 import           Prelude hiding                       (foldr, foldr1, foldl, foldl1)
 import           Text.Read
-import           Utils.Containers.Internal.StrictPair
 import qualified Data.Foldable                        as F
 import qualified Data.Semigroup.Foldable              as F1
 import qualified Data.Set                             as S
 import qualified Data.Set.Internal                    as S
 
--- | A non-empty set of values @a@.  At least one value exists in an
--- @'NESet' a@ at all times.
+#if !MIN_VERSION_containers(0,5,11)
+import           Utils.Containers.Internal.StrictPair
+#endif
+
+-- | A non-empty (by construction) set of values @a@.  At least one value
+-- exists in an @'NESet' a@ at all times.
 --
 -- Functions that /take/ an 'NESet' can safely operate on it with the
 -- assumption that it has at least one item.
@@ -380,7 +383,7 @@ instance Foldable1 NESet where
     {-# INLINE toNonEmpty #-}
 
 
--- | Used for 'cartesianProduct'
+-- | Used for 'Data.Set.NonEmpty.cartesianProduct'
 newtype MergeNESet a = MergeNESet { getMergeNESet :: NESet a }
 
 instance Semigroup (MergeNESet a) where

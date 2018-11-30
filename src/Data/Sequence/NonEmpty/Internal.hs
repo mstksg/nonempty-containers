@@ -68,7 +68,7 @@ import           Text.Read
 import qualified Data.Foldable              as F
 import qualified Data.Sequence              as Seq
 
--- | A general-purpose non-empty finite sequence type.
+-- | A general-purpose non-empty (by construction) finite sequence type.
 --
 -- Non-emptiness means that:
 --
@@ -286,6 +286,7 @@ infixr 5 <|
 infixr 5 ><
 infixr 5 |><
 
+-- | Defined here but hidden; intended for use with RULES pragma.
 map :: (a -> b) -> NESeq a -> NESeq b
 map f (x :<|| xs) = f x :<|| fmap f xs
 {-# NOINLINE [1] map #-}
@@ -343,17 +344,6 @@ zip (x :<|| xs) (y :<|| ys) = (x, y) :<|| Seq.zip xs ys
 zipWith :: (a -> b -> c) -> NESeq a -> NESeq b -> NESeq c
 zipWith f (x :<|| xs) (y :<|| ys) = f x y :<|| Seq.zipWith f xs ys
 {-# INLINE zipWith #-}
-
-unzipSeq :: Seq (a, b) -> (Seq a, Seq b)
-#if MIN_VERSION_containers(0,5,11)
-unzipSeq = Seq.unzip
-{-# INLINE unzipSeq #-}
-#else
-unzipSeq = \case
-    (x, y) :<| xys -> bimap (x :<|) (y :<|) . unzipSeq $ xys
-    Empty          -> (Empty, Empty)
-{-# INLINABLE unzipSeq #-}
-#endif
 
 -- | Unzip a sequence of pairs.
 --
@@ -522,6 +512,18 @@ unstableSortOnSeq = Seq.unstableSortOn
 unstableSortOnSeq f = Seq.unstableSortBy (\x y -> f x `compare` f y)
 #endif
 {-# INLINE unstableSortOnSeq #-}
+
+-- | Compatibility layer for 'Data.Sequence.unzip'.
+unzipSeq :: Seq (a, b) -> (Seq a, Seq b)
+#if MIN_VERSION_containers(0,5,11)
+unzipSeq = Seq.unzip
+{-# INLINE unzipSeq #-}
+#else
+unzipSeq = \case
+    (x, y) :<| xys -> bimap (x :<|) (y :<|) . unzipSeq $ xys
+    Empty          -> (Empty, Empty)
+{-# INLINABLE unzipSeq #-}
+#endif
 
 -- | Compatibility layer for 'Data.Sequence.unzipWith'.
 unzipWithSeq :: (a -> (b, c)) -> Seq a -> (Seq b, Seq c)
