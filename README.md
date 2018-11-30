@@ -3,10 +3,15 @@
 Efficient and optimized non-empty (by construction) versions of types from
 *[containers][]*. Inspired by *[non-empty-containers][]* library, except
 attempting a more faithful port (with under-the-hood optimizations) of the full
-*containers* API.
+*containers* API.  Also contains a convenient typeclass abstraction for
+converting betwewen non-empty and possibly-empty variants.
 
 [containers]: http://hackage.haskell.org/package/containers
 [non-empty-containers]: http://hackage.haskell.org/package/non-empty-containers
+
+Non-empty *by construction* means that the data type is implemented using a
+data structure where it is structurally impossible to represent an empty
+collection.
 
 Unlike similar packages (see below), this package is defined to be a
 *drop-in replacement* for the *containers* API in most situations.  More or
@@ -20,6 +25,7 @@ non-emptiness and emptiness as concepts, including:
 
 1.  Functions that might return empty results (like `delete`, `filter`) return
     possibly-empty variants instead.
+
 2.  Functions that totally partition a non-empty collection (like `partition`,
     `splitAt`, `span`) would previously return a tuple of either halves:
 
@@ -45,7 +51,17 @@ non-emptiness and emptiness as concepts, including:
     non-empty maps in either camp.
 
     [these]: https://hackage.haskell.org/package/these
-3.  Functions that can "potentially delete" (like `alter` and `updateAt`)
+
+3.  Typeclass-polymorphic functions are made more general (or have more general
+    variants provided) whenever possible.  This means that functions like
+    `foldMapWithKey` are written for all `Semigroup m` instead of only `Monoid
+    m`, and `traverseWithKey1` is provided to work for all `Apply f` instances
+    (instead of only `Applicative f` instances).
+
+    `Foldable1` and `Traversable1` instances are also provided, to provide
+    `foldMap1` and `traverse1`.
+
+4.  Functions that can "potentially delete" (like `alter` and `updateAt`)
     return possibly-empty variants.  However, alternatives are offered
     (whenever not already present) with variants that disallow deletion,
     allowing for guaranteed non-empty maps to be returned.
@@ -58,11 +74,9 @@ Contains non-empty versions for:
 *   `IntSet`
 *   `Sequence`
 
-Note that `Tree`, from *Data.Tree*, is already non-empty by construction.
-
-Non-empty *by construction* means that the data type is implemented using a
-data structure where it is structurally impossible to represent an empty
-collection.
+A typeclass abstraction (in *Data.Containers.NonEmpty*) is provided to allow
+for easy conversions between non-empty and possibly-empty variants.  Note that
+`Tree`, from *Data.Tree*, is already non-empty by construction.
 
 Similar packages include:
 

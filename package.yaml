@@ -22,7 +22,9 @@ description: |
   Efficient and optimized non-empty versions of types from /containers/.
   Inspired by /non-empty-containers/ library, except attempting a more
   faithful port (with under-the-hood optimizations) of the full /containers/
-  API.
+  API. Also contains a convenient typeclass abstraction for converting
+  betwewen non-empty and possibly-empty variants. See README.md for more
+  information.
 
 ghc-options:
 - -Wall
@@ -31,7 +33,7 @@ ghc-options:
 - -Wredundant-constraints
 
 dependencies:
-- base >= 4.7 && < 5
+- base >= 4.9 && < 5
 - comonad
 - containers >= 0.5.9
 - semigroupoids
@@ -41,7 +43,6 @@ library:
   source-dirs: src
   dependencies:
   - deepseq
-  - base-compat
 
 tests:
   nonempty-containers-test:
