@@ -6,7 +6,7 @@ Efficient and optimized non-empty (by construction) versions of types from
 *[containers][]*. Inspired by *[non-empty-containers][]* library, except
 attempting a more faithful port (with under-the-hood optimizations) of the full
 *containers* API.  Also contains a convenient typeclass abstraction for
-converting betwewen non-empty and possibly-empty variants, as well as pattern
+converting between non-empty and possibly-empty variants, as well as pattern
 synonym-based conversion methods.
 
 [containers]: http://hackage.haskell.org/package/containers
@@ -45,7 +45,7 @@ non-emptiness and emptiness as concepts, including:
                    | That    b
                    | These a b
 
-    mapEither :: (a -> Either b c) -> NEMap k a -> These (NEMap k c) (NEMap k c)
+    mapEither :: (a -> Either b c) -> NEMap k a -> These (NEMap k b) (NEMap k c)
     ```
 
     This preserves the invariance of non-emptiness: either we have a non-empty
