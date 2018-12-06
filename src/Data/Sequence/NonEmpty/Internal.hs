@@ -301,8 +301,7 @@ map f (x :<|| xs) = f x :<|| fmap f xs
 -- a folding function that also depends on the element's index, and applies
 -- it to every element in the sequence.
 foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
-foldMapWithIndex f (x :<|| xs) = maybe (f 0 x) (f 0 x <>)
-                               . getOption
+foldMapWithIndex f (x :<|| xs) = option (f 0 x) (f 0 x <>)
                                . Seq.foldMapWithIndex (\i -> Option . Just . f (i + 1))
                                $ xs
 {-# INLINE foldMapWithIndex #-}
@@ -452,8 +451,7 @@ instance Foldable NESeq where
     {-# INLINE length #-}
 
 instance Foldable1 NESeq where
-    fold1 (x :<|| xs) = maybe x (x <>)
-                      . getOption
+    fold1 (x :<|| xs) = option x (x <>)
                       . F.foldMap (Option . Just)
                       $ xs
     {-# INLINE fold1 #-}

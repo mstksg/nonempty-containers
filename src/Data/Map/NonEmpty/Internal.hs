@@ -264,8 +264,7 @@ foldMapWithKey
     => (k -> a -> m)
     -> NEMap k a
     -> m
-foldMapWithKey f (NEMap k0 v m) = maybe (f k0 v) (f k0 v <>)
-                                . getOption
+foldMapWithKey f (NEMap k0 v m) = option (f k0 v) (f k0 v <>)
                                 . M.foldMapWithKey (\k -> Option . Just . f k)
                                 $ m
 {-# INLINE foldMapWithKey #-}
@@ -535,8 +534,7 @@ instance Traversable (NEMap k) where
 
 -- | Traverses elements in order of ascending keys
 instance Foldable1 (NEMap k) where
-    fold1 (NEMap _ v m) = maybe v (v <>)
-                        . getOption
+    fold1 (NEMap _ v m) = option v (v <>)
                         . F.foldMap (Option . Just)
                         $ m
     {-# INLINE fold1 #-}

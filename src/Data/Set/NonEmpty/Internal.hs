@@ -368,14 +368,12 @@ instance Foldable NESet where
 
 -- | Traverses elements in ascending order
 instance Foldable1 NESet where
-    fold1 (NESet x s) = maybe x (x <>)
-                      . getOption
+    fold1 (NESet x s) = option x (x <>)
                       . F.foldMap (Option . Just)
                       $ s
     {-# INLINE fold1 #-}
     -- TODO: benchmark against maxView-based method
-    foldMap1 f (NESet x s) = maybe (f x) (f x <>)
-                           . getOption
+    foldMap1 f (NESet x s) = option (f x) (f x <>)
                            . F.foldMap (Option . Just . f)
                            $ s
     {-# INLINE foldMap1 #-}

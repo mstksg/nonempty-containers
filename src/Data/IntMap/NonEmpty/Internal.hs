@@ -550,8 +550,7 @@ instance Traversable NEIntMap where
 -- elements in order of ascending keys, while 'IntMap' traverses positive
 -- keys first, then negative keys.
 instance Foldable1 NEIntMap where
-    fold1 (NEIntMap _ v m) = maybe v (v <>)
-                           . getOption
+    fold1 (NEIntMap _ v m) = option v (v <>)
                            . F.foldMap (Option . Just)
                            . M.elems
                            $ m
