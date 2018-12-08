@@ -558,8 +558,7 @@ instance Traversable1 (NEMap k) where
 -- a map of maps comprised of all keys from the original map greater than
 -- or equal to the current key.
 --
--- Credit to
--- <https://www.reddit.com/r/haskell/comments/a1qjcy/nonemptycontainers_nonempty_variants_of/eat5r4h/ Faucelme>.
+-- @since 0.1.1.0
 instance Comonad (NEMap k) where
     extract = nemV0
     {-# INLINE extract #-}

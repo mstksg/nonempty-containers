@@ -4,6 +4,8 @@ Changelog
 Version 0.1.1.0
 ---------------
 
+*December 8, 2018*
+
 <https://github.com/mstksg/nonempty-containres/releases/tag/v0.1.1.0>
 
 *   `Comonad` instances added for `Map k` and `IntMap`, based on [Faucelme's
