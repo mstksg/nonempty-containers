@@ -253,24 +253,25 @@ module Data.Map.NonEmpty (
 
 import           Control.Applicative
 import           Data.Bifunctor
+import qualified Data.Foldable              as F
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.Functor.Identity
 import           Data.List.NonEmpty         (NonEmpty(..))
-import           Data.Map                   (Map)
-import           Data.Map.NonEmpty.Internal
-import           Data.Maybe hiding          (mapMaybe)
-import           Data.Semigroup.Foldable    (Foldable1)
-import           Data.Set                   (Set)
-import           Data.Set.NonEmpty.Internal (NESet(..))
-import           Data.These
-import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map, take, drop, splitAt)
-import qualified Data.Foldable              as F
 import qualified Data.List.NonEmpty         as NE
+import           Data.Map                   (Map)
 import qualified Data.Map                   as M
+import           Data.Map.NonEmpty.Internal
+import           Data.Maybe                 hiding (mapMaybe)
 import qualified Data.Maybe                 as Maybe
+import           Data.Or                    (Or(..))
+import           Data.Semigroup.Foldable    (Foldable1)
 import qualified Data.Semigroup.Foldable    as F1
+import           Data.Set                   (Set)
 import qualified Data.Set                   as S
+import           Data.Set.NonEmpty.Internal (NESet(..))
+import           Prelude                    hiding
+    (drop, filter, foldl, foldl1, foldr, foldr1, lookup, map, splitAt, take)
 
 -- | /O(1)/ match, /O(log n)/ usage of contents. The 'IsNonEmpty' and
 -- 'IsEmpty' patterns allow you to treat a 'Map' as if it were either
@@ -1623,60 +1624,60 @@ withoutKeys n@(NEMap k v m) xs = case S.minView xs of
 
 -- | /O(n)/. Partition the map according to a predicate.
 --
--- Returns a 'These' with potentially two non-empty maps:
+-- Returns an 'Or' with potentially two non-empty maps:
 --
--- *   @'This' n1@ means that the predicate was true for all items.
--- *   @'That' n2@ means that the predicate was false for all items.
--- *   @'These' n1 n2@ gives @n1@ (all of the items that were true for the
+-- *   @'Fst' n1@ means that the predicate was true for all items.
+-- *   @'Snd' n2@ means that the predicate was false for all items.
+-- *   @'Both' n1 n2@ gives @n1@ (all of the items that were true for the
 --     predicate) and @n2@ (all of the items that were false for the
 --     predicate).
 --
 -- See also 'split'.
 --
--- > partition (> "a") (fromList ((5,"a") :| [(3,"b")])) == These (singleton 3 "b") (singleton 5 "a")
--- > partition (< "x") (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
--- > partition (> "x") (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
+-- > partition (> "a") (fromList ((5,"a") :| [(3,"b")])) == Both (singleton 3 "b") (singleton 5 "a")
+-- > partition (< "x") (fromList ((5,"a") :| [(3,"b")])) == Fst  (fromList ((3, "b") :| [(5, "a")]))
+-- > partition (> "x") (fromList ((5,"a") :| [(3,"b")])) == Snd  (fromList ((3, "b") :| [(5, "a")]))
 partition
     :: (a -> Bool)
     -> NEMap k a
-    -> These (NEMap k a) (NEMap k a)
+    -> Or (NEMap k a) (NEMap k a)
 partition f = partitionWithKey (const f)
 {-# INLINE partition #-}
 
 -- | /O(n)/. Partition the map according to a predicate.
 --
--- Returns a 'These' with potentially two non-empty maps:
+-- Returns an 'Or' with potentially two non-empty maps:
 --
--- *   @'This' n1@ means that the predicate was true for all items,
+-- *   @'Fst' n1@ means that the predicate was true for all items,
 --     returning the original map.
--- *   @'That' n2@ means that the predicate was false for all items,
+-- *   @'Snd' n2@ means that the predicate was false for all items,
 --     returning the original map.
--- *   @'These' n1 n2@ gives @n1@ (all of the items that were true for the
+-- *   @'Both' n1 n2@ gives @n1@ (all of the items that were true for the
 --     predicate) and @n2@ (all of the items that were false for the
 --     predicate).
 --
 -- See also 'split'.
 --
--- > partitionWithKey (\ k _ -> k > 3) (fromList ((5,"a") :| [(3,"b")])) == These (singleton 5 "a") (singleton 3 "b")
--- > partitionWithKey (\ k _ -> k < 7) (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
--- > partitionWithKey (\ k _ -> k > 7) (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
+-- > partitionWithKey (\ k _ -> k > 3) (fromList ((5,"a") :| [(3,"b")])) == Both (singleton 5 "a") (singleton 3 "b")
+-- > partitionWithKey (\ k _ -> k < 7) (fromList ((5,"a") :| [(3,"b")])) == Fst  (fromList ((3, "b") :| [(5, "a")]))
+-- > partitionWithKey (\ k _ -> k > 7) (fromList ((5,"a") :| [(3,"b")])) == Snd  (fromList ((3, "b") :| [(5, "a")]))
 partitionWithKey
     :: (k -> a -> Bool)
     -> NEMap k a
-    -> These (NEMap k a) (NEMap k a)
+    -> Or (NEMap k a) (NEMap k a)
 partitionWithKey f n@(NEMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
     (Nothing, Nothing)
-      | f k v     -> This  n
-      | otherwise -> That                        n
+      | f k v     -> Fst  n
+      | otherwise -> Snd                        n
     (Just n1, Nothing)
-      | f k v     -> This  n
-      | otherwise -> These n1                    (singleton k v)
+      | f k v     -> Fst  n
+      | otherwise -> Both n1                    (singleton k v)
     (Nothing, Just n2)
-      | f k v     -> These (singleton k v)       n2
-      | otherwise -> That                        n
+      | f k v     -> Both (singleton k v)       n2
+      | otherwise -> Snd                        n
     (Just n1, Just n2)
-      | f k v     -> These (insertMapMin k v m1) n2
-      | otherwise -> These n1                    (insertMapMin k v m2)
+      | f k v     -> Both (insertMapMin k v m1) n2
+      | otherwise -> Both n1                    (insertMapMin k v m2)
   where
     (m1, m2) = M.partitionWithKey f m0
 {-# INLINABLE partitionWithKey #-}
@@ -1722,13 +1723,13 @@ dropWhileAntitone f n@(NEMap k _ m)
 -- The user is responsible for ensuring that for all keys @j@ and @k@ in the map,
 -- @j \< k ==\> p j \>= p k@.
 --
--- Returns a 'These' with potentially two non-empty maps:
+-- Returns an 'Or' with potentially two non-empty maps:
 --
--- *   @'This' n1@ means that the predicate never failed for any item,
+-- *   @'Fst' n1@ means that the predicate never failed for any item,
 --     returning the original map.
--- *   @'That' n2@ means that the predicate failed for the first item,
+-- *   @'Snd' n2@ means that the predicate failed for the first item,
 --     returning the original map.
--- *   @'These' n1 n2@ gives @n1@ (the map up to the point where the
+-- *   @'Both' n1 n2@ gives @n1@ (the map up to the point where the
 --     predicate on the keys stops holding) and @n2@ (the map starting from
 --     the point where the predicate stops holding)
 --
@@ -1743,14 +1744,14 @@ dropWhileAntitone f n@(NEMap k _ m)
 spanAntitone
     :: (k -> Bool)
     -> NEMap k a
-    -> These (NEMap k a) (NEMap k a)
+    -> Or (NEMap k a) (NEMap k a)
 spanAntitone f n@(NEMap k v m0)
     | f k       = case (nonEmptyMap m1, nonEmptyMap m2) of
-        (Nothing, Nothing) -> This  n
-        (Just _ , Nothing) -> This  n
-        (Nothing, Just n2) -> These (singleton k v)       n2
-        (Just _ , Just n2) -> These (insertMapMin k v m1) n2
-    | otherwise = That n
+        (Nothing, Nothing) -> Fst  n
+        (Just _ , Nothing) -> Fst  n
+        (Nothing, Just n2) -> Both (singleton k v)       n2
+        (Just _ , Just n2) -> Both (insertMapMin k v m1) n2
+    | otherwise = Snd n
   where
     (m1, m2) = M.spanAntitone f m0
 {-# INLINABLE spanAntitone #-}
@@ -1787,98 +1788,98 @@ mapMaybeWithKey f (NEMap k v m) = ($ M.mapMaybeWithKey f m)
 
 -- | /O(n)/. Map values and separate the 'Left' and 'Right' results.
 --
--- Returns a 'These' with potentially two non-empty maps:
+-- Returns an 'Or' with potentially two non-empty maps:
 --
--- *   @'This' n1@ means that the results were all 'Left'.
--- *   @'That' n2@ means that the results were all 'Right'.
--- *   @'These' n1 n2@ gives @n1@ (the map where the results were 'Left')
+-- *   @'Fst' n1@ means that the results were all 'Left'.
+-- *   @'Snd' n2@ means that the results were all 'Right'.
+-- *   @'Both' n1 n2@ gives @n1@ (the map where the results were 'Left')
 --     and @n2@ (the map where the results were 'Right')
 --
 -- > let f a = if a < "c" then Left a else Right a
 -- > mapEither f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
--- >     == These (fromList ((3,"b") :| [(5,"a")])) (fromList ((1,"x") :| [(7,"z")]))
+-- >     == Both (fromList ((3,"b") :| [(5,"a")])) (fromList ((1,"x") :| [(7,"z")]))
 -- >
 -- > mapEither (\ a -> Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
--- >     == That (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+-- >     == Snd (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
 mapEither
     :: (a -> Either b c)
     -> NEMap k a
-    -> These (NEMap k b) (NEMap k c)
+    -> Or (NEMap k b) (NEMap k c)
 mapEither f = mapEitherWithKey (const f)
 {-# INLINE mapEither #-}
 
 -- | /O(n)/. Map keys\/values and separate the 'Left' and 'Right' results.
 --
--- Returns a 'These' with potentially two non-empty maps:
+-- Returns an 'Or' with potentially two non-empty maps:
 --
--- *   @'This' n1@ means that the results were all 'Left'.
--- *   @'That' n2@ means that the results were all 'Right'.
--- *   @'These' n1 n2@ gives @n1@ (the map where the results were 'Left')
+-- *   @'Fst' n1@ means that the results were all 'Left'.
+-- *   @'Snd' n2@ means that the results were all 'Right'.
+-- *   @'Both' n1 n2@ gives @n1@ (the map where the results were 'Left')
 --     and @n2@ (the map where the results were 'Right')
 --
 -- > let f k a = if k < 5 then Left (k * 2) else Right (a ++ a)
 -- > mapEitherWithKey f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
--- >     == These (fromList ((1,2) :| [(3,6)])) (fromList ((5,"aa") :| [(7,"zz")]))
+-- >     == Both (fromList ((1,2) :| [(3,6)])) (fromList ((5,"aa") :| [(7,"zz")]))
 -- >
 -- > mapEitherWithKey (\_ a -> Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
--- >     == That (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
+-- >     == Snd (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
 mapEitherWithKey
     :: (k -> a -> Either b c)
     -> NEMap k a
-    -> These (NEMap k b) (NEMap k c)
+    -> Or (NEMap k b) (NEMap k c)
 mapEitherWithKey f (NEMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
     (Nothing, Nothing) -> case f k v of
-      Left  v' -> This  (singleton k v')
-      Right v' -> That                         (singleton k v')
+      Left  v' -> Fst  (singleton k v')
+      Right v' -> Snd                         (singleton k v')
     (Just n1, Nothing) -> case f k v of
-      Left  v' -> This  (insertMapMin k v' m1)
-      Right v' -> These n1                     (singleton k v')
+      Left  v' -> Fst  (insertMapMin k v' m1)
+      Right v' -> Both n1                     (singleton k v')
     (Nothing, Just n2) -> case f k v of
-      Left  v' -> These (singleton k v')       n2
-      Right v' -> That                         (insertMapMin k v' m2)
+      Left  v' -> Both (singleton k v')       n2
+      Right v' -> Snd                         (insertMapMin k v' m2)
     (Just n1, Just n2) -> case f k v of
-      Left  v' -> These (insertMapMin k v' m1) n2
-      Right v' -> These n1                     (insertMapMin k v' m2)
+      Left  v' -> Both (insertMapMin k v' m1) n2
+      Right v' -> Both n1                     (insertMapMin k v' m2)
   where
     (m1, m2) = M.mapEitherWithKey f m0
 {-# INLINABLE mapEitherWithKey #-}
 
--- | /O(log n)/. The expression (@'split' k map@) is potentially a 'These'
+-- | /O(log n)/. The expression (@'split' k map@) is potentially a 'Both'
 -- containing up to two 'NEMap's based on splitting the map into maps
 -- containing items before and after the given key @k@.  It will never
 -- return a map that contains @k@ itself.
 --
 -- *   'Nothing' means that @k@ was the only key in the the original map,
 --     and so there are no items before or after it.
--- *   @'Just' ('This' n1)@ means @k@ was larger than or equal to all items
+-- *   @'Just' ('Fst' n1)@ means @k@ was larger than or equal to all items
 --     in the map, and @n1@ is the entire original map (minus @k@, if it was
 --     present)
--- *   @'Just' ('That' n2)@ means @k@ was smaller than or equal to all
+-- *   @'Just' ('Snd' n2)@ means @k@ was smaller than or equal to all
 --     items in the map, and @n2@ is the entire original map (minus @k@, if
 --     it was present)
--- *   @'Just' ('These' n1 n2)@ gives @n1@ (the map of all keys from the
+-- *   @'Just' ('Both' n1 n2)@ gives @n1@ (the map of all keys from the
 --     original map less than @k@) and @n2@ (the map of all keys from the
 --     original map greater than @k@)
 --
--- > split 2 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (fromList ((3,"b") :| [(5,"a")]))  )
--- > split 3 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (singleton 5 "a")                  )
--- > split 4 (fromList ((5,"a") :| [(3,"b")])) == Just (These (singleton 3 "b") (singleton 5 "a"))
--- > split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (singleton 3 "b")                  )
--- > split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (fromList ((3,"b") :| [(5,"a")]))  )
+-- > split 2 (fromList ((5,"a") :| [(3,"b")])) == Just (Snd  (fromList ((3,"b") :| [(5,"a")]))  )
+-- > split 3 (fromList ((5,"a") :| [(3,"b")])) == Just (Snd  (singleton 5 "a")                  )
+-- > split 4 (fromList ((5,"a") :| [(3,"b")])) == Just (Both (singleton 3 "b") (singleton 5 "a"))
+-- > split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (Fst  (singleton 3 "b")                  )
+-- > split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (Fst  (fromList ((3,"b") :| [(5,"a")]))  )
 -- > split 5 (singleton 5 "a")                 == Nothing
 split
     :: Ord k
     => k
     -> NEMap k a
-    -> Maybe (These (NEMap k a) (NEMap k a))
+    -> Maybe (Or (NEMap k a) (NEMap k a))
 split k n@(NEMap k0 v m0) = case compare k k0 of
-    LT -> Just $ That n
-    EQ -> That <$> nonEmptyMap m0
+    LT -> Just $ Snd n
+    EQ -> Snd <$> nonEmptyMap m0
     GT -> case (nonEmptyMap m1, nonEmptyMap m2) of
-      (Nothing, Nothing) -> Just $ This  (singleton k0 v)
-      (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v m1)
-      (Nothing, Just n2) -> Just $ These (singleton k0 v)       n2
-      (Just _ , Just n2) -> Just $ These (insertMapMin k0 v m1) n2
+      (Nothing, Nothing) -> Just $ Fst  (singleton k0 v)
+      (Just _ , Nothing) -> Just $ Fst  (insertMapMin k0 v m1)
+      (Nothing, Just n2) -> Just $ Both (singleton k0 v)       n2
+      (Just _ , Just n2) -> Just $ Both (insertMapMin k0 v m1) n2
   where
     (m1, m2) = M.split k m0
 {-# INLINABLE split #-}
@@ -1886,25 +1887,25 @@ split k n@(NEMap k0 v m0) = case compare k k0 of
 -- | /O(log n)/. The expression (@'splitLookup' k map@) splits a map just
 -- like 'split' but also returns @'lookup' k map@, as a @'Maybe' a@.
 --
--- > splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (That  (fromList ((3,"b") :| [(5,"a")]))))
--- > splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (That  (singleton 5 "a")))
--- > splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (These (singleton 3 "b") (singleton 5 "a")))
--- > splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (This  (singleton 3 "b"))
--- > splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (This  (fromList ((3,"b") :| [(5,"a")])))
+-- > splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Snd  (fromList ((3,"b") :| [(5,"a")]))))
+-- > splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (Snd  (singleton 5 "a")))
+-- > splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Both (singleton 3 "b") (singleton 5 "a")))
+-- > splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (Fst  (singleton 3 "b"))
+-- > splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Fst  (fromList ((3,"b") :| [(5,"a")])))
 -- > splitLookup 5 (singleton 5 "a")                 == (Just "a", Nothing)
 splitLookup
     :: Ord k
     => k
     -> NEMap k a
-    -> (Maybe a, Maybe (These (NEMap k a) (NEMap k a)))
+    -> (Maybe a, Maybe (Or (NEMap k a) (NEMap k a)))
 splitLookup k n@(NEMap k0 v0 m0) = case compare k k0 of
-    LT -> (Nothing, Just $ That n)
-    EQ -> (Just v0, That <$> nonEmptyMap m0)
+    LT -> (Nothing, Just $ Snd n)
+    EQ -> (Just v0, Snd <$> nonEmptyMap m0)
     GT -> (v      ,) $ case (nonEmptyMap m1, nonEmptyMap m2) of
-      (Nothing, Nothing) -> Just $ This  (singleton k0 v0)
-      (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v0 m1)
-      (Nothing, Just n2) -> Just $ These (singleton k0 v0)       n2
-      (Just _ , Just n2) -> Just $ These (insertMapMin k0 v0 m1) n2
+      (Nothing, Nothing) -> Just $ Fst  (singleton k0 v0)
+      (Just _ , Nothing) -> Just $ Fst  (insertMapMin k0 v0 m1)
+      (Nothing, Just n2) -> Just $ Both (singleton k0 v0)       n2
+      (Just _ , Just n2) -> Just $ Both (insertMapMin k0 v0 m1) n2
   where
     (m1, v, m2) = M.splitLookup k m0
 {-# INLINABLE splitLookup #-}
@@ -2144,22 +2145,22 @@ drop i (NEMap _ _ m) = M.drop (i - 1) m
 
 -- | /O(log n)/. Split a map at a particular index @i@.
 --
--- *   @'This' n1@ means that there are less than @i@ items in the map, and
+-- *   @'Fst' n1@ means that there are less than @i@ items in the map, and
 --     @n1@ is the original map.
--- *   @'That' n2@ means @i@ was 0; we dropped 0 items, so @n2@ is the
+-- *   @'Snd' n2@ means @i@ was 0; we dropped 0 items, so @n2@ is the
 --     original map.
--- *   @'These' n1 n2@ gives @n1@ (taking @i@ items from the original map)
+-- *   @'Both' n1 n2@ gives @n1@ (taking @i@ items from the original map)
 --     and @n2@ (dropping @i@ items from the original map))
 splitAt
     :: Int
     -> NEMap k a
-    -> These (NEMap k a) (NEMap k a)
-splitAt 0 n                = That n
+    -> Or (NEMap k a) (NEMap k a)
+splitAt 0 n                = Snd n
 splitAt i n@(NEMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
-    (Nothing, Nothing) -> This  (singleton k v)
-    (Just _ , Nothing) -> This  n
-    (Nothing, Just n2) -> These (singleton k v)       n2
-    (Just _ , Just n2) -> These (insertMapMin k v m1) n2
+    (Nothing, Nothing) -> Fst  (singleton k v)
+    (Just _ , Nothing) -> Fst  n
+    (Nothing, Just n2) -> Both (singleton k v)       n2
+    (Just _ , Just n2) -> Both (insertMapMin k v m1) n2
   where
     (m1, m2) = M.splitAt (i - 1) m0
 {-# INLINABLE splitAt #-}

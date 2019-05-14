@@ -151,14 +151,15 @@ module Data.Set.NonEmpty (
 import           Control.Applicative
 import           Data.Bifunctor
 import           Data.List.NonEmpty         (NonEmpty(..))
-import           Data.Maybe
-import           Data.Set                   (Set)
-import           Data.Set.NonEmpty.Internal
-import           Data.These
-import           Prelude hiding             (foldr, foldl, filter, map, take, drop, splitAt)
 import qualified Data.List.NonEmpty         as NE
+import           Data.Maybe
+import           Data.Or                    (Or(..))
 import qualified Data.Semigroup.Foldable    as F1
+import           Data.Set                   (Set)
 import qualified Data.Set                   as S
+import           Data.Set.NonEmpty.Internal
+import           Prelude                    hiding
+    (drop, filter, foldl, foldr, map, splitAt, take)
 
 -- | /O(1)/ match, /O(log n)/ usage of contents. The 'IsNonEmpty' and
 -- 'IsEmpty' patterns allow you to treat a 'Set' as if it were either
@@ -611,13 +612,13 @@ dropWhileAntitone f n@(NESet x s)
 -- elements stops holding.  The user is responsible for ensuring that for
 -- all elements @j@ and @k@ in the set, @j \< k ==\> p j \>= p k@.
 --
--- Returns a 'These' with potentially two non-empty sets:
+-- Returns an 'Or' with potentially two non-empty sets:
 --
--- *   @'This' n1@ means that the predicate never failed for any item,
+-- *   @'Fst' n1@ means that the predicate never failed for any item,
 --     returning the original set
--- *   @'That' n2@ means that the predicate failed for the first item,
+-- *   @'Snd' n2@ means that the predicate failed for the first item,
 --     returning the original set
--- *   @'These' n1 n2@ gives @n1@ (the set up to the point where the
+-- *   @'Both' n1 n2@ gives @n1@ (the set up to the point where the
 --     predicate stops holding) and @n2@ (the set starting from
 --     the point where the predicate stops holding)
 --
@@ -632,90 +633,90 @@ dropWhileAntitone f n@(NESet x s)
 spanAntitone
     :: (a -> Bool)
     -> NESet a
-    -> These (NESet a) (NESet a)
+    -> Or (NESet a) (NESet a)
 spanAntitone f n@(NESet x s0)
     | f x       = case (nonEmptySet s1, nonEmptySet s2) of
-        (Nothing, Nothing) -> This  n
-        (Just _ , Nothing) -> This  n
-        (Nothing, Just n2) -> These (singleton x)       n2
-        (Just _ , Just n2) -> These (insertSetMin x s1) n2
-    | otherwise = That n
+        (Nothing, Nothing) -> Fst  n
+        (Just _ , Nothing) -> Fst  n
+        (Nothing, Just n2) -> Both (singleton x)       n2
+        (Just _ , Just n2) -> Both (insertSetMin x s1) n2
+    | otherwise = Snd n
   where
     (s1, s2) = S.spanAntitone f s0
 {-# INLINABLE spanAntitone #-}
 
 -- | /O(n)/. Partition the map according to a predicate.
 --
--- Returns a 'These' with potentially two non-empty sets:
+-- Returns an 'Or' with potentially two non-empty sets:
 --
 -- *   @'This' n1@ means that the predicate was true for all items.
--- *   @'That' n2@ means that the predicate was false for all items.
--- *   @'These' n1 n2@ gives @n1@ (all of the items that were true for the
+-- *   @'Snd' n2@ means that the predicate was false for all items.
+-- *   @'Both' n1 n2@ gives @n1@ (all of the items that were true for the
 --     predicate) and @n2@ (all of the items that were false for the
 --     predicate).
 --
 -- See also 'split'.
 --
--- > partition (> 3) (fromList (5 :| [3])) == These (singleton 5) (singleton 3)
+-- > partition (> 3) (fromList (5 :| [3])) == Both (singleton 5) (singleton 3)
 -- > partition (< 7) (fromList (5 :| [3])) == This  (fromList (3 :| [5]))
--- > partition (> 7) (fromList (5 :| [3])) == That  (fromList (3 :| [5]))
+-- > partition (> 7) (fromList (5 :| [3])) == Snd  (fromList (3 :| [5]))
 partition
     :: (a -> Bool)
     -> NESet a
-    -> These (NESet a) (NESet a)
+    -> Or (NESet a) (NESet a)
 partition f n@(NESet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
     (Nothing, Nothing)
-      | f x       -> This  n
-      | otherwise -> That                      n
+      | f x       -> Fst  n
+      | otherwise -> Snd                      n
     (Just n1, Nothing)
-      | f x       -> This  n
-      | otherwise -> These n1                  (singleton x)
+      | f x       -> Fst  n
+      | otherwise -> Both n1                  (singleton x)
     (Nothing, Just n2)
-      | f x       -> These (singleton x)       n2
-      | otherwise -> That                      n
+      | f x       -> Both (singleton x)       n2
+      | otherwise -> Snd                      n
     (Just n1, Just n2)
-      | f x       -> These (insertSetMin x s1) n2
-      | otherwise -> These n1                  (insertSetMin x s2)
+      | f x       -> Both (insertSetMin x s1) n2
+      | otherwise -> Both n1                  (insertSetMin x s2)
   where
     (s1, s2) = S.partition f s0
 {-# INLINABLE partition #-}
 
--- | /O(log n)/. The expression (@'split' x set@) is potentially a 'These'
+-- | /O(log n)/. The expression (@'split' x set@) is potentially a 'Both'
 -- containing up to two 'NESet's based on splitting the set into sets
 -- containing items before and after the value @x@.  It will never return
 -- a set that contains @x@ itself.
 --
 -- *   'Nothing' means that @x@ was the only value in the the original set,
 --     and so there are no items before or after it.
--- *   @'Just' ('This' n1)@ means @x@ was larger than or equal to all items
+-- *   @'Just' ('Fst' n1)@ means @x@ was larger than or equal to all items
 --     in the set, and @n1@ is the entire original set (minus @x@, if it
 --     was present)
--- *   @'Just' ('That' n2)@ means @x@ was smaller than or equal to all
+-- *   @'Just' ('Snd' n2)@ means @x@ was smaller than or equal to all
 --     items in the set, and @n2@ is the entire original set (minus @x@, if
 --     it was present)
--- *   @'Just' ('These' n1 n2)@ gives @n1@ (the set of all values from the
+-- *   @'Just' ('Both' n1 n2)@ gives @n1@ (the set of all values from the
 --     original set less than @x@) and @n2@ (the set of all values from the
 --     original set greater than @x@).
 --
--- > split 2 (fromList (5 :| [3])) == Just (That  (fromList (3 :| [5]))      )
--- > split 3 (fromList (5 :| [3])) == Just (That  (singleton 5)              )
--- > split 4 (fromList (5 :| [3])) == Just (These (singleton 3) (singleton 5))
--- > split 5 (fromList (5 :| [3])) == Just (This  (singleton 3)              )
--- > split 6 (fromList (5 :| [3])) == Just (This  (fromList (3 :| [5]))      )
+-- > split 2 (fromList (5 :| [3])) == Just (Snd  (fromList (3 :| [5]))      )
+-- > split 3 (fromList (5 :| [3])) == Just (Snd  (singleton 5)              )
+-- > split 4 (fromList (5 :| [3])) == Just (Both (singleton 3) (singleton 5))
+-- > split 5 (fromList (5 :| [3])) == Just (Fst  (singleton 3)              )
+-- > split 6 (fromList (5 :| [3])) == Just (Fst  (fromList (3 :| [5]))      )
 -- > split 5 (singleton 5)         == Nothing
 split
     :: Ord a
     => a
     -> NESet a
-    -> Maybe (These (NESet a) (NESet a))
+    -> Maybe (Or (NESet a) (NESet a))
 split x n@(NESet x0 s0) = case compare x x0 of
-    LT -> Just $ That n
-    EQ -> That <$> nonEmptySet s0
+    LT -> Just $ Snd n
+    EQ -> Snd <$> nonEmptySet s0
     GT -> case (nonEmptySet s1, nonEmptySet s2) of
-      (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
-      (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
+      (Nothing, Nothing) -> Just $ Fst  (singleton x0)
+      (Just _ , Nothing) -> Just $ Fst  (insertSetMin x0 s1)
+      (Nothing, Just n2) -> Just $ Both (singleton x0)       n2
+      (Just _ , Just n2) -> Just $ Both (insertSetMin x0 s1) n2
   where
     (s1, s2) = S.split x s0
 {-# INLINABLE split #-}
@@ -724,25 +725,25 @@ split x n@(NESet x0 s0) = case compare x x0 of
 -- like 'split' but also returns @'member' x set@ (whether or not @x@ was
 -- in @set@)
 --
--- > splitMember 2 (fromList (5 :| [3])) == (False, Just (That  (fromList (3 :| [5)]))))
--- > splitMember 3 (fromList (5 :| [3])) == (True , Just (That  (singleton 5)))
--- > splitMember 4 (fromList (5 :| [3])) == (False, Just (These (singleton 3) (singleton 5)))
--- > splitMember 5 (fromList (5 :| [3])) == (True , Just (This  (singleton 3))
--- > splitMember 6 (fromList (5 :| [3])) == (False, Just (This  (fromList (3 :| [5])))
+-- > splitMember 2 (fromList (5 :| [3])) == (False, Just (Snd  (fromList (3 :| [5)]))))
+-- > splitMember 3 (fromList (5 :| [3])) == (True , Just (Snd  (singleton 5)))
+-- > splitMember 4 (fromList (5 :| [3])) == (False, Just (Both (singleton 3) (singleton 5)))
+-- > splitMember 5 (fromList (5 :| [3])) == (True , Just (Fst  (singleton 3))
+-- > splitMember 6 (fromList (5 :| [3])) == (False, Just (Fst  (fromList (3 :| [5])))
 -- > splitMember 5 (singleton 5)         == (True , Nothing)
 splitMember
     :: Ord a
     => a
     -> NESet a
-    -> (Bool, Maybe (These (NESet a) (NESet a)))
+    -> (Bool, Maybe (Or (NESet a) (NESet a)))
 splitMember x n@(NESet x0 s0) = case compare x x0 of
-    LT -> (False, Just $ That n)
-    EQ -> (True , That <$> nonEmptySet s0)
+    LT -> (False, Just $ Snd n)
+    EQ -> (True , Snd <$> nonEmptySet s0)
     GT -> (mem  ,) $ case (nonEmptySet s1, nonEmptySet s2) of
-      (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
-      (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
+      (Nothing, Nothing) -> Just $ Fst  (singleton x0)
+      (Just _ , Nothing) -> Just $ Fst  (insertSetMin x0 s1)
+      (Nothing, Just n2) -> Just $ Both (singleton x0)       n2
+      (Just _ , Just n2) -> Just $ Both (insertSetMin x0 s1) n2
   where
     (s1, mem, s2) = S.splitMember x s0
 {-# INLINABLE splitMember #-}
@@ -876,22 +877,22 @@ drop n (NESet _ s) = S.drop (n - 1) s
 
 -- | /O(log n)/. Split a set at a particular index @i@.
 --
--- *   @'This' n1@ means that there are less than @i@ items in the set, and
+-- *   @'Fst' n1@ means that there are less than @i@ items in the set, and
 --     @n1@ is the original set.
--- *   @'That' n2@ means @i@ was 0; we dropped 0 items, so @n2@ is the
+-- *   @'Snd' n2@ means @i@ was 0; we dropped 0 items, so @n2@ is the
 --     original set.
--- *   @'These' n1 n2@ gives @n1@ (taking @i@ items from the original set)
+-- *   @'Both' n1 n2@ gives @n1@ (taking @i@ items from the original set)
 --     and @n2@ (dropping @i@ items from the original set))
 splitAt
     :: Int
     -> NESet a
-    -> These (NESet a) (NESet a)
-splitAt 0 n              = That n
+    -> Or (NESet a) (NESet a)
+splitAt 0 n              = Snd n
 splitAt i n@(NESet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
-    (Nothing, Nothing) -> This  (singleton x)
-    (Just _ , Nothing) -> This  n
-    (Nothing, Just n2) -> These (singleton x)       n2
-    (Just _ , Just n2) -> These (insertSetMin x s1) n2
+    (Nothing, Nothing) -> Fst  (singleton x)
+    (Just _ , Nothing) -> Fst  n
+    (Nothing, Just n2) -> Both (singleton x)       n2
+    (Just _ , Just n2) -> Both (insertSetMin x s1) n2
   where
     (s1, s2) = S.splitAt (i - 1) s0
 {-# INLINABLE splitAt #-}

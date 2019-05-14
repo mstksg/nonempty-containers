@@ -169,14 +169,17 @@ module Data.Sequence.NonEmpty (
   ) where
 
 import           Control.Applicative
-import           Control.Monad hiding            (replicateM)
+import           Control.Monad                   hiding (replicateM)
 import           Data.Bifunctor
 import           Data.Functor.Apply
+import           Data.Or                         (Or(..))
 import           Data.Sequence                   (Seq(..))
-import           Data.Sequence.NonEmpty.Internal
-import           Data.These
-import           Prelude hiding                  (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter, reverse, lookup, take, drop, head, tail, init, last, map)
 import qualified Data.Sequence                   as Seq
+import           Data.Sequence.NonEmpty.Internal
+import           Prelude                         hiding
+    (drop, filter, head, init, last, length, lookup, map, replicate, reverse,
+    scanl, scanl1, scanr, scanr1, splitAt, tail, take, unzip, zip, zip3,
+    zipWith, zipWith3)
 
 -- | /O(1)/. The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat
 -- a 'Seq' as if it were either a @'IsNonEmpty' n@ (where @n@ is a 'NESeq')
@@ -436,9 +439,9 @@ chunksOf :: Int -> NESeq a -> NESeq (NESeq a)
 chunksOf n = go
   where
     go xs = case splitAt n xs of
-      This  ys    -> singleton ys
-      That     _  -> e
-      These ys zs -> ys <| go zs
+      Fst  ys    -> singleton ys
+      Snd     _  -> e
+      Both ys zs -> ys <| go zs
     e = error "chunksOf: A non-empty sequence can only be broken up into positively-sized chunks."
 {-# INLINABLE chunksOf #-}
 
@@ -493,23 +496,23 @@ dropWhileR p xs0@(xs :||> x)
 {-# INLINE dropWhileR #-}
 
 -- | \( O(i) \) where \( i \) is the prefix length.  'spanl', applied to
--- a predicate @p@ and a sequence @xs@, returns a 'These' based on the
+-- a predicate @p@ and a sequence @xs@, returns a 'Both' based on the
 -- point where the predicate fails:
 --
--- *   @'This' ys@ means that the predicate was true for all items, and
+-- *   @'Fst' ys@ means that the predicate was true for all items, and
 --     @ys@ is the entire original sequence.
--- *   @'That' zs@ means that the predicate failed on the first item, and
+-- *   @'Snd' zs@ means that the predicate failed on the first item, and
 --     @zs@ is the entire original sequence.
--- *   @'These' ys zs@ gives @ys@ (the prefix of elements that satisfy the
+-- *   @'Both' ys zs@ gives @ys@ (the prefix of elements that satisfy the
 --     predicae) and @zs@ (the remainder of the sequence)
-spanl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+spanl :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
 spanl p xs0@(x :<|| xs)
     | p x       = case (nonEmptySeq ys, nonEmptySeq zs) of
-        (Nothing , Nothing ) -> This  (singleton x)
-        (Just _  , Nothing ) -> This  xs0
-        (Nothing , Just zs') -> These (singleton x) zs'
-        (Just ys', Just zs') -> These (x <| ys')    zs'
-    | otherwise = That xs0
+        (Nothing , Nothing ) -> Fst  (singleton x)
+        (Just _  , Nothing ) -> Fst  xs0
+        (Nothing , Just zs') -> Both (singleton x) zs'
+        (Just ys', Just zs') -> Both (x <| ys')    zs'
+    | otherwise = Snd xs0
   where
     (ys, zs) = Seq.spanl p xs
 {-# INLINABLE spanl #-}
@@ -518,20 +521,20 @@ spanl p xs0@(x :<|| xs)
 -- a predicate @p@ and a sequence @xs@, returns a 'These' based on the
 -- point where the predicate fails:
 --
--- *   @'This' ys@ means that the predicate was true for all items, and
+-- *   @'Fst' ys@ means that the predicate was true for all items, and
 --     @ys@ is the entire original sequence.
--- *   @'That' zs@ means that the predicate failed on the first item, and
+-- *   @'Snd' zs@ means that the predicate failed on the first item, and
 --     @zs@ is the entire original sequence.
--- *   @'These' ys zs@ gives @ys@ (the suffix of elements that satisfy the
+-- *   @'Both' ys zs@ gives @ys@ (the suffix of elements that satisfy the
 --     predicae) and @zs@ (the remainder of the sequence, before the suffix)
-spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+spanr :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
 spanr p xs0@(xs :||> x)
     | p x       = case (nonEmptySeq ys, nonEmptySeq zs) of
-        (Nothing , Nothing ) -> This  (singleton x)
-        (Just _  , Nothing ) -> This  xs0
-        (Nothing , Just zs') -> These (singleton x) zs'
-        (Just ys', Just zs') -> These (ys' |> x   ) zs'
-    | otherwise = That xs0
+        (Nothing , Nothing ) -> Fst  (singleton x)
+        (Just _  , Nothing ) -> Fst  xs0
+        (Nothing , Just zs') -> Both (singleton x) zs'
+        (Just ys', Just zs') -> Both (ys' |> x   ) zs'
+    | otherwise = Snd xs0
   where
     (ys, zs) = Seq.spanr p xs
 {-# INLINABLE spanr #-}
@@ -539,42 +542,42 @@ spanr p xs0@(xs :||> x)
 -- | \( O(i) \) where \( i \) is the breakpoint index.
 --
 -- @'breakl' p@ is @'spanl' (not . p)@.
-breakl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+breakl :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
 breakl p = spanl (not . p)
 {-# INLINE breakl #-}
 
 -- | \( O(i) \) where \( i \) is the breakpoint index.
 --
 -- @'breakr' p@ is @'spanr' (not . p)@.
-breakr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+breakr :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
 breakr p = spanr (not . p)
 {-# INLINE breakr #-}
 
 -- | \( O(n) \).  The 'partition' function takes a predicate @p@ and a
 -- sequence @xs@ and returns sequences of those elements which do and
--- do not satisfy the predicate, as a 'These':
+-- do not satisfy the predicate, as a 'Both':
 --
--- *   @'This' ys@ means that the predicate was true for all items, and
+-- *   @'Fst' ys@ means that the predicate was true for all items, and
 --     @ys@ is the entire original sequence.
--- *   @'That' zs@ means that the predicate failed on the first item, and
+-- *   @'Snd' zs@ means that the predicate failed on the first item, and
 --     @zs@ is the entire original sequence.
--- *   @'These' ys zs@ gives @ys@ (the sequence of elements for which the
+-- *   @'Both' ys zs@ gives @ys@ (the sequence of elements for which the
 --     predicate was true) and @zs@ (the sequence of elements for which the
 --     predicate was false).
-partition :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
+partition :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
 partition p xs0@(x :<|| xs) = case (nonEmptySeq ys, nonEmptySeq zs) of
     (Nothing , Nothing )
-      | p x       -> This  (singleton x)
-      | otherwise -> That                (singleton x)
+      | p x       -> Fst  (singleton x)
+      | otherwise -> Snd                (singleton x)
     (Just ys', Nothing )
-      | p x       -> This  xs0
-      | otherwise -> These ys'           (singleton x)
+      | p x       -> Fst  xs0
+      | otherwise -> Both ys'           (singleton x)
     (Nothing, Just zs' )
-      | p x       -> These (singleton x) zs'
-      | otherwise -> That                xs0
+      | p x       -> Both (singleton x) zs'
+      | otherwise -> Snd                xs0
     (Just ys', Just zs')
-      | p x       -> These (x <| ys')    zs'
-      | otherwise -> These ys'           (x <| zs')
+      | p x       -> Both (x <| ys')    zs'
+      | otherwise -> Both ys'           (x <| zs')
   where
     (ys, zs) = Seq.partition p xs
 {-# INLINABLE partition #-}
@@ -688,18 +691,18 @@ unstableSortOn f = unsafeFromSeq . unstableSortOnSeq f . toSeq
 
 insertBy :: (a -> a -> Ordering) -> a -> NESeq a -> NESeq a
 insertBy c x xs = case spanl ltx xs of
-    This  ys    -> ys |> x
-    That     zs -> x <| zs
-    These ys zs -> ys >< (x <| zs)
+    Fst  ys    -> ys |> x
+    Snd     zs -> x <| zs
+    Both ys zs -> ys >< (x <| zs)
   where
     ltx y = c x y == GT
 {-# INLINABLE insertBy #-}
 
 insertOn :: Ord b => (a -> b) -> a -> NESeq a -> NESeq a
 insertOn f x xs = case spanl ltx xs of
-    This  ys    -> ys |> x
-    That     zs -> x <| zs
-    These ys zs -> ys >< (x <| zs)
+    Fst  ys    -> ys |> x
+    Snd     zs -> x <| zs
+    Both ys zs -> ys >< (x <| zs)
   where
     fx = f x
     ltx y = fx > f y
@@ -806,21 +809,21 @@ deleteAt i xs0@(x :<|| xs) = case compare i 0 of
 
 -- | \( O(\log(\min(i,n-i))) \). Split a sequence at a given position.
 --
--- *   @'This' ys@ means that the given position was longer than the length
+-- *   @'Fst' ys@ means that the given position was longer than the length
 --     of the list, and @ys@ is the entire original system.
--- *   @'That' zs@ means that the given position was zero or smaller, and
+-- *   @'Snd' zs@ means that the given position was zero or smaller, and
 --     so @zs@ is the entire original sequence.
--- *   @'These' ys zs@ gives @ys@ (the sequence of elements before the
+-- *   @'Both' ys zs@ gives @ys@ (the sequence of elements before the
 --     given position, @take n xs@) and @zs@ (the sequence of elements
 --     after the given position, @drop n xs@).
-splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
+splitAt :: Int -> NESeq a -> Or (NESeq a) (NESeq a)
 splitAt n xs0@(x :<|| xs)
-    | n <= 0    = That xs0
+    | n <= 0    = Snd xs0
     | otherwise = case (nonEmptySeq ys, nonEmptySeq zs) of
-        (Nothing , Nothing ) -> This  (singleton x)
-        (Just _  , Nothing ) -> This  xs0
-        (Nothing , Just zs') -> These (singleton x) zs'
-        (Just ys', Just zs') -> These (x <| ys')    zs'
+        (Nothing , Nothing ) -> Fst  (singleton x)
+        (Just _  , Nothing ) -> Fst  xs0
+        (Nothing , Just zs') -> Both (singleton x) zs'
+        (Just ys', Just zs') -> Both (x <| ys')    zs'
   where
     (ys, zs) = Seq.splitAt (n - 1) xs
 {-# INLINABLE splitAt #-}

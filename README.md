@@ -36,16 +36,16 @@ non-emptiness and emptiness as concepts, including:
     mapEither :: (a -> Either b c) -> Map k a -> (Map k b, Map k c)
     ```
 
-    The final result is always a total partition (every item in the original
-    map is represented in the result), so, to reflect this, [`These`][these] is
-    returned instead:
+    The final result is always a total partition (every item in the original map
+    is represented in the result), so, to reflect this, `Or` from the
+    [`data-or`][data-or] library is returned instead:
 
     ```haskell
-    data These a b = This  a
-                   | That    b
-                   | These a b
+    data Or a b = Fst  a
+                | Both a b
+                | Snd    b
 
-    mapEither :: (a -> Either b c) -> NEMap k a -> These (NEMap k b) (NEMap k c)
+    mapEither :: (a -> Either b c) -> NEMap k a -> Or (NEMap k b) (NEMap k c)
     ```
 
     This preserves the invariance of non-emptiness: either we have a non-empty
@@ -53,7 +53,7 @@ non-emptiness and emptiness as concepts, including:
     the second camp (containing all original values), or a split between two
     non-empty maps in either camp.
 
-    [these]: https://hackage.haskell.org/package/these
+    [data-or]: https://hackage.haskell.org/package/data-or
 
 3.  Typeclass-polymorphic functions are made more general (or have more general
     variants provided) whenever possible.  This means that functions like
