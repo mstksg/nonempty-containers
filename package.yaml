@@ -33,7 +33,7 @@ dependencies:
 - comonad
 - containers >= 0.5.9
 - semigroupoids
-- these
+- data-or >= 0.1
 
 library:
   source-dirs: src

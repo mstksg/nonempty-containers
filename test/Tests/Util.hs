@@ -38,40 +38,40 @@ import           Data.Function
 import           Data.Functor.Apply
 import           Data.Functor.Classes
 import           Data.IntMap                (IntMap)
+import qualified Data.IntMap                as IM
 import           Data.IntMap.NonEmpty       (NEIntMap)
+import qualified Data.IntMap.NonEmpty       as NEIM
 import           Data.IntSet                (IntSet, Key)
+import qualified Data.IntSet                as IS
 import           Data.IntSet.NonEmpty       (NEIntSet)
+import qualified Data.IntSet.NonEmpty       as NEIS
 import           Data.Kind
 import           Data.List.NonEmpty         (NonEmpty(..))
+import qualified Data.List.NonEmpty         as NE
 import           Data.Map                   (Map)
+import qualified Data.Map                   as M
 import           Data.Map.NonEmpty          (NEMap)
+import qualified Data.Map.NonEmpty          as NEM
 import           Data.Maybe
+import           Data.Or                    (Or(..))
 import           Data.Semigroup.Foldable
 import           Data.Sequence              (Seq(..))
 import           Data.Sequence.NonEmpty     (NESeq(..))
+import qualified Data.Sequence.NonEmpty     as NESeq
 import           Data.Set                   (Set)
+import qualified Data.Set                   as S
 import           Data.Set.NonEmpty          (NESet)
+import qualified Data.Set.NonEmpty          as NES
 import           Data.Text                  (Text)
-import           Data.These
+import qualified Data.Text                  as T
 import           Hedgehog
-import           Hedgehog.Function hiding   ((:*:))
+import           Hedgehog.Function          hiding ((:*:))
+import qualified Hedgehog.Gen               as Gen
 import           Hedgehog.Internal.Property
+import qualified Hedgehog.Range             as Range
 import           Test.Tasty
 import           Test.Tasty.Hedgehog
 import           Text.Read
-import qualified Data.IntMap                as IM
-import qualified Data.IntMap.NonEmpty       as NEIM
-import qualified Data.IntSet                as IS
-import qualified Data.IntSet.NonEmpty       as NEIS
-import qualified Data.List.NonEmpty         as NE
-import qualified Data.Map                   as M
-import qualified Data.Map.NonEmpty          as NEM
-import qualified Data.Sequence.NonEmpty     as NESeq
-import qualified Data.Set                   as S
-import qualified Data.Set.NonEmpty          as NES
-import qualified Data.Text                  as T
-import qualified Hedgehog.Gen               as Gen
-import qualified Hedgehog.Range             as Range
 
 #if !MIN_VERSION_base(4,11,0)
 import           Data.Semigroup             (Semigroup(..))
@@ -240,11 +240,11 @@ data TestType :: Type -> Type -> Type where
     TTThese     :: (Eq a, Show a, Monoid a, Eq c, Show c, Monoid c)
                 => TestType a               b
                 -> TestType c               d
-                -> TestType (a, c)          (These b d)
+                -> TestType (a, c)          (Or b d)
     TTMThese    :: (Eq a, Show a, Monoid a, Eq c, Show c, Monoid c)
                 => TestType a               b
                 -> TestType c               d
-                -> TestType (a, c)          (Maybe (These b d))
+                -> TestType (a, c)          (Maybe (Or b d))
     TTMaybe     :: TestType a               b
                 -> TestType (Maybe a)       (Maybe b)
     TTEither    :: TestType a               b
@@ -344,26 +344,26 @@ runTT = \case
     TTVal   -> (===)
     TTOther -> (===)
     TTThese t1 t2 -> \(x1, x2) -> \case
-      This y1 -> do
+      Fst y1 -> do
         runTT t1 x1 y1
         x2 === mempty
-      That y2 -> do
+      Snd y2 -> do
         x1 === mempty
         runTT t2 x2 y2
-      These y1 y2 -> do
+      Both y1 y2 -> do
         runTT t1 x1 y1
         runTT t2 x2 y2
     TTMThese t1 t2 -> \(x1, x2) -> \case
       Nothing -> do
         x1 === mempty
         x2 === mempty
-      Just (This y1) -> do
+      Just (Fst y1) -> do
         runTT t1 x1 y1
         x2 === mempty
-      Just (That y2) -> do
+      Just (Snd y2) -> do
         x1 === mempty
         runTT t2 x2 y2
-      Just (These y1 y2) -> do
+      Just (Both y1 y2) -> do
         runTT t1 x1 y1
         runTT t2 x2 y2
     TTMaybe tt -> \x y -> do
@@ -551,4 +551,3 @@ instance Vary Char where
 
 instance Vary Text where
     vary = contramap T.unpack vary
-
