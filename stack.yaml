@@ -1,8 +1,9 @@
-resolver: lts-13.21
+resolver: nightly-2019-05-13
 
 packages:
 - .
 
 extra-deps:
-  - hedgehog-fn-0.6
-  - tasty-hedgehog-0.2.0.0
+- hedgehog-0.6.1
+- hedgehog-fn-0.6
+- tasty-hedgehog-0.2.0.0
