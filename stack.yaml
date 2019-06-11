@@ -4,6 +4,6 @@ packages:
 - .
 
 extra-deps:
-- hedgehog-0.6.1
-- hedgehog-fn-0.6
-- tasty-hedgehog-0.2.0.0
+- hedgehog-1.0
+- hedgehog-fn-1.0
+- tasty-hedgehog-1.0.0.1

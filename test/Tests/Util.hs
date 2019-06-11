@@ -37,6 +37,7 @@ import           Data.Foldable
 import           Data.Function
 import           Data.Functor.Apply
 import           Data.Functor.Classes
+import           Data.Functor.Identity
 import           Data.IntMap                (IntMap)
 import           Data.IntMap.NonEmpty       (NEIntMap)
 import           Data.IntSet                (IntSet, Key)
@@ -502,13 +503,13 @@ mapSize = Range.exponential 4 8
 mapGen :: MonadGen m => m (Map KeyType Text)
 mapGen = Gen.map mapSize $ (,) <$> keyGen <*> valGen
 
-neMapGen :: MonadGen m => m (NEMap KeyType Text)
+neMapGen :: (MonadGen m, GenBase m ~ Identity) => m (NEMap KeyType Text)
 neMapGen = Gen.just $ NEM.nonEmptyMap <$> mapGen
 
 setGen :: MonadGen m => m (Set KeyType)
 setGen = Gen.set mapSize keyGen
 
-neSetGen :: MonadGen m => m (NESet KeyType)
+neSetGen :: (MonadGen m, GenBase m ~ Identity) => m (NESet KeyType)
 neSetGen = Gen.just $ NES.nonEmptySet <$> setGen
 
 intKeyGen :: MonadGen m => m Key
@@ -517,19 +518,19 @@ intKeyGen = Gen.int (Range.linear (-100) 100)
 intMapGen :: MonadGen m => m (IntMap Text)
 intMapGen = IM.fromDistinctAscList . M.toList <$> Gen.map mapSize ((,) <$> intKeyGen <*> valGen)
 
-neIntMapGen :: MonadGen m => m (NEIntMap Text)
+neIntMapGen :: (MonadGen m, GenBase m ~ Identity) => m (NEIntMap Text)
 neIntMapGen = Gen.just $ NEIM.nonEmptyMap <$> intMapGen
 
 intSetGen :: MonadGen m => m IntSet
 intSetGen = IS.fromDistinctAscList . S.toList <$> Gen.set mapSize intKeyGen
 
-neIntSetGen :: MonadGen m => m NEIntSet
+neIntSetGen :: (MonadGen m, GenBase m ~ Identity) => m NEIntSet
 neIntSetGen = Gen.just $ NEIS.nonEmptySet <$> intSetGen
 
 seqGen :: MonadGen m => m (Seq Text)
 seqGen = Gen.seq mapSize valGen
 
-neSeqGen :: MonadGen m => m (NESeq Text)
+neSeqGen :: (MonadGen m, GenBase m ~ Identity) => m (NESeq Text)
 neSeqGen = Gen.just $ NESeq.nonEmptySeq <$> seqGen
 
 

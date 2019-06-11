@@ -49,9 +49,9 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hedgehog
-    - hedgehog-fn
+    - hedgehog >= 1.0
+    - hedgehog-fn >= 1.0
     - nonempty-containers
     - tasty
-    - tasty-hedgehog
+    - tasty-hedgehog >= 1.0
     - text
