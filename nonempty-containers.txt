@@ -11,7 +11,7 @@
 --   convenient typeclass abstraction for converting betwewen non-empty and
 --   possibly-empty variants. See README.md for more information.
 @package nonempty-containers
-@version 0.2.0.0
+@version 0.3.0.0
 
 
 -- | Unsafe internal-use functions used in the implementation of
@@ -860,14 +860,14 @@ filter :: (Key -> Bool) -> NEIntSet -> IntSet
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns an <a>Or</a> with potentially two non-empty sets:
+--   Returns a <a>These</a> with potentially two non-empty sets:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
 --   items.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate was false for all
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
 --   items.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
 --   that were true for the predicate) and <tt>n2</tt> (all of the items
 --   that were false for the predicate).</li>
 --   </ul>
@@ -875,14 +875,14 @@ filter :: (Key -> Bool) -> NEIntSet -> IntSet
 --   See also <a>split</a>.
 --   
 --   <pre>
---   partition (&gt; 3) (fromList (5 :| [3])) == Both (singleton 5) (singleton 3)
---   partition (&lt; 7) (fromList (5 :| [3])) == Fst  (fromList (3 :| [5]))
---   partition (&gt; 7) (fromList (5 :| [3])) == Snd  (fromList (3 :| [5]))
+--   partition (&gt; 3) (fromList (5 :| [3])) == These (singleton 5) (singleton 3)
+--   partition (&lt; 7) (fromList (5 :| [3])) == This  (fromList (3 :| [5]))
+--   partition (&gt; 7) (fromList (5 :| [3])) == That  (fromList (3 :| [5]))
 --   </pre>
-partition :: (Key -> Bool) -> NEIntSet -> Or NEIntSet NEIntSet
+partition :: (Key -> Bool) -> NEIntSet -> These NEIntSet NEIntSet
 
 -- | <i>O(log n)</i>. The expression (<tt><a>split</a> x set</tt>) is
---   potentially a <a>Both</a> containing up to two <a>NEIntSet</a>s based
+--   potentially a <a>These</a> containing up to two <a>NEIntSet</a>s based
 --   on splitting the set into sets containing items before and after the
 --   value <tt>x</tt>. It will never return a set that contains <tt>x</tt>
 --   itself.
@@ -890,41 +890,41 @@ partition :: (Key -> Bool) -> NEIntSet -> Or NEIntSet NEIntSet
 --   <ul>
 --   <li><a>Nothing</a> means that <tt>x</tt> was the only value in the the
 --   original set, and so there are no items before or after it.</li>
---   <li><tt><a>Just</a> (<a>Fst</a> n1)</tt> means <tt>x</tt> was larger
+--   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>x</tt> was larger
 --   than or equal to all items in the set, and <tt>n1</tt> is the entire
 --   original set (minus <tt>x</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Snd</a> n2)</tt> means <tt>x</tt> was smaller
+--   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>x</tt> was smaller
 --   than or equal to all items in the set, and <tt>n2</tt> is the entire
 --   original set (minus <tt>x</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Both</a> n1 n2)</tt> gives <tt>n1</tt> (the
+--   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
 --   set of all values from the original set less than <tt>x</tt>) and
 --   <tt>n2</tt> (the set of all values from the original set greater than
 --   <tt>x</tt>).</li>
 --   </ul>
 --   
 --   <pre>
---   split 2 (fromList (5 :| [3])) == Just (Snd  (fromList (3 :| [5]))      )
---   split 3 (fromList (5 :| [3])) == Just (Snd  (singleton 5)              )
---   split 4 (fromList (5 :| [3])) == Just (Both (singleton 3) (singleton 5))
---   split 5 (fromList (5 :| [3])) == Just (Fst  (singleton 3)              )
---   split 6 (fromList (5 :| [3])) == Just (Fst  (fromList (3 :| [5]))      )
+--   split 2 (fromList (5 :| [3])) == Just (That  (fromList (3 :| [5]))      )
+--   split 3 (fromList (5 :| [3])) == Just (That  (singleton 5)              )
+--   split 4 (fromList (5 :| [3])) == Just (These (singleton 3) (singleton 5))
+--   split 5 (fromList (5 :| [3])) == Just (This  (singleton 3)              )
+--   split 6 (fromList (5 :| [3])) == Just (This  (fromList (3 :| [5]))      )
 --   split 5 (singleton 5)         == Nothing
 --   </pre>
-split :: Key -> NEIntSet -> Maybe (Or NEIntSet NEIntSet)
+split :: Key -> NEIntSet -> Maybe (These NEIntSet NEIntSet)
 
 -- | <i>O(log n)</i>. The expression (<tt><a>splitMember</a> x set</tt>)
 --   splits a set just like <a>split</a> but also returns <tt><a>member</a>
 --   x set</tt> (whether or not <tt>x</tt> was in <tt>set</tt>)
 --   
 --   <pre>
---   splitMember 2 (fromList (5 :| [3])) == (False, Just (Snd  (fromList (3 :| [5)]))))
---   splitMember 3 (fromList (5 :| [3])) == (True , Just (Snd  (singleton 5)))
---   splitMember 4 (fromList (5 :| [3])) == (False, Just (Both (singleton 3) (singleton 5)))
---   splitMember 5 (fromList (5 :| [3])) == (True , Just (Fst  (singleton 3))
---   splitMember 6 (fromList (5 :| [3])) == (False, Just (Fst  (fromList (3 :| [5])))
+--   splitMember 2 (fromList (5 :| [3])) == (False, Just (That  (fromList (3 :| [5)]))))
+--   splitMember 3 (fromList (5 :| [3])) == (True , Just (That  (singleton 5)))
+--   splitMember 4 (fromList (5 :| [3])) == (False, Just (These (singleton 3) (singleton 5)))
+--   splitMember 5 (fromList (5 :| [3])) == (True , Just (This  (singleton 3))
+--   splitMember 6 (fromList (5 :| [3])) == (False, Just (This  (fromList (3 :| [5])))
 --   splitMember 5 (singleton 5)         == (True , Nothing)
 --   </pre>
-splitMember :: Key -> NEIntSet -> (Bool, Maybe (Or NEIntSet NEIntSet))
+splitMember :: Key -> NEIntSet -> (Bool, Maybe (These NEIntSet NEIntSet))
 
 -- | <i>O(1)</i>. Decompose a set into pieces based on the structure of the
 --   underlying tree. This function is useful for consuming a set in
@@ -2300,14 +2300,14 @@ withoutKeys :: NEIntMap a -> IntSet -> IntMap a
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
 --   items.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate was false for all
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
 --   items.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
 --   that were true for the predicate) and <tt>n2</tt> (all of the items
 --   that were false for the predicate).</li>
 --   </ul>
@@ -2315,22 +2315,22 @@ withoutKeys :: NEIntMap a -> IntSet -> IntMap a
 --   See also <a>split</a>.
 --   
 --   <pre>
---   partition (&gt; "a") (fromList ((5,"a") :| [(3,"b")])) == Both (singleton 3 "b") (singleton 5 "a")
---   partition (&lt; "x") (fromList ((5,"a") :| [(3,"b")])) == Fst  (fromList ((3, "b") :| [(5, "a")]))
---   partition (&gt; "x") (fromList ((5,"a") :| [(3,"b")])) == Snd  (fromList ((3, "b") :| [(5, "a")]))
+--   partition (&gt; "a") (fromList ((5,"a") :| [(3,"b")])) == These (singleton 3 "b") (singleton 5 "a")
+--   partition (&lt; "x") (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
+--   partition (&gt; "x") (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
 --   </pre>
-partition :: (a -> Bool) -> NEIntMap a -> Or (NEIntMap a) (NEIntMap a)
+partition :: (a -> Bool) -> NEIntMap a -> These (NEIntMap a) (NEIntMap a)
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
 --   items, returning the original map.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate was false for all
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
 --   items, returning the original map.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
 --   that were true for the predicate) and <tt>n2</tt> (all of the items
 --   that were false for the predicate).</li>
 --   </ul>
@@ -2338,11 +2338,11 @@ partition :: (a -> Bool) -> NEIntMap a -> Or (NEIntMap a) (NEIntMap a)
 --   See also <a>split</a>.
 --   
 --   <pre>
---   partitionWithKey (\ k _ -&gt; k &gt; 3) (fromList ((5,"a") :| [(3,"b")])) == Both (singleton 5 "a") (singleton 3 "b")
---   partitionWithKey (\ k _ -&gt; k &lt; 7) (fromList ((5,"a") :| [(3,"b")])) == Fst  (fromList ((3, "b") :| [(5, "a")]))
---   partitionWithKey (\ k _ -&gt; k &gt; 7) (fromList ((5,"a") :| [(3,"b")])) == Snd  (fromList ((3, "b") :| [(5, "a")]))
+--   partitionWithKey (\ k _ -&gt; k &gt; 3) (fromList ((5,"a") :| [(3,"b")])) == These (singleton 5 "a") (singleton 3 "b")
+--   partitionWithKey (\ k _ -&gt; k &lt; 7) (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
+--   partitionWithKey (\ k _ -&gt; k &gt; 7) (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
 --   </pre>
-partitionWithKey :: (Key -> a -> Bool) -> NEIntMap a -> Or (NEIntMap a) (NEIntMap a)
+partitionWithKey :: (Key -> a -> Bool) -> NEIntMap a -> These (NEIntMap a) (NEIntMap a)
 
 -- | <i>O(n)</i>. Map values and collect the <a>Just</a> results.
 --   
@@ -2371,14 +2371,14 @@ mapMaybeWithKey :: (Key -> a -> Maybe b) -> NEIntMap a -> IntMap b
 -- | <i>O(n)</i>. Map values and separate the <a>Left</a> and <a>Right</a>
 --   results.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the results were all
+--   <li><tt><a>This</a> n1</tt> means that the results were all
 --   <a>Left</a>.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the results were all
+--   <li><tt><a>That</a> n2</tt> means that the results were all
 --   <a>Right</a>.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
 --   results were <a>Left</a>) and <tt>n2</tt> (the map where the results
 --   were <a>Right</a>)</li>
 --   </ul>
@@ -2386,24 +2386,24 @@ mapMaybeWithKey :: (Key -> a -> Maybe b) -> NEIntMap a -> IntMap b
 --   <pre>
 --   let f a = if a &lt; "c" then Left a else Right a
 --   mapEither f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Both (fromList ((3,"b") :| [(5,"a")])) (fromList ((1,"x") :| [(7,"z")]))
+--       == These (fromList ((3,"b") :| [(5,"a")])) (fromList ((1,"x") :| [(7,"z")]))
 --   
 --   mapEither (\ a -&gt; Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Snd (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+--       == That (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
 --   </pre>
-mapEither :: (a -> Either b c) -> NEIntMap a -> Or (NEIntMap b) (NEIntMap c)
+mapEither :: (a -> Either b c) -> NEIntMap a -> These (NEIntMap b) (NEIntMap c)
 
 -- | <i>O(n)</i>. Map keys/values and separate the <a>Left</a> and
 --   <a>Right</a> results.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the results were all
+--   <li><tt><a>This</a> n1</tt> means that the results were all
 --   <a>Left</a>.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the results were all
+--   <li><tt><a>That</a> n2</tt> means that the results were all
 --   <a>Right</a>.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
 --   results were <a>Left</a>) and <tt>n2</tt> (the map where the results
 --   were <a>Right</a>)</li>
 --   </ul>
@@ -2411,15 +2411,15 @@ mapEither :: (a -> Either b c) -> NEIntMap a -> Or (NEIntMap b) (NEIntMap c)
 --   <pre>
 --   let f k a = if k &lt; 5 then Left (k * 2) else Right (a ++ a)
 --   mapEitherWithKey f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Both (fromList ((1,2) :| [(3,6)])) (fromList ((5,"aa") :| [(7,"zz")]))
+--       == These (fromList ((1,2) :| [(3,6)])) (fromList ((5,"aa") :| [(7,"zz")]))
 --   
 --   mapEitherWithKey (\_ a -&gt; Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Snd (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
+--       == That (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
 --   </pre>
-mapEitherWithKey :: (Key -> a -> Either b c) -> NEIntMap a -> Or (NEIntMap b) (NEIntMap c)
+mapEitherWithKey :: (Key -> a -> Either b c) -> NEIntMap a -> These (NEIntMap b) (NEIntMap c)
 
 -- | <i>O(log n)</i>. The expression (<tt><a>split</a> k map</tt>) is
---   potentially a <a>Both</a> containing up to two <a>NEIntMap</a>s based
+--   potentially a <a>These</a> containing up to two <a>NEIntMap</a>s based
 --   on splitting the map into maps containing items before and after the
 --   given key <tt>k</tt>. It will never return a map that contains
 --   <tt>k</tt> itself.
@@ -2427,41 +2427,41 @@ mapEitherWithKey :: (Key -> a -> Either b c) -> NEIntMap a -> Or (NEIntMap b) (N
 --   <ul>
 --   <li><a>Nothing</a> means that <tt>k</tt> was the only key in the the
 --   original map, and so there are no items before or after it.</li>
---   <li><tt><a>Just</a> (<a>Fst</a> n1)</tt> means <tt>k</tt> was larger
+--   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>k</tt> was larger
 --   than or equal to all items in the map, and <tt>n1</tt> is the entire
 --   original map (minus <tt>k</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Snd</a> n2)</tt> means <tt>k</tt> was smaller
+--   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>k</tt> was smaller
 --   than or equal to all items in the map, and <tt>n2</tt> is the entire
 --   original map (minus <tt>k</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Both</a> n1 n2)</tt> gives <tt>n1</tt> (the
+--   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
 --   map of all keys from the original map less than <tt>k</tt>) and
 --   <tt>n2</tt> (the map of all keys from the original map greater than
 --   <tt>k</tt>)</li>
 --   </ul>
 --   
 --   <pre>
---   split 2 (fromList ((5,"a") :| [(3,"b")])) == Just (Snd  (fromList ((3,"b") :| [(5,"a")]))  )
---   split 3 (fromList ((5,"a") :| [(3,"b")])) == Just (Snd  (singleton 5 "a")                  )
---   split 4 (fromList ((5,"a") :| [(3,"b")])) == Just (Both (singleton 3 "b") (singleton 5 "a"))
---   split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (Fst  (singleton 3 "b")                  )
---   split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (Fst  (fromList ((3,"b") :| [(5,"a")]))  )
+--   split 2 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (fromList ((3,"b") :| [(5,"a")]))  )
+--   split 3 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (singleton 5 "a")                  )
+--   split 4 (fromList ((5,"a") :| [(3,"b")])) == Just (These (singleton 3 "b") (singleton 5 "a"))
+--   split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (singleton 3 "b")                  )
+--   split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (fromList ((3,"b") :| [(5,"a")]))  )
 --   split 5 (singleton 5 "a")                 == Nothing
 --   </pre>
-split :: Key -> NEIntMap a -> Maybe (Or (NEIntMap a) (NEIntMap a))
+split :: Key -> NEIntMap a -> Maybe (These (NEIntMap a) (NEIntMap a))
 
 -- | <i>O(log n)</i>. The expression (<tt><a>splitLookup</a> k map</tt>)
 --   splits a map just like <a>split</a> but also returns <tt><a>lookup</a>
 --   k map</tt>, as a <tt><a>Maybe</a> a</tt>.
 --   
 --   <pre>
---   splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Snd  (fromList ((3,"b") :| [(5,"a")]))))
---   splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (Snd  (singleton 5 "a")))
---   splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Both (singleton 3 "b") (singleton 5 "a")))
---   splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (Fst  (singleton 3 "b"))
---   splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Fst  (fromList ((3,"b") :| [(5,"a")])))
+--   splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (That  (fromList ((3,"b") :| [(5,"a")]))))
+--   splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (That  (singleton 5 "a")))
+--   splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (These (singleton 3 "b") (singleton 5 "a")))
+--   splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (This  (singleton 3 "b"))
+--   splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (This  (fromList ((3,"b") :| [(5,"a")])))
 --   splitLookup 5 (singleton 5 "a")                 == (Just "a", Nothing)
 --   </pre>
-splitLookup :: Key -> NEIntMap a -> (Maybe a, Maybe (Or (NEIntMap a) (NEIntMap a)))
+splitLookup :: Key -> NEIntMap a -> (Maybe a, Maybe (These (NEIntMap a) (NEIntMap a)))
 
 -- | <i>O(1)</i>. Decompose a map into pieces based on the structure of the
 --   underlying tree. This function is useful for consuming a map in
@@ -3684,58 +3684,58 @@ dropWhileR :: (a -> Bool) -> NESeq a -> Seq a
 
 -- | &lt;math&gt; where &lt;math&gt; is the prefix length. <a>spanl</a>,
 --   applied to a predicate <tt>p</tt> and a sequence <tt>xs</tt>, returns
---   a <a>Both</a> based on the point where the predicate fails:
+--   a <a>These</a> based on the point where the predicate fails:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> ys</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> ys</tt> means that the predicate was true for all
 --   items, and <tt>ys</tt> is the entire original sequence.</li>
---   <li><tt><a>Snd</a> zs</tt> means that the predicate failed on the
+--   <li><tt><a>That</a> zs</tt> means that the predicate failed on the
 --   first item, and <tt>zs</tt> is the entire original sequence.</li>
---   <li><tt><a>Both</a> ys zs</tt> gives <tt>ys</tt> (the prefix of
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the prefix of
 --   elements that satisfy the predicae) and <tt>zs</tt> (the remainder of
 --   the sequence)</li>
 --   </ul>
-spanl :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
+spanl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 
 -- | &lt;math&gt; where &lt;math&gt; is the suffix length. <a>spanr</a>,
 --   applied to a predicate <tt>p</tt> and a sequence <tt>xs</tt>, returns
---   a <tt>These</tt> based on the point where the predicate fails:
+--   a <a>These</a> based on the point where the predicate fails:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> ys</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> ys</tt> means that the predicate was true for all
 --   items, and <tt>ys</tt> is the entire original sequence.</li>
---   <li><tt><a>Snd</a> zs</tt> means that the predicate failed on the
+--   <li><tt><a>That</a> zs</tt> means that the predicate failed on the
 --   first item, and <tt>zs</tt> is the entire original sequence.</li>
---   <li><tt><a>Both</a> ys zs</tt> gives <tt>ys</tt> (the suffix of
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the suffix of
 --   elements that satisfy the predicae) and <tt>zs</tt> (the remainder of
 --   the sequence, before the suffix)</li>
 --   </ul>
-spanr :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
+spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 
 -- | &lt;math&gt; where &lt;math&gt; is the breakpoint index.
 --   
 --   <tt><a>breakl</a> p</tt> is <tt><a>spanl</a> (not . p)</tt>.
-breakl :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
+breakl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 
 -- | &lt;math&gt; where &lt;math&gt; is the breakpoint index.
 --   
 --   <tt><a>breakr</a> p</tt> is <tt><a>spanr</a> (not . p)</tt>.
-breakr :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
+breakr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 
 -- | &lt;math&gt;. The <a>partition</a> function takes a predicate
 --   <tt>p</tt> and a sequence <tt>xs</tt> and returns sequences of those
---   elements which do and do not satisfy the predicate, as a <a>Both</a>:
+--   elements which do and do not satisfy the predicate, as a <a>These</a>:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> ys</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> ys</tt> means that the predicate was true for all
 --   items, and <tt>ys</tt> is the entire original sequence.</li>
---   <li><tt><a>Snd</a> zs</tt> means that the predicate failed on the
+--   <li><tt><a>That</a> zs</tt> means that the predicate failed on the
 --   first item, and <tt>zs</tt> is the entire original sequence.</li>
---   <li><tt><a>Both</a> ys zs</tt> gives <tt>ys</tt> (the sequence of
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the sequence of
 --   elements for which the predicate was true) and <tt>zs</tt> (the
 --   sequence of elements for which the predicate was false).</li>
 --   </ul>
-partition :: (a -> Bool) -> NESeq a -> Or (NESeq a) (NESeq a)
+partition :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 
 -- | &lt;math&gt;. The <a>filter</a> function takes a predicate <tt>p</tt>
 --   and a sequence <tt>xs</tt> and returns a sequence of those elements
@@ -3904,17 +3904,17 @@ deleteAt :: Int -> NESeq a -> Seq a
 -- | &lt;math&gt;. Split a sequence at a given position.
 --   
 --   <ul>
---   <li><tt><a>Fst</a> ys</tt> means that the given position was longer
+--   <li><tt><a>This</a> ys</tt> means that the given position was longer
 --   than the length of the list, and <tt>ys</tt> is the entire original
 --   system.</li>
---   <li><tt><a>Snd</a> zs</tt> means that the given position was zero or
+--   <li><tt><a>That</a> zs</tt> means that the given position was zero or
 --   smaller, and so <tt>zs</tt> is the entire original sequence.</li>
---   <li><tt><a>Both</a> ys zs</tt> gives <tt>ys</tt> (the sequence of
+--   <li><tt><a>These</a> ys zs</tt> gives <tt>ys</tt> (the sequence of
 --   elements before the given position, <tt>take n xs</tt>) and
 --   <tt>zs</tt> (the sequence of elements after the given position,
 --   <tt>drop n xs</tt>).</li>
 --   </ul>
-splitAt :: Int -> NESeq a -> Or (NESeq a) (NESeq a)
+splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
 
 -- | <a>elemIndexL</a> finds the leftmost index of the specified element,
 --   if it is present, and otherwise <a>Nothing</a>.
@@ -4705,14 +4705,14 @@ dropWhileAntitone :: (a -> Bool) -> NESet a -> Set a
 --   all elements <tt>j</tt> and <tt>k</tt> in the set, <tt>j &lt; k ==&gt;
 --   p j &gt;= p k</tt>.
 --   
---   Returns an <a>Or</a> with potentially two non-empty sets:
+--   Returns a <a>These</a> with potentially two non-empty sets:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the predicate never failed for
+--   <li><tt><a>This</a> n1</tt> means that the predicate never failed for
 --   any item, returning the original set</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate failed for the
+--   <li><tt><a>That</a> n2</tt> means that the predicate failed for the
 --   first item, returning the original set</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (the set up to the
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the set up to the
 --   point where the predicate stops holding) and <tt>n2</tt> (the set
 --   starting from the point where the predicate stops holding)</li>
 --   </ul>
@@ -4726,18 +4726,18 @@ dropWhileAntitone :: (a -> Bool) -> NESet a -> Set a
 --   point where the predicate switches from holding to not holding (where
 --   the predicate is seen to hold before the first element and to fail
 --   after the last element).
-spanAntitone :: (a -> Bool) -> NESet a -> Or (NESet a) (NESet a)
+spanAntitone :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns an <a>Or</a> with potentially two non-empty sets:
+--   Returns a <a>These</a> with potentially two non-empty sets:
 --   
 --   <ul>
---   <li><tt><tt>This</tt> n1</tt> means that the predicate was true for
---   all items.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate was false for all
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
 --   items.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
+--   items.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
 --   that were true for the predicate) and <tt>n2</tt> (all of the items
 --   that were false for the predicate).</li>
 --   </ul>
@@ -4745,14 +4745,14 @@ spanAntitone :: (a -> Bool) -> NESet a -> Or (NESet a) (NESet a)
 --   See also <a>split</a>.
 --   
 --   <pre>
---   partition (&gt; 3) (fromList (5 :| [3])) == Both (singleton 5) (singleton 3)
+--   partition (&gt; 3) (fromList (5 :| [3])) == These (singleton 5) (singleton 3)
 --   partition (&lt; 7) (fromList (5 :| [3])) == This  (fromList (3 :| [5]))
---   partition (&gt; 7) (fromList (5 :| [3])) == Snd  (fromList (3 :| [5]))
+--   partition (&gt; 7) (fromList (5 :| [3])) == That  (fromList (3 :| [5]))
 --   </pre>
-partition :: (a -> Bool) -> NESet a -> Or (NESet a) (NESet a)
+partition :: (a -> Bool) -> NESet a -> These (NESet a) (NESet a)
 
 -- | <i>O(log n)</i>. The expression (<tt><a>split</a> x set</tt>) is
---   potentially a <a>Both</a> containing up to two <a>NESet</a>s based on
+--   potentially a <a>These</a> containing up to two <a>NESet</a>s based on
 --   splitting the set into sets containing items before and after the
 --   value <tt>x</tt>. It will never return a set that contains <tt>x</tt>
 --   itself.
@@ -4760,41 +4760,41 @@ partition :: (a -> Bool) -> NESet a -> Or (NESet a) (NESet a)
 --   <ul>
 --   <li><a>Nothing</a> means that <tt>x</tt> was the only value in the the
 --   original set, and so there are no items before or after it.</li>
---   <li><tt><a>Just</a> (<a>Fst</a> n1)</tt> means <tt>x</tt> was larger
+--   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>x</tt> was larger
 --   than or equal to all items in the set, and <tt>n1</tt> is the entire
 --   original set (minus <tt>x</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Snd</a> n2)</tt> means <tt>x</tt> was smaller
+--   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>x</tt> was smaller
 --   than or equal to all items in the set, and <tt>n2</tt> is the entire
 --   original set (minus <tt>x</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Both</a> n1 n2)</tt> gives <tt>n1</tt> (the
+--   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
 --   set of all values from the original set less than <tt>x</tt>) and
 --   <tt>n2</tt> (the set of all values from the original set greater than
 --   <tt>x</tt>).</li>
 --   </ul>
 --   
 --   <pre>
---   split 2 (fromList (5 :| [3])) == Just (Snd  (fromList (3 :| [5]))      )
---   split 3 (fromList (5 :| [3])) == Just (Snd  (singleton 5)              )
---   split 4 (fromList (5 :| [3])) == Just (Both (singleton 3) (singleton 5))
---   split 5 (fromList (5 :| [3])) == Just (Fst  (singleton 3)              )
---   split 6 (fromList (5 :| [3])) == Just (Fst  (fromList (3 :| [5]))      )
+--   split 2 (fromList (5 :| [3])) == Just (That  (fromList (3 :| [5]))      )
+--   split 3 (fromList (5 :| [3])) == Just (That  (singleton 5)              )
+--   split 4 (fromList (5 :| [3])) == Just (These (singleton 3) (singleton 5))
+--   split 5 (fromList (5 :| [3])) == Just (This  (singleton 3)              )
+--   split 6 (fromList (5 :| [3])) == Just (This  (fromList (3 :| [5]))      )
 --   split 5 (singleton 5)         == Nothing
 --   </pre>
-split :: Ord a => a -> NESet a -> Maybe (Or (NESet a) (NESet a))
+split :: Ord a => a -> NESet a -> Maybe (These (NESet a) (NESet a))
 
 -- | <i>O(log n)</i>. The expression (<tt><a>splitMember</a> x set</tt>)
 --   splits a set just like <a>split</a> but also returns <tt><a>member</a>
 --   x set</tt> (whether or not <tt>x</tt> was in <tt>set</tt>)
 --   
 --   <pre>
---   splitMember 2 (fromList (5 :| [3])) == (False, Just (Snd  (fromList (3 :| [5)]))))
---   splitMember 3 (fromList (5 :| [3])) == (True , Just (Snd  (singleton 5)))
---   splitMember 4 (fromList (5 :| [3])) == (False, Just (Both (singleton 3) (singleton 5)))
---   splitMember 5 (fromList (5 :| [3])) == (True , Just (Fst  (singleton 3))
---   splitMember 6 (fromList (5 :| [3])) == (False, Just (Fst  (fromList (3 :| [5])))
+--   splitMember 2 (fromList (5 :| [3])) == (False, Just (That  (fromList (3 :| [5)]))))
+--   splitMember 3 (fromList (5 :| [3])) == (True , Just (That  (singleton 5)))
+--   splitMember 4 (fromList (5 :| [3])) == (False, Just (These (singleton 3) (singleton 5)))
+--   splitMember 5 (fromList (5 :| [3])) == (True , Just (This  (singleton 3))
+--   splitMember 6 (fromList (5 :| [3])) == (False, Just (This  (fromList (3 :| [5])))
 --   splitMember 5 (singleton 5)         == (True , Nothing)
 --   </pre>
-splitMember :: Ord a => a -> NESet a -> (Bool, Maybe (Or (NESet a) (NESet a)))
+splitMember :: Ord a => a -> NESet a -> (Bool, Maybe (These (NESet a) (NESet a)))
 
 -- | <i>O(1)</i>. Decompose a set into pieces based on the structure of the
 --   underlying tree. This function is useful for consuming a set in
@@ -4891,15 +4891,15 @@ drop :: Int -> NESet a -> Set a
 -- | <i>O(log n)</i>. Split a set at a particular index <tt>i</tt>.
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that there are less than <tt>i</tt>
+--   <li><tt><a>This</a> n1</tt> means that there are less than <tt>i</tt>
 --   items in the set, and <tt>n1</tt> is the original set.</li>
---   <li><tt><a>Snd</a> n2</tt> means <tt>i</tt> was 0; we dropped 0 items,
---   so <tt>n2</tt> is the original set.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (taking <tt>i</tt>
+--   <li><tt><a>That</a> n2</tt> means <tt>i</tt> was 0; we dropped 0
+--   items, so <tt>n2</tt> is the original set.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (taking <tt>i</tt>
 --   items from the original set) and <tt>n2</tt> (dropping <tt>i</tt>
 --   items from the original set))</li>
 --   </ul>
-splitAt :: Int -> NESet a -> Or (NESet a) (NESet a)
+splitAt :: Int -> NESet a -> These (NESet a) (NESet a)
 
 -- | <i>O(n*log n)</i>. <tt><a>map</a> f s</tt> is the set obtained by
 --   applying <tt>f</tt> to each element of <tt>s</tt>.
@@ -6323,14 +6323,14 @@ withoutKeys :: Ord k => NEMap k a -> Set k -> Map k a
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
 --   items.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate was false for all
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
 --   items.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
 --   that were true for the predicate) and <tt>n2</tt> (all of the items
 --   that were false for the predicate).</li>
 --   </ul>
@@ -6338,22 +6338,22 @@ withoutKeys :: Ord k => NEMap k a -> Set k -> Map k a
 --   See also <a>split</a>.
 --   
 --   <pre>
---   partition (&gt; "a") (fromList ((5,"a") :| [(3,"b")])) == Both (singleton 3 "b") (singleton 5 "a")
---   partition (&lt; "x") (fromList ((5,"a") :| [(3,"b")])) == Fst  (fromList ((3, "b") :| [(5, "a")]))
---   partition (&gt; "x") (fromList ((5,"a") :| [(3,"b")])) == Snd  (fromList ((3, "b") :| [(5, "a")]))
+--   partition (&gt; "a") (fromList ((5,"a") :| [(3,"b")])) == These (singleton 3 "b") (singleton 5 "a")
+--   partition (&lt; "x") (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
+--   partition (&gt; "x") (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
 --   </pre>
-partition :: (a -> Bool) -> NEMap k a -> Or (NEMap k a) (NEMap k a)
+partition :: (a -> Bool) -> NEMap k a -> These (NEMap k a) (NEMap k a)
 
 -- | <i>O(n)</i>. Partition the map according to a predicate.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the predicate was true for all
+--   <li><tt><a>This</a> n1</tt> means that the predicate was true for all
 --   items, returning the original map.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate was false for all
+--   <li><tt><a>That</a> n2</tt> means that the predicate was false for all
 --   items, returning the original map.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (all of the items
 --   that were true for the predicate) and <tt>n2</tt> (all of the items
 --   that were false for the predicate).</li>
 --   </ul>
@@ -6361,11 +6361,11 @@ partition :: (a -> Bool) -> NEMap k a -> Or (NEMap k a) (NEMap k a)
 --   See also <a>split</a>.
 --   
 --   <pre>
---   partitionWithKey (\ k _ -&gt; k &gt; 3) (fromList ((5,"a") :| [(3,"b")])) == Both (singleton 5 "a") (singleton 3 "b")
---   partitionWithKey (\ k _ -&gt; k &lt; 7) (fromList ((5,"a") :| [(3,"b")])) == Fst  (fromList ((3, "b") :| [(5, "a")]))
---   partitionWithKey (\ k _ -&gt; k &gt; 7) (fromList ((5,"a") :| [(3,"b")])) == Snd  (fromList ((3, "b") :| [(5, "a")]))
+--   partitionWithKey (\ k _ -&gt; k &gt; 3) (fromList ((5,"a") :| [(3,"b")])) == These (singleton 5 "a") (singleton 3 "b")
+--   partitionWithKey (\ k _ -&gt; k &lt; 7) (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
+--   partitionWithKey (\ k _ -&gt; k &gt; 7) (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
 --   </pre>
-partitionWithKey :: (k -> a -> Bool) -> NEMap k a -> Or (NEMap k a) (NEMap k a)
+partitionWithKey :: (k -> a -> Bool) -> NEMap k a -> These (NEMap k a) (NEMap k a)
 
 -- | <i>O(log n)</i>. Take while a predicate on the keys holds. The user is
 --   responsible for ensuring that for all keys <tt>j</tt> and <tt>k</tt>
@@ -6397,14 +6397,14 @@ dropWhileAntitone :: (k -> Bool) -> NEMap k a -> Map k a
 --   keys <tt>j</tt> and <tt>k</tt> in the map, <tt>j &lt; k ==&gt; p j
 --   &gt;= p k</tt>.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the predicate never failed for
+--   <li><tt><a>This</a> n1</tt> means that the predicate never failed for
 --   any item, returning the original map.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the predicate failed for the
+--   <li><tt><a>That</a> n2</tt> means that the predicate failed for the
 --   first item, returning the original map.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (the map up to the
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map up to the
 --   point where the predicate on the keys stops holding) and <tt>n2</tt>
 --   (the map starting from the point where the predicate stops
 --   holding)</li>
@@ -6419,7 +6419,7 @@ dropWhileAntitone :: (k -> Bool) -> NEMap k a -> Map k a
 --   point where the predicate switches from holding to not holding (where
 --   the predicate is seen to hold before the first key and to fail after
 --   the last key).
-spanAntitone :: (k -> Bool) -> NEMap k a -> Or (NEMap k a) (NEMap k a)
+spanAntitone :: (k -> Bool) -> NEMap k a -> These (NEMap k a) (NEMap k a)
 
 -- | <i>O(n)</i>. Map values and collect the <a>Just</a> results.
 --   
@@ -6448,14 +6448,14 @@ mapMaybeWithKey :: (k -> a -> Maybe b) -> NEMap k a -> Map k b
 -- | <i>O(n)</i>. Map values and separate the <a>Left</a> and <a>Right</a>
 --   results.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the results were all
+--   <li><tt><a>This</a> n1</tt> means that the results were all
 --   <a>Left</a>.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the results were all
+--   <li><tt><a>That</a> n2</tt> means that the results were all
 --   <a>Right</a>.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
 --   results were <a>Left</a>) and <tt>n2</tt> (the map where the results
 --   were <a>Right</a>)</li>
 --   </ul>
@@ -6463,24 +6463,24 @@ mapMaybeWithKey :: (k -> a -> Maybe b) -> NEMap k a -> Map k b
 --   <pre>
 --   let f a = if a &lt; "c" then Left a else Right a
 --   mapEither f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Both (fromList ((3,"b") :| [(5,"a")])) (fromList ((1,"x") :| [(7,"z")]))
+--       == These (fromList ((3,"b") :| [(5,"a")])) (fromList ((1,"x") :| [(7,"z")]))
 --   
 --   mapEither (\ a -&gt; Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Snd (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
+--       == That (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
 --   </pre>
-mapEither :: (a -> Either b c) -> NEMap k a -> Or (NEMap k b) (NEMap k c)
+mapEither :: (a -> Either b c) -> NEMap k a -> These (NEMap k b) (NEMap k c)
 
 -- | <i>O(n)</i>. Map keys/values and separate the <a>Left</a> and
 --   <a>Right</a> results.
 --   
---   Returns an <a>Or</a> with potentially two non-empty maps:
+--   Returns a <a>These</a> with potentially two non-empty maps:
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that the results were all
+--   <li><tt><a>This</a> n1</tt> means that the results were all
 --   <a>Left</a>.</li>
---   <li><tt><a>Snd</a> n2</tt> means that the results were all
+--   <li><tt><a>That</a> n2</tt> means that the results were all
 --   <a>Right</a>.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (the map where the
 --   results were <a>Left</a>) and <tt>n2</tt> (the map where the results
 --   were <a>Right</a>)</li>
 --   </ul>
@@ -6488,15 +6488,15 @@ mapEither :: (a -> Either b c) -> NEMap k a -> Or (NEMap k b) (NEMap k c)
 --   <pre>
 --   let f k a = if k &lt; 5 then Left (k * 2) else Right (a ++ a)
 --   mapEitherWithKey f (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Both (fromList ((1,2) :| [(3,6)])) (fromList ((5,"aa") :| [(7,"zz")]))
+--       == These (fromList ((1,2) :| [(3,6)])) (fromList ((5,"aa") :| [(7,"zz")]))
 --   
 --   mapEitherWithKey (\_ a -&gt; Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
---       == Snd (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
+--       == That (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
 --   </pre>
-mapEitherWithKey :: (k -> a -> Either b c) -> NEMap k a -> Or (NEMap k b) (NEMap k c)
+mapEitherWithKey :: (k -> a -> Either b c) -> NEMap k a -> These (NEMap k b) (NEMap k c)
 
 -- | <i>O(log n)</i>. The expression (<tt><a>split</a> k map</tt>) is
---   potentially a <a>Both</a> containing up to two <a>NEMap</a>s based on
+--   potentially a <a>These</a> containing up to two <a>NEMap</a>s based on
 --   splitting the map into maps containing items before and after the
 --   given key <tt>k</tt>. It will never return a map that contains
 --   <tt>k</tt> itself.
@@ -6504,41 +6504,41 @@ mapEitherWithKey :: (k -> a -> Either b c) -> NEMap k a -> Or (NEMap k b) (NEMap
 --   <ul>
 --   <li><a>Nothing</a> means that <tt>k</tt> was the only key in the the
 --   original map, and so there are no items before or after it.</li>
---   <li><tt><a>Just</a> (<a>Fst</a> n1)</tt> means <tt>k</tt> was larger
+--   <li><tt><a>Just</a> (<a>This</a> n1)</tt> means <tt>k</tt> was larger
 --   than or equal to all items in the map, and <tt>n1</tt> is the entire
 --   original map (minus <tt>k</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Snd</a> n2)</tt> means <tt>k</tt> was smaller
+--   <li><tt><a>Just</a> (<a>That</a> n2)</tt> means <tt>k</tt> was smaller
 --   than or equal to all items in the map, and <tt>n2</tt> is the entire
 --   original map (minus <tt>k</tt>, if it was present)</li>
---   <li><tt><a>Just</a> (<a>Both</a> n1 n2)</tt> gives <tt>n1</tt> (the
+--   <li><tt><a>Just</a> (<a>These</a> n1 n2)</tt> gives <tt>n1</tt> (the
 --   map of all keys from the original map less than <tt>k</tt>) and
 --   <tt>n2</tt> (the map of all keys from the original map greater than
 --   <tt>k</tt>)</li>
 --   </ul>
 --   
 --   <pre>
---   split 2 (fromList ((5,"a") :| [(3,"b")])) == Just (Snd  (fromList ((3,"b") :| [(5,"a")]))  )
---   split 3 (fromList ((5,"a") :| [(3,"b")])) == Just (Snd  (singleton 5 "a")                  )
---   split 4 (fromList ((5,"a") :| [(3,"b")])) == Just (Both (singleton 3 "b") (singleton 5 "a"))
---   split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (Fst  (singleton 3 "b")                  )
---   split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (Fst  (fromList ((3,"b") :| [(5,"a")]))  )
+--   split 2 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (fromList ((3,"b") :| [(5,"a")]))  )
+--   split 3 (fromList ((5,"a") :| [(3,"b")])) == Just (That  (singleton 5 "a")                  )
+--   split 4 (fromList ((5,"a") :| [(3,"b")])) == Just (These (singleton 3 "b") (singleton 5 "a"))
+--   split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (singleton 3 "b")                  )
+--   split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (fromList ((3,"b") :| [(5,"a")]))  )
 --   split 5 (singleton 5 "a")                 == Nothing
 --   </pre>
-split :: Ord k => k -> NEMap k a -> Maybe (Or (NEMap k a) (NEMap k a))
+split :: Ord k => k -> NEMap k a -> Maybe (These (NEMap k a) (NEMap k a))
 
 -- | <i>O(log n)</i>. The expression (<tt><a>splitLookup</a> k map</tt>)
 --   splits a map just like <a>split</a> but also returns <tt><a>lookup</a>
 --   k map</tt>, as a <tt><a>Maybe</a> a</tt>.
 --   
 --   <pre>
---   splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Snd  (fromList ((3,"b") :| [(5,"a")]))))
---   splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (Snd  (singleton 5 "a")))
---   splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Both (singleton 3 "b") (singleton 5 "a")))
---   splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (Fst  (singleton 3 "b"))
---   splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (Fst  (fromList ((3,"b") :| [(5,"a")])))
+--   splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (That  (fromList ((3,"b") :| [(5,"a")]))))
+--   splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (That  (singleton 5 "a")))
+--   splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (These (singleton 3 "b") (singleton 5 "a")))
+--   splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (This  (singleton 3 "b"))
+--   splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (This  (fromList ((3,"b") :| [(5,"a")])))
 --   splitLookup 5 (singleton 5 "a")                 == (Just "a", Nothing)
 --   </pre>
-splitLookup :: Ord k => k -> NEMap k a -> (Maybe a, Maybe (Or (NEMap k a) (NEMap k a)))
+splitLookup :: Ord k => k -> NEMap k a -> (Maybe a, Maybe (These (NEMap k a) (NEMap k a)))
 
 -- | <i>O(1)</i>. Decompose a map into pieces based on the structure of the
 --   underlying tree. This function is useful for consuming a map in
@@ -6710,15 +6710,15 @@ drop :: Int -> NEMap k a -> Map k a
 -- | <i>O(log n)</i>. Split a map at a particular index <tt>i</tt>.
 --   
 --   <ul>
---   <li><tt><a>Fst</a> n1</tt> means that there are less than <tt>i</tt>
+--   <li><tt><a>This</a> n1</tt> means that there are less than <tt>i</tt>
 --   items in the map, and <tt>n1</tt> is the original map.</li>
---   <li><tt><a>Snd</a> n2</tt> means <tt>i</tt> was 0; we dropped 0 items,
---   so <tt>n2</tt> is the original map.</li>
---   <li><tt><a>Both</a> n1 n2</tt> gives <tt>n1</tt> (taking <tt>i</tt>
+--   <li><tt><a>That</a> n2</tt> means <tt>i</tt> was 0; we dropped 0
+--   items, so <tt>n2</tt> is the original map.</li>
+--   <li><tt><a>These</a> n1 n2</tt> gives <tt>n1</tt> (taking <tt>i</tt>
 --   items from the original map) and <tt>n2</tt> (dropping <tt>i</tt>
 --   items from the original map))</li>
 --   </ul>
-splitAt :: Int -> NEMap k a -> Or (NEMap k a) (NEMap k a)
+splitAt :: Int -> NEMap k a -> These (NEMap k a) (NEMap k a)
 
 -- | <i>O(1)</i>. The minimal key of the map. Note that this is total,
 --   making <a>lookupMin</a> obsolete. It is constant-time, so has better
