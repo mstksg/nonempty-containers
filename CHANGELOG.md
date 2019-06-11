@@ -1,12 +1,34 @@
 Changelog
 =========
 
+Version 0.3.0.0
+---------------
+
+*June 10, 2019*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.0.0>
+
+*   Switch back from *data-or* to *these*, due to changes in the organization
+    of *these* that get rid of the high dependency footprint.
+
+Version 0.2.0.0
+---------------
+
+*May 14, 2019*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.2.0.0>
+
+*   ([#2][]) Switch from *these* to *data-or*, for lighter dependency footprint.  Much
+    thanks to @fosskers for putting in the heavy work.
+
+[#2]: https://github.com/mstksg/nonempty-containers/pull/2
+
 Version 0.1.1.0
 ---------------
 
 *December 8, 2018*
 
-<https://github.com/mstksg/nonempty-containres/releases/tag/v0.1.1.0>
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.1.1.0>
 
 *   `Comonad` instances added for `Map k` and `IntMap`, based on [Faucelme's
     suggestion][comonad]
@@ -16,6 +38,6 @@ Version 0.1.1.0
 Version 0.1.0.0
 ---------------
 
-<https://github.com/mstksg/nonempty-containres/releases/tag/v0.1.0.0>
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.1.0.0>
 
 *   Initial release
