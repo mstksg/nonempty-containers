@@ -11,7 +11,7 @@
 --   convenient typeclass abstraction for converting betwewen non-empty and
 --   possibly-empty variants. See README.md for more information.
 @package nonempty-containers
-@version 0.3.0.0
+@version 0.3.1.0
 
 
 -- | Unsafe internal-use functions used in the implementation of
@@ -5832,6 +5832,15 @@ lookupLE :: Ord k => k -> NEMap k a -> Maybe (k, a)
 --   lookupGE 6 (fromList ((3,'a') :| [(5,'b')])) == Nothing
 --   </pre>
 lookupGE :: Ord k => k -> NEMap k a -> Maybe (k, a)
+
+-- | Special property of non-empty maps: The type of non-empty maps over
+--   uninhabited keys is itself uninhabited.
+--   
+--   This property also exists for <i>values</i> inside a non-empty
+--   container (like for <a>NESet</a>, <tt>NESeq</tt>, and
+--   <tt>NEIntMap</tt>); this can be witnessed using the function
+--   <tt><a>absurd</a> . <tt>fold1</tt></tt>.
+absurdNEMap :: NEMap Void a -> b
 
 -- | <i>O(1)</i>. The number of elements in the map. Guaranteed to be
 --   greater than zero.
