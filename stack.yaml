@@ -8,5 +8,3 @@ extra-deps:
 - hedgehog-fn-1.0
 - tasty-hedgehog-1.0.0.1
 - transformers-base-0.4.5.2
-
-allow-newer: true
