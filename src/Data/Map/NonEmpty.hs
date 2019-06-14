@@ -122,6 +122,7 @@ module Data.Map.NonEmpty (
   , lookupGT
   , lookupLE
   , lookupGE
+  , absurdNEMap
 
   -- ** Size
   , size
@@ -264,6 +265,7 @@ import           Data.Semigroup.Foldable    (Foldable1)
 import           Data.Set                   (Set)
 import           Data.Set.NonEmpty.Internal (NESet(..))
 import           Data.These
+import           Data.Void
 import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map, take, drop, splitAt)
 import qualified Data.Foldable              as F
 import qualified Data.List.NonEmpty         as NE
@@ -2336,6 +2338,17 @@ deleteFindMax (NEMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v)
                             . M.maxViewWithKey
                             $ m
 {-# INLINE deleteFindMax #-}
+
+-- | Special property of non-empty maps: The type of non-empty maps over
+-- uninhabited keys is itself uninhabited.
+--
+-- This property also exists for /values/ inside a non-empty container
+-- (like for 'NESet', 'NESeq', and 'NEIntMap'); this can be witnessed using
+-- the function @'absurd' . 'fold1'@.
+--
+-- @since 0.3.1.0
+absurdNEMap :: NEMap Void a -> b
+absurdNEMap (NEMap k _ _) = absurd k
 
 -- ---------------------------
 -- Combining functions

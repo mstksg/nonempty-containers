@@ -1,6 +1,17 @@
 Changelog
 =========
 
+Version 0.3.1.0
+---------------
+
+*June 13, 2019*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.1.0>
+
+*   Add `absurdNEMap` to *Data.Map.NonEmpty*.  This is the only type that would
+    benefit from such a specialized function, whereas all other types would do
+    just as well with `absurd . fold1 :: Foldable1 f => f Void -> a`.
+
 Version 0.3.0.0
 ---------------
 
