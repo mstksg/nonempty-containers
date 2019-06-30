@@ -25,13 +25,6 @@ packages:
       sha256: 7c26d9584f8ad1a86d9f5cbd6f5a8b81219eaee992e5a098ddab29a6c0b4b2bf
   original:
     hackage: tasty-hedgehog-1.0.0.1
-- completed:
-    hackage: transformers-base-0.4.5.2@sha256:e4d8155470905ba2942033a1537fc4cf91927d1c9b34693fd57ddf3bc02334af,1550
-    pantry-tree:
-      size: 275
-      sha256: de1ab09cfb378c269105d6fcfa0fa9820081c2d1d91c87503a5f10068a4119e7
-  original:
-    hackage: transformers-base-0.4.5.2
 snapshots:
 - completed:
     size: 513872
