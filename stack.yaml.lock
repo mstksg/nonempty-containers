@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: nonempty-vector-0.0.1.1@sha256:a3d9b42d74491ad6b7ede8176852ae0350540f753e170635339a2d8fe8392698,1825
+    pantry-tree:
+      size: 418
+      sha256: 817f1cae96ec9ad94729760cf734f0b974d9ba045d3dd2de5cc9dd8ea75a76ed
+  original:
+    hackage: nonempty-vector-0.0.1.1
+- completed:
     hackage: hedgehog-1.0@sha256:440dafedac48a34eac3871f8622b215462cfc0708536cb0458b7a8cf38247c69,4463
     pantry-tree:
       size: 2409

@@ -32,8 +32,10 @@ dependencies:
 - base >= 4.9 && < 5
 - comonad
 - containers >= 0.5.9
+- nonempty-vector
 - semigroupoids
 - these
+- vector
 
 library:
   source-dirs: src
