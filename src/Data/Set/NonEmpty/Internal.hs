@@ -47,17 +47,16 @@ import           Control.DeepSeq
 import           Data.Data
 import           Data.Function
 import           Data.Functor.Classes
-import           Data.List.NonEmpty                   (NonEmpty(..))
+import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup
-import           Data.Semigroup.Foldable              (Foldable1)
-import           Data.Set.Internal                    (Set(..))
-import           Data.Typeable                        (Typeable)
-import           Prelude hiding                       (foldr, foldr1, foldl, foldl1)
+import           Data.Semigroup.Foldable (Foldable1)
+import           Data.Set.Internal       (Set(..))
+import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
 import           Text.Read
-import qualified Data.Foldable                        as F
-import qualified Data.Semigroup.Foldable              as F1
-import qualified Data.Set                             as S
-import qualified Data.Set.Internal                    as S
+import qualified Data.Foldable           as F
+import qualified Data.Semigroup.Foldable as F1
+import qualified Data.Set                as S
+import qualified Data.Set.Internal       as S
 
 #if !MIN_VERSION_containers(0,5,11)
 import           Utils.Containers.Internal.StrictPair

@@ -64,7 +64,6 @@ import           Data.Maybe
 import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1(fold1))
 import           Data.Semigroup.Traversable (Traversable1(..))
-import           Data.Typeable              (Typeable)
 import           Prelude hiding             (foldr1, foldl1, foldr, foldl, map)
 import           Text.Read
 import qualified Data.Foldable              as F

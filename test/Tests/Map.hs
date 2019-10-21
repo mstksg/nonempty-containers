@@ -674,8 +674,8 @@ prop_split = ttProp (GTKey :-> GTNEMap :-> TTMThese TTNEMap TTNEMap)
     NEM.split
 
 prop_splitLookup :: Property
-prop_splitLookup = ttProp (GTKey :-> GTNEMap :-> TTMaybe TTVal :*: TTMThese TTNEMap TTNEMap)
-    (\k -> (\(x,y,z) -> (y,(x,z))) . M.splitLookup k)
+prop_splitLookup = ttProp (GTKey :-> GTNEMap :-> TTTThese TTVal TTNEMap TTNEMap)
+    (\k -> (\(x,y,z) -> (y,x,z)) . M.splitLookup k)
     NEM.splitLookup
 
 prop_isSubmapOfBy :: Property

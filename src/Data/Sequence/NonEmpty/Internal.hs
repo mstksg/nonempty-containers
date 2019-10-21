@@ -53,7 +53,6 @@ import           Control.Monad.Zip
 import           Data.Bifunctor
 import           Data.Coerce
 import           Data.Data
-import           Data.Foldable              (Foldable)
 import           Data.Functor.Alt
 import           Data.Functor.Bind
 import           Data.Functor.Classes

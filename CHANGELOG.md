@@ -4,6 +4,16 @@ Changelog
 Version 0.3.1.0
 ---------------
 
+*October 21, 2019*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.2.0>
+
+*   Add `HasNonEmpty` instance for *nonempty-vector*
+*   Changed `splitLookup` to use `These` instead of a tuple of `Maybe`s.
+
+Version 0.3.1.0
+---------------
+
 *June 13, 2019*
 
 <https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.1.0>

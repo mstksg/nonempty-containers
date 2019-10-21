@@ -1876,37 +1876,38 @@ split
 split k n@(NEMap k0 v m0) = case compare k k0 of
     LT -> Just $ That n
     EQ -> That <$> nonEmptyMap m0
-    GT -> case (nonEmptyMap m1, nonEmptyMap m2) of
-      (Nothing, Nothing) -> Just $ This  (singleton k0 v)
-      (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v m1)
-      (Nothing, Just n2) -> Just $ These (singleton k0 v)       n2
-      (Just _ , Just n2) -> Just $ These (insertMapMin k0 v m1) n2
+    GT -> Just $ case (nonEmptyMap m1, nonEmptyMap m2) of
+      (Nothing, Nothing) -> This  (singleton k0 v)
+      (Just _ , Nothing) -> This  (insertMapMin k0 v m1)
+      (Nothing, Just n2) -> These (singleton k0 v)       n2
+      (Just _ , Just n2) -> These (insertMapMin k0 v m1) n2
   where
     (m1, m2) = M.split k m0
 {-# INLINABLE split #-}
 
 -- | /O(log n)/. The expression (@'splitLookup' k map@) splits a map just
--- like 'split' but also returns @'lookup' k map@, as a @'Maybe' a@.
+-- like 'split' but also returns @'lookup' k map@, as the first field in
+-- the 'These':
 --
--- > splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (That  (fromList ((3,"b") :| [(5,"a")]))))
--- > splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Just (That  (singleton 5 "a")))
--- > splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (These (singleton 3 "b") (singleton 5 "a")))
--- > splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "a", Just (This  (singleton 3 "b"))
--- > splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == (Nothing , Just (This  (fromList ((3,"b") :| [(5,"a")])))
--- > splitLookup 5 (singleton 5 "a")                 == (Just "a", Nothing)
+-- > splitLookup 2 (fromList ((5,"a") :| [(3,"b")])) == That      (That  (fromList ((3,"b") :| [(5,"a")])))
+-- > splitLookup 3 (fromList ((5,"a") :| [(3,"b")])) == These "b" (That  (singleton 5 "a"))
+-- > splitLookup 4 (fromList ((5,"a") :| [(3,"b")])) == That      (These (singleton 3 "b") (singleton 5 "a"))
+-- > splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == These "a" (This  (singleton 3 "b"))
+-- > splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == That      (This  (fromList ((3,"b") :| [(5,"a")])))
+-- > splitLookup 5 (singleton 5 "a")                 == This  "a"
 splitLookup
     :: Ord k
     => k
     -> NEMap k a
-    -> (Maybe a, Maybe (These (NEMap k a) (NEMap k a)))
+    -> These a (These (NEMap k a) (NEMap k a))
 splitLookup k n@(NEMap k0 v0 m0) = case compare k k0 of
-    LT -> (Nothing, Just $ That n)
-    EQ -> (Just v0, That <$> nonEmptyMap m0)
-    GT -> (v      ,) $ case (nonEmptyMap m1, nonEmptyMap m2) of
-      (Nothing, Nothing) -> Just $ This  (singleton k0 v0)
-      (Just _ , Nothing) -> Just $ This  (insertMapMin k0 v0 m1)
-      (Nothing, Just n2) -> Just $ These (singleton k0 v0)       n2
-      (Just _ , Just n2) -> Just $ These (insertMapMin k0 v0 m1) n2
+    LT -> That . That $ n
+    EQ -> maybe (This v0) (These v0 . That) . nonEmptyMap $ m0
+    GT -> maybe That These v $ case (nonEmptyMap m1, nonEmptyMap m2) of
+      (Nothing, Nothing) -> This  (singleton k0 v0)
+      (Just _ , Nothing) -> This  (insertMapMin k0 v0 m1)
+      (Nothing, Just n2) -> These (singleton k0 v0)       n2
+      (Just _ , Just n2) -> These (insertMapMin k0 v0 m1) n2
   where
     (m1, v, m2) = M.splitLookup k m0
 {-# INLINABLE splitLookup #-}

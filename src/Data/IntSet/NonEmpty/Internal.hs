@@ -39,7 +39,6 @@ import           Data.IntSet.Internal    (IntSet(..), Key)
 import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup
 import           Data.Semigroup.Foldable (Foldable1)
-import           Data.Typeable           (Typeable)
 import           Text.Read
 import qualified Data.Foldable           as F
 import qualified Data.IntSet             as S

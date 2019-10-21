@@ -246,6 +246,11 @@ data TestType :: Type -> Type -> Type where
                 => TestType a               b
                 -> TestType c               d
                 -> TestType (a, c)          (Maybe (These b d))
+    TTTThese    :: (Eq a, Show a, Monoid a, Eq c, Show c, Monoid c, Eq e, Show e, Monoid e)
+                => TestType a               b
+                -> TestType c               d
+                -> TestType e               f
+                -> TestType (Maybe a, c, e) (These b (These d f))
     TTMaybe     :: TestType a               b
                 -> TestType (Maybe a)       (Maybe b)
     TTEither    :: TestType a               b
@@ -367,6 +372,17 @@ runTT = \case
       Just (These y1 y2) -> do
         runTT t1 x1 y1
         runTT t2 x2 y2
+    TTTThese t1 t2 t3 -> \(x1,x2,x3) -> \case
+      This y1 -> do
+        mapM_ (flip (runTT t1) y1) x1
+        x2 === mempty
+        x3 === mempty
+      That     y23 -> do
+        x1 === mempty
+        runTT (TTThese t2 t3) (x2, x3) y23
+      These y1 y23 -> do
+        mapM_ (flip (runTT t1) y1) x1
+        runTT (TTThese t2 t3) (x2, x3) y23
     TTMaybe tt -> \x y -> do
       isJust y === isJust y
       traverse_ (uncurry (runTT tt)) $ liftA2 (,) x y
