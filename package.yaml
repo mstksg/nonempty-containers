@@ -5,7 +5,7 @@ license:             BSD3
 author:              "Justin Le"
 maintainer:          "justin@jle.im"
 copyright:           "(c) Justin Le 2018"
-tested-with:         GHC >= 8.2
+tested-with:         GHC >= 8.4
 
 extra-source-files:
 - README.md

@@ -12,12 +12,12 @@ packages:
   original:
     hackage: nonempty-vector-0.1.0.0
 - completed:
-    hackage: hedgehog-1.0@sha256:440dafedac48a34eac3871f8622b215462cfc0708536cb0458b7a8cf38247c69,4463
+    hackage: hedgehog-1.0.1@sha256:b65b1ebde7b7fe8e693070916e45aa2ed63eea5e3f84ac3a8f9a0b7f8fcf0337,4465
     pantry-tree:
       size: 2409
-      sha256: 985f5ddc16bc1fd4b0c33d4b4e6f54d205fc63aa97b5912b0fcb370dc2a672e3
+      sha256: 41ff1350ad4efb5bcad364e85df7616d30836b348f83b20826349efea8fbc8dd
   original:
-    hackage: hedgehog-1.0
+    hackage: hedgehog-1.0.1
 - completed:
     hackage: hedgehog-fn-1.0@sha256:6316a86744e6730b031287a498b5089e5caab83c0a9af3c9d566696dd82642ff,1816
     pantry-tree:
@@ -26,15 +26,15 @@ packages:
   original:
     hackage: hedgehog-fn-1.0
 - completed:
-    hackage: tasty-hedgehog-1.0.0.1@sha256:cdcf60a29195bd0d819d3018c11db2e0deb7c6e559ad940c49409a5a7a982f83,1766
+    hackage: tasty-hedgehog-1.0.0.1@sha256:f632aa57399fbd9a0910757bd550e702e13752f9fd1fced0cc9e6b54dd49c7d8,1823
     pantry-tree:
       size: 330
-      sha256: 7c26d9584f8ad1a86d9f5cbd6f5a8b81219eaee992e5a098ddab29a6c0b4b2bf
+      sha256: a2f71ddf7ebe2c7e918f2643159b262687ff0d7560b2124430d658a7051dc7ba
   original:
     hackage: tasty-hedgehog-1.0.0.1
 snapshots:
 - completed:
-    size: 513872
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2019/6/28.yaml
-    sha256: 60d99bc77de2ab71baaf7114873210155f84e8ae78350f113a1e6307a6b1995c
-  original: nightly-2019-06-28
+    size: 402401
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2019/10/21.yaml
+    sha256: 1e20e653a1bfe841dca182754a932fbcff216cba49d72c654eea96c0a1d61e5f
+  original: nightly-2019-10-21
