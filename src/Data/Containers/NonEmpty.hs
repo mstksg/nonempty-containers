@@ -38,6 +38,8 @@ import           Data.Sequence          (Seq(..))
 import           Data.Sequence.NonEmpty (NESeq(..))
 import           Data.Set               (Set)
 import           Data.Set.NonEmpty      (NESet)
+import           Data.Vector            (Vector)
+import           Data.Vector.NonEmpty   (NonEmptyVector)
 import qualified Data.IntMap            as IM
 import qualified Data.IntMap.NonEmpty   as NEIM
 import qualified Data.IntSet            as IS
@@ -49,6 +51,8 @@ import qualified Data.Sequence          as Seq
 import qualified Data.Sequence.NonEmpty as NESeq
 import qualified Data.Set               as S
 import qualified Data.Set.NonEmpty      as NES
+import qualified Data.Vector            as V
+import qualified Data.Vector.NonEmpty   as NEV
 
 -- | If @s@ is an instance of @HasNonEmpty@, it means that there is
 -- a corresponding "non-empty" version of @s@, @'NE' s@.
@@ -160,6 +164,12 @@ instance HasNonEmpty (Seq a) where
     isEmpty          = Seq.null
     unsafeToNonEmpty = NESeq.unsafeFromSeq
 
+instance HasNonEmpty (Vector a) where
+    type NE (Vector a) = NonEmptyVector a
+    nonEmpty           = NEV.fromVector
+    fromNonEmpty       = NEV.toVector
+    empty              = V.empty
+    isEmpty            = V.null
 
 -- | The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat a @s@ as
 -- if it were either a @'IsNonEmpty' n@ (where @n@ is a non-empty version
