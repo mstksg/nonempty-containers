@@ -24,6 +24,8 @@
 module Data.Containers.NonEmpty (
     HasNonEmpty(..)
   , pattern IsNonEmpty, pattern IsEmpty
+  , overNonEmpty
+  , onNonEmpty
   ) where
 
 import           Data.IntMap            (IntMap)
@@ -107,6 +109,23 @@ class HasNonEmpty s where
     unsafeToNonEmpty = fromMaybe e . nonEmpty
       where
         e = errorWithoutStackTrace "unsafeToNonEmpty: empty input provided"
+
+-- | Useful function for mapping over the "non-empty" representation of
+-- a type.
+--
+-- @since 0.3.3.0
+overNonEmpty :: (HasNonEmpty s, HasNonEmpty t) => (NE s -> NE t) -> s -> t
+overNonEmpty f = withNonEmpty empty (fromNonEmpty . f)
+
+-- | Useful function for applying a function on the "non-empty"
+-- representation of a type.
+--
+-- If you want a continuation taking @'NE' s -> 'Maybe r'@, you can
+-- use @'withNonEmpty' 'Nothing'@.
+--
+-- @since 0.3.3.0
+onNonEmpty :: HasNonEmpty s => (NE s -> r) -> s -> Maybe r
+onNonEmpty f = withNonEmpty Nothing (Just . f)
 
 instance HasNonEmpty [a] where
     type NE [a] = NonEmpty a

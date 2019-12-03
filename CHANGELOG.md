@@ -1,12 +1,21 @@
 Changelog
 =========
 
+Version 0.3.3.0
+---------------
+
+*December 3, 2019*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.3.0>
+
+*   Add `overNonEmpty` and `onNonEmpty` in *Data.Containers.NonEmpty*.
+
 Version 0.3.1.0
 ---------------
 
 *October 21, 2019*
 
-<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.2.0>
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.3.0>
 
 *   Add `HasNonEmpty` instance for *nonempty-vector*
 *   Changed `splitLookup` to use `These` instead of a tuple of `Maybe`s.
