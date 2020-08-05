@@ -5,6 +5,7 @@ packages:
 
 extra-deps:
 - nonempty-vector-0.2.0.2
-- hedgehog-1.0.1
+- hedgehog-1.0.3
 - hedgehog-fn-1.0
-- tasty-hedgehog-1.0.0.1
+- tasty-hedgehog-1.0.0.2
+- pretty-show-1.9.5
