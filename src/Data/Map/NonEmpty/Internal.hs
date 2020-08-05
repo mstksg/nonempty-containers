@@ -53,6 +53,7 @@ module Data.Map.NonEmpty.Internal (
 import           Control.Applicative
 import           Control.Comonad
 import           Control.DeepSeq
+import           Control.Monad
 import           Data.Coerce
 import           Data.Data
 import           Data.Function
@@ -66,6 +67,7 @@ import           Data.Semigroup.Foldable    (Foldable1(fold1))
 import           Data.Semigroup.Traversable (Traversable1(..))
 import           Prelude hiding             (foldr1, foldl1, foldr, foldl, map)
 import           Text.Read
+import qualified Data.Aeson                 as A
 import qualified Data.Foldable              as F
 import qualified Data.Map                   as M
 import qualified Data.Map.Internal          as M
@@ -187,6 +189,16 @@ fromListConstr = mkConstr mapDataType "fromList" [] Prefix
 
 mapDataType :: DataType
 mapDataType = mkDataType "Data.Map.NonEmpty.NonEmpty.Internal.NEMap" [fromListConstr]
+
+instance (A.ToJSONKey k, A.ToJSON a) => A.ToJSON (NEMap k a) where
+    toJSON     = A.toJSON . toMap
+    toEncoding = A.toEncoding . toMap
+
+instance (A.FromJSONKey k, Ord k, A.FromJSON a) => A.FromJSON (NEMap k a) where
+    parseJSON = withNonEmpty (fail err) pure
+            <=< A.parseJSON
+      where
+        err = "NEMap: Non-empty map expected, but empty map found"
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.

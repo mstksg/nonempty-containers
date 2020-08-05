@@ -1,5 +1,5 @@
 name:                nonempty-containers
-version:             0.3.3.0
+version:             0.3.4.0
 github:              "mstksg/nonempty-containers"
 license:             BSD3
 author:              "Justin Le"
@@ -25,7 +25,7 @@ description: |
 ghc-options:
 - -Wall
 - -Wcompat
-- -Werror=incomplete-patterns
+# - -Werror=incomplete-patterns
 - -Wredundant-constraints
 
 dependencies:
@@ -41,6 +41,7 @@ library:
   source-dirs: src
   dependencies:
   - deepseq
+  - aeson
 
 tests:
   nonempty-containers-test:

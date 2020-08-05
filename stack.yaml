@@ -1,10 +1,10 @@
-resolver: nightly-2019-10-21
+resolver: lts-16.8
 
 packages:
 - .
 
 extra-deps:
-- nonempty-vector-0.1.0.0
+- nonempty-vector-0.2.0.2
 - hedgehog-1.0.1
 - hedgehog-fn-1.0
 - tasty-hedgehog-1.0.0.1

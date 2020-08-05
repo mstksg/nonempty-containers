@@ -44,6 +44,7 @@ module Data.Set.NonEmpty.Internal (
   ) where
 
 import           Control.DeepSeq
+import           Control.Monad
 import           Data.Data
 import           Data.Function
 import           Data.Functor.Classes
@@ -53,6 +54,7 @@ import           Data.Semigroup.Foldable (Foldable1)
 import           Data.Set.Internal       (Set(..))
 import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
 import           Text.Read
+import qualified Data.Aeson              as A
 import qualified Data.Foldable           as F
 import qualified Data.Semigroup.Foldable as F1
 import qualified Data.Set                as S
@@ -160,7 +162,15 @@ setDataType :: DataType
 setDataType = mkDataType "Data.Set.NonEmpty.Internal.NESet" [fromListConstr]
 
 
+instance A.ToJSON a => A.ToJSON (NESet a) where
+    toJSON     = A.toJSON . toSet
+    toEncoding = A.toEncoding . toSet
 
+instance (A.FromJSON a, Ord a) => A.FromJSON (NESet a) where
+    parseJSON = withNonEmpty (fail err) pure
+            <=< A.parseJSON
+      where
+        err = "NESet: Non-empty set expected, but empty set found"
 
 
 -- | /O(log n)/. Smart constructor for an 'NESet' from a 'Set'.  Returns

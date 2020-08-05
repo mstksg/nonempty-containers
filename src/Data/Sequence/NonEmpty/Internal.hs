@@ -48,6 +48,7 @@ module Data.Sequence.NonEmpty.Internal (
 
 import           Control.Comonad
 import           Control.DeepSeq
+import           Control.Monad
 import           Control.Monad.Fix
 import           Control.Monad.Zip
 import           Data.Bifunctor
@@ -64,6 +65,7 @@ import           Data.Semigroup.Traversable
 import           Data.Sequence              (Seq(..))
 import           Prelude hiding             (length, zipWith, unzip, zip, map, replicate)
 import           Text.Read
+import qualified Data.Aeson                 as A
 import qualified Data.Foldable              as F
 import qualified Data.Sequence              as Seq
 
@@ -187,6 +189,18 @@ consConstr  = mkConstr seqDataType ":<||" [] Infix
 
 seqDataType :: DataType
 seqDataType = mkDataType "Data.Sequence.NonEmpty.Internal.NESeq" [consConstr]
+
+
+instance A.ToJSON a => A.ToJSON (NESeq a) where
+    toJSON     = A.toJSON . toSeq
+    toEncoding = A.toEncoding . toSeq
+
+instance A.FromJSON a => A.FromJSON (NESeq a) where
+    parseJSON = withNonEmpty (fail err) pure
+            <=< A.parseJSON
+      where
+        err = "NESeq: Non-empty sequence expected, but empty sequence found"
+
 
 -- | /O(log n)/. A general continuation-based way to consume a 'Seq' as if
 -- it were an 'NESeq'. @'withNonEmpty' def f@ will take a 'Seq'.  If map is

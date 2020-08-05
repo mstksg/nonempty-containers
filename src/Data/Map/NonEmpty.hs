@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns    #-}
+{-# LANGUAGE EmptyCase       #-}
 {-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TupleSections   #-}
@@ -2349,7 +2350,7 @@ deleteFindMax (NEMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v)
 --
 -- @since 0.3.1.0
 absurdNEMap :: NEMap Void a -> b
-absurdNEMap (NEMap k _ _) = absurd k
+absurdNEMap = \case {}
 
 -- ---------------------------
 -- Combining functions

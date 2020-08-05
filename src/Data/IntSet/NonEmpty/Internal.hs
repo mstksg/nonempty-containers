@@ -33,6 +33,7 @@ module Data.IntSet.NonEmpty.Internal (
   ) where
 
 import           Control.DeepSeq
+import           Control.Monad
 import           Data.Data
 import           Data.Function
 import           Data.IntSet.Internal    (IntSet(..), Key)
@@ -40,6 +41,7 @@ import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup
 import           Data.Semigroup.Foldable (Foldable1)
 import           Text.Read
+import qualified Data.Aeson              as A
 import qualified Data.Foldable           as F
 import qualified Data.IntSet             as S
 import qualified Data.Semigroup.Foldable as F1
@@ -130,7 +132,15 @@ intSetDataType :: DataType
 intSetDataType = mkDataType "Data.IntSet.NonEmpty.Internal.NEIntSet" [fromListConstr]
 
 
+instance A.ToJSON NEIntSet where
+    toJSON     = A.toJSON . toSet
+    toEncoding = A.toEncoding . toSet
 
+instance A.FromJSON NEIntSet where
+    parseJSON = withNonEmpty (fail err) pure
+            <=< A.parseJSON
+      where
+        err = "NEIntSet: Non-empty set expected, but empty set found"
 
 
 -- | /O(log n)/. Smart constructor for an 'NEIntSet' from a 'IntSet'.  Returns

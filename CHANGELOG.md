@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 0.3.4.0
+---------------
+
+*August 4, 2020*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.0>
+
+*   Add `ToJSON` and `FromJSON` instances.
+
 Version 0.3.3.0
 ---------------
 
