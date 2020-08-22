@@ -1,10 +1,14 @@
 Changelog
 =========
 
-Unreleased
+Version 0.3.4.1
 ----------
 
-*   Add `Ord` instance to `NESeq`.
+*August 22, 2020*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.1>
+
+*   Add `Ord` instance to `NESeq`. (@mitchellwrosen)
 
 Version 0.3.4.0
 ---------------
