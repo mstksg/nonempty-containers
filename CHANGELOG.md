@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+*   Add `Ord` instance to `NESeq`.
+
 Version 0.3.4.0
 ---------------
 
