@@ -161,6 +161,9 @@ instance Eq a => Eq (NESeq a) where
     xs == ys = length xs == length ys
             && toNonEmpty xs == toNonEmpty ys
 
+instance Ord a => Ord (NESeq a) where
+    compare xs ys = compare (F.toList xs) (F.toList ys)
+
 instance Show1 NESeq where
     liftShowsPrec sp sl d m =
         showsUnaryWith (liftShowsPrec sp sl) "fromList" d (toNonEmpty m)
