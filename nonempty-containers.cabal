@@ -1,0 +1,93 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           nonempty-containers
+version:        0.3.4.1
+synopsis:       Non-empty variants of containers data types, with full API
+description:    Efficient and optimized non-empty versions of types from /containers/.
+                Inspired by /non-empty-containers/ library, except attempting a more
+                faithful port (with under-the-hood optimizations) of the full /containers/
+                API. Also contains a convenient typeclass abstraction for converting
+                betwewen non-empty and possibly-empty variants. See README.md for more
+                information.
+category:       Data Structures
+homepage:       https://github.com/mstksg/nonempty-containers#readme
+bug-reports:    https://github.com/mstksg/nonempty-containers/issues
+author:         Justin Le
+maintainer:     justin@jle.im
+copyright:      (c) Justin Le 2018
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+tested-with:
+    GHC >= 8.4
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/mstksg/nonempty-containers
+
+library
+  exposed-modules:
+      Data.Containers.NonEmpty
+      Data.IntMap.NonEmpty
+      Data.IntMap.NonEmpty.Internal
+      Data.IntSet.NonEmpty
+      Data.IntSet.NonEmpty.Internal
+      Data.Map.NonEmpty
+      Data.Map.NonEmpty.Internal
+      Data.Sequence.NonEmpty
+      Data.Sequence.NonEmpty.Internal
+      Data.Set.NonEmpty
+      Data.Set.NonEmpty.Internal
+  other-modules:
+      Paths_nonempty_containers
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Wredundant-constraints
+  build-depends:
+      aeson
+    , base >=4.9 && <5
+    , comonad
+    , containers >=0.5.9
+    , deepseq
+    , nonempty-vector
+    , semigroupoids
+    , these
+    , vector
+  default-language: Haskell2010
+
+test-suite nonempty-containers-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Tests.IntMap
+      Tests.IntSet
+      Tests.Map
+      Tests.Sequence
+      Tests.Set
+      Tests.Util
+      Paths_nonempty_containers
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.9 && <5
+    , comonad
+    , containers >=0.5.9
+    , hedgehog >=1.0
+    , hedgehog-fn >=1.0
+    , nonempty-containers
+    , nonempty-vector
+    , semigroupoids
+    , tasty
+    , tasty-hedgehog >=1.0
+    , text
+    , these
+    , vector
+  default-language: Haskell2010
