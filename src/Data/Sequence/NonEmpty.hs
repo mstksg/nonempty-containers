@@ -957,7 +957,9 @@ mapReverse f (x :<|| xs) = fmap f (Seq.reverse xs) :||> f x
 -- intersperse a (fromList [x,y,z]) = fromList [x,a,y,a,z]
 -- @
 intersperse :: a -> NESeq a -> NESeq a
-intersperse z (x :<|| xs) = x :<|| (z Seq.<| Seq.intersperse z xs)
+intersperse z nes@(x :<|| xs) = case xs of
+  _ Seq.:<| _ -> x :<|| (z Seq.<| Seq.intersperse z xs)
+  Seq.Empty -> nes
 {-# INLINE intersperse #-}
 
 -- | \( O(\min(n_1,n_2,n_3)) \).  'zip3' takes three sequences and returns a
