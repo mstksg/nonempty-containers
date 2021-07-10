@@ -153,7 +153,7 @@ instance (Data a, Ord a) => Data (NESet a) where
     1 -> k (z fromList)
     _ -> error "gunfold"
   dataTypeOf _   = setDataType
-  dataCast1      = gcast1
+  dataCast1 f    = gcast1 f
 
 fromListConstr :: Constr
 fromListConstr = mkConstr setDataType "fromList" [] Prefix

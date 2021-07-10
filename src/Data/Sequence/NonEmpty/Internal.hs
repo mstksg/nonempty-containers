@@ -185,7 +185,7 @@ instance Data a => Data (NESeq a) where
     gunfold k z _   = k (k (z (:<||)))
     toConstr _      = consConstr
     dataTypeOf _    = seqDataType
-    dataCast1       = gcast1
+    dataCast1 f     = gcast1 f
 
 consConstr :: Constr
 consConstr  = mkConstr seqDataType ":<||" [] Infix

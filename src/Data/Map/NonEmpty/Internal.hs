@@ -182,7 +182,7 @@ instance (Data k, Data a, Ord k) => Data (NEMap k a) where
       1 -> k (z fromList)
       _ -> error "gunfold"
     dataTypeOf _   = mapDataType
-    dataCast2      = gcast2
+    dataCast2 f    = gcast2 f
 
 fromListConstr :: Constr
 fromListConstr = mkConstr mapDataType "fromList" [] Prefix

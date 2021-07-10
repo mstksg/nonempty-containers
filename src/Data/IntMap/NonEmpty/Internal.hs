@@ -181,7 +181,7 @@ instance Data a => Data (NEIntMap a) where
     1 -> k (z fromList)
     _ -> error "gunfold"
   dataTypeOf _   = intMapDataType
-  dataCast1      = gcast1
+  dataCast1 f    = gcast1 f
 
 fromListConstr :: Constr
 fromListConstr = mkConstr intMapDataType "fromList" [] Prefix
