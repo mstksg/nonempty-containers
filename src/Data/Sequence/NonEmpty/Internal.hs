@@ -317,9 +317,15 @@ map f (x :<|| xs) = f x :<|| fmap f xs
 -- a folding function that also depends on the element's index, and applies
 -- it to every element in the sequence.
 foldMapWithIndex :: Semigroup m => (Int -> a -> m) -> NESeq a -> m
+#if MIN_VERSION_base(4,11,0)
+foldMapWithIndex f (x :<|| xs) = maybe (f 0 x) (f 0 x <>)
+                               . Seq.foldMapWithIndex (\i -> Just . f (i + 1))
+                               $ xs
+#else
 foldMapWithIndex f (x :<|| xs) = option (f 0 x) (f 0 x <>)
                                . Seq.foldMapWithIndex (\i -> Option . Just . f (i + 1))
                                $ xs
+#endif
 {-# INLINE foldMapWithIndex #-}
 
 -- | /O(n)/. 'traverseWithIndex1' is a version of 'traverse1' that also
@@ -467,9 +473,15 @@ instance Foldable NESeq where
     {-# INLINE length #-}
 
 instance Foldable1 NESeq where
+#if MIN_VERSION_base(4,11,0)
+    fold1 (x :<|| xs) = maybe x (x <>)
+                      . F.foldMap Just
+                      $ xs
+#else
     fold1 (x :<|| xs) = option x (x <>)
                       . F.foldMap (Option . Just)
                       $ xs
+#endif
     {-# INLINE fold1 #-}
     foldMap1 f = foldMapWithIndex (const f)
     {-# INLINE foldMap1 #-}

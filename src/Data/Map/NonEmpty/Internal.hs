@@ -275,9 +275,15 @@ foldMapWithKey
     => (k -> a -> m)
     -> NEMap k a
     -> m
+#if MIN_VERSION_base(4,11,0)
+foldMapWithKey f (NEMap k0 v m) = maybe (f k0 v) (f k0 v <>)
+                                . M.foldMapWithKey (\k -> Just . f k)
+                                $ m
+#else
 foldMapWithKey f (NEMap k0 v m) = option (f k0 v) (f k0 v <>)
                                 . M.foldMapWithKey (\k -> Option . Just . f k)
                                 $ m
+#endif
 {-# INLINE foldMapWithKey #-}
 
 -- | /O(n)/. Map a function over all values in the map.
@@ -545,9 +551,15 @@ instance Traversable (NEMap k) where
 
 -- | Traverses elements in order of ascending keys
 instance Foldable1 (NEMap k) where
+#if MIN_VERSION_base(4,11,0)
+    fold1 (NEMap _ v m) = maybe v (v <>)
+                        . F.foldMap Just
+                        $ m
+#else
     fold1 (NEMap _ v m) = option v (v <>)
                         . F.foldMap (Option . Just)
                         $ m
+#endif
     {-# INLINE fold1 #-}
     foldMap1 f = foldMapWithKey (const f)
     {-# INLINE foldMap1 #-}

@@ -562,10 +562,17 @@ instance Traversable NEIntMap where
 -- elements in order of ascending keys, while 'IntMap' traverses positive
 -- keys first, then negative keys.
 instance Foldable1 NEIntMap where
+#if MIN_VERSION_base(4,11,0)
+    fold1 (NEIntMap _ v m) = maybe v (v <>)
+                           . F.foldMap Just
+                           . M.elems
+                           $ m
+#else
     fold1 (NEIntMap _ v m) = option v (v <>)
                            . F.foldMap (Option . Just)
                            . M.elems
                            $ m
+#endif
     {-# INLINE fold1 #-}
     foldMap1 f = foldMapWithKey (const f)
     {-# INLINE foldMap1 #-}
