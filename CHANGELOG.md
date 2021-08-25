@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 0.3.4.2
+----------
+
+*August 25, 2021*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.2>
+
+*   Compatibility with GHC 9. (@andremarianiello)
+
 Version 0.3.4.1
 ----------
 
