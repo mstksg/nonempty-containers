@@ -153,7 +153,7 @@ instance (Data a, Ord a) => Data (NESet a) where
     1 -> k (z fromList)
     _ -> error "gunfold"
   dataTypeOf _   = setDataType
-  dataCast1      = gcast1
+  dataCast1 f    = gcast1 f
 
 fromListConstr :: Constr
 fromListConstr = mkConstr setDataType "fromList" [] Prefix
@@ -377,6 +377,17 @@ instance Foldable NESet where
 
 -- | Traverses elements in ascending order
 instance Foldable1 NESet where
+#if MIN_VERSION_base(4,11,0)
+    fold1 (NESet x s) = maybe x (x <>)
+                      . F.foldMap Just
+                      $ s
+    {-# INLINE fold1 #-}
+    -- TODO: benchmark against maxView-based method
+    foldMap1 f (NESet x s) = maybe (f x) (f x <>)
+                           . F.foldMap (Just . f)
+                           $ s
+    {-# INLINE foldMap1 #-}
+#else
     fold1 (NESet x s) = option x (x <>)
                       . F.foldMap (Option . Just)
                       $ s
@@ -386,6 +397,7 @@ instance Foldable1 NESet where
                            . F.foldMap (Option . Just . f)
                            $ s
     {-# INLINE foldMap1 #-}
+#endif
     toNonEmpty = toList
     {-# INLINE toNonEmpty #-}
 
