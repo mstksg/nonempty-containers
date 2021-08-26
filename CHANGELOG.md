@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Version 0.3.4.3
+----------
+
+*August 25, 2021*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.3>
+
+*   Fix `intersperse` for singleton non-empty sequences. (@eddiemundo)
+*   Fix `deleteMax` for singleton containers.
+
 Version 0.3.4.2
 ----------
 

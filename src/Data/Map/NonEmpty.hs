@@ -2203,7 +2203,9 @@ deleteMin (NEMap _ _ m) = m
 -- > deleteMax (fromList ((5,"a") :| [(3,"b"), (7,"c")])) == Data.Map.fromList [(3,"b"), (5,"a")]
 -- > deleteMax (singleton 5 "a") == Data.Map.empty
 deleteMax :: NEMap k a -> Map k a
-deleteMax (NEMap k v m) = insertMinMap k v . M.deleteMax $ m
+deleteMax (NEMap k v m) = case M.maxView m of
+    Nothing      -> M.empty
+    Just (_, m') -> insertMinMap k v m'
 {-# INLINE deleteMax #-}
 
 -- | /O(1)/ if delete, /O(log n)/ otherwise. Update the value at the

@@ -700,7 +700,9 @@ deleteMin (NEIntSet _ s) = s
 -- > deleteMax (fromList (5 :| [3, 7])) == Data.IntSet.fromList [3, 5]
 -- > deleteMax (singleton 5) == Data.IntSet.empty
 deleteMax :: NEIntSet -> IntSet
-deleteMax (NEIntSet x s) = insertMinSet x . S.deleteMax $ s
+deleteMax (NEIntSet x s) = case S.maxView s of
+    Nothing      -> S.empty
+    Just (_, s') -> insertMinSet x s'
 {-# INLINE deleteMax #-}
 
 -- | /O(1)/. Delete and find the minimal element.  It is constant-time, so

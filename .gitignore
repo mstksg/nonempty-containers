@@ -1,3 +1,6 @@
 .stack-work/
 nonempty-containers.cabal
 *~
+.ghc.environment.*
+dist-newstyle/
+tags

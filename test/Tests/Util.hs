@@ -514,7 +514,7 @@ valGen :: MonadGen m => m Text
 valGen = Gen.text (Range.linear 0 5) Gen.alphaNum
 
 mapSize :: Range Int
-mapSize = Range.exponential 4 8
+mapSize = Range.exponential 1 8
 
 mapGen :: MonadGen m => m (Map KeyType Text)
 mapGen = Gen.map mapSize $ (,) <$> keyGen <*> valGen
