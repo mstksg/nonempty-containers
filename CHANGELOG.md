@@ -1,42 +1,18 @@
 Changelog
 =========
 
-Version 0.3.4.3
-----------
-
-*August 25, 2021*
-
-<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.3>
-
-*   Fix `intersperse` for singleton non-empty sequences. (@eddiemundo)
-*   Fix `deleteMax` for singleton containers.
-
-Version 0.3.4.2
-----------
-
-*August 25, 2021*
-
-<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.2>
-
-*   Compatibility with GHC 9. (@andremarianiello)
-
-Version 0.3.4.1
-----------
-
-*August 22, 2020*
-
-<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.1>
-
-*   Add `Ord` instance to `NESeq`. (@mitchellwrosen)
-
-Version 0.3.4.0
+Version 0.3.4.x
 ---------------
 
-*August 4, 2020*
-
-<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.4.0>
-
-*   Add `ToJSON` and `FromJSON` instances.
+* **0.3.4.0**: `ToJSON` and `FromJSON` instances (*August 4, 2020*)
+* **0.3.4.1**: `Ord` instance to `NESeq` (@mitchelwrosen) (*August 22, 2020*)
+* **0.3.4.2**: Compatibility with GHC 9 (@andremarianiello) (*August 25, 2021*)
+* **0.3.4.3**: (*August 25, 2021*)
+    * Fix `intersperse` for singleton non-empty sequences. (@eddiemundo)
+    * Fix `deleteMax` for singleton containers.
+* **0.3.4.4**: (*September 25, 2021*)
+    * `Alt` instances for `NEMap` and `NEIntMap`
+    * `Invariant` instance for `NEMap`, `NEIntMap`, and `NESeq`.
 
 Version 0.3.3.0
 ---------------

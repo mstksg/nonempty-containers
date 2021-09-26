@@ -57,8 +57,9 @@ import           Control.Monad
 import           Data.Coerce
 import           Data.Data
 import           Data.Function
-import           Data.Functor.Apply
+import           Data.Functor.Alt
 import           Data.Functor.Classes
+import           Data.Functor.Invariant
 import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Map.Internal          (Map(..))
 import           Data.Maybe
@@ -199,6 +200,11 @@ instance (A.FromJSONKey k, Ord k, A.FromJSON a) => A.FromJSON (NEMap k a) where
             <=< A.parseJSON
       where
         err = "NEMap: Non-empty map expected, but empty map found"
+
+-- | @since 0.3.4.4
+instance Ord k => Alt (NEMap k) where
+    (<!>) = union
+    {-# INLINE (<!>) #-}
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
@@ -502,6 +508,11 @@ instance Functor (NEMap k) where
     {-# INLINE fmap #-}
     x <$ NEMap k _ m = NEMap k x (x <$ m)
     {-# INLINE (<$) #-}
+
+-- | @since 0.3.4.4
+instance Invariant (NEMap k) where
+    invmap f _ = fmap f
+    {-# INLINE invmap #-}
 
 -- | Traverses elements in order of ascending keys
 --

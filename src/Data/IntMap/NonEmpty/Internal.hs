@@ -62,15 +62,15 @@ import           Control.Monad
 import           Data.Coerce
 import           Data.Data
 import           Data.Function
-import           Data.Functor.Apply
+import           Data.Functor.Alt
 import           Data.Functor.Classes
+import           Data.Functor.Invariant
 import           Data.IntMap.Internal       (IntMap(..), Key)
 import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Maybe
 import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1(fold1))
 import           Data.Semigroup.Traversable (Traversable1(..))
--- import           Data.Typeable              (Typeable)
 import           Prelude hiding             (foldr1, foldl1, foldr, foldl, map)
 import           Text.Read
 import qualified Data.Aeson                 as A
@@ -198,6 +198,10 @@ instance A.FromJSON a => A.FromJSON (NEIntMap a) where
             <=< A.parseJSON
       where
         err = "NEIntMap: Non-empty map expected, but empty map found"
+
+-- | @since 0.3.4.4
+instance Alt NEIntMap where
+    (<!>) = union
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
@@ -502,6 +506,11 @@ instance Functor NEIntMap where
     {-# INLINE fmap #-}
     x <$ NEIntMap k _ m = NEIntMap k x (x <$ m)
     {-# INLINE (<$) #-}
+
+-- | @since 0.3.4.4
+instance Invariant NEIntMap where
+    invmap f _ = fmap f
+    {-# INLINE invmap #-}
 
 -- | Traverses elements in order of ascending keys.
 --

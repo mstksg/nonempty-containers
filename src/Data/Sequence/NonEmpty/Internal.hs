@@ -60,6 +60,7 @@ import           Data.Functor.Classes
 import           Data.Functor.Extend
 import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Semigroup
+import           Data.Functor.Invariant
 import           Data.Semigroup.Foldable
 import           Data.Semigroup.Traversable
 import           Data.Sequence              (Seq(..))
@@ -393,6 +394,11 @@ instance Functor NESeq where
     {-# INLINE fmap #-}
     x <$ xs = replicate (length xs) x
     {-# INLINE (<$) #-}
+
+-- | @since 0.3.4.4
+instance Invariant NESeq where
+    invmap f _ = fmap f
+    {-# INLINE invmap #-}
 
 instance Apply NESeq where
     (f :<|| fs) <.> xs = fxs |>< fsxs

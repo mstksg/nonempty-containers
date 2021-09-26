@@ -1,5 +1,5 @@
 name:                nonempty-containers
-version:             0.3.4.3
+version:             0.3.4.4
 github:              "mstksg/nonempty-containers"
 license:             BSD3
 author:              "Justin Le"
@@ -36,6 +36,7 @@ dependencies:
 - semigroupoids
 - these
 - vector
+- invariant
 
 library:
   source-dirs: src

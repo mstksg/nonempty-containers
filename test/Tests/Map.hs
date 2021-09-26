@@ -7,6 +7,7 @@ import           Control.Applicative
 import           Control.Comonad
 import           Data.Coerce
 import           Data.Foldable
+import           Data.Functor.Alt
 import           Data.Functor.Identity
 import           Data.List.NonEmpty         (NonEmpty(..))
 import           Data.Semigroup.Foldable
@@ -813,3 +814,7 @@ prop_foldMap = ttProp (gf1 valGen :?> GTNEMap :-> TTOther)
     (\f -> foldMap ((:[]) . f))
     (\f -> foldMap ((:[]) . f))
 
+prop_alt :: Property
+prop_alt = ttProp (GTNEMap :-> GTNEMap :-> TTNEMap)
+    (<!>)
+    (<!>)
