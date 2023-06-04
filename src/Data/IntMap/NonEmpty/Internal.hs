@@ -71,7 +71,7 @@ import           Data.Maybe
 import           Data.Semigroup
 import           Data.Semigroup.Foldable    (Foldable1(fold1))
 import           Data.Semigroup.Traversable (Traversable1(..))
-import           Prelude hiding             (foldr1, foldl1, foldr, foldl, map)
+import           Prelude hiding             (Foldable(..), map)
 import           Text.Read
 import qualified Data.Aeson                 as A
 import qualified Data.Foldable              as F
@@ -520,16 +520,16 @@ instance Invariant NEIntMap where
 --
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
-instance Foldable NEIntMap where
+instance F.Foldable NEIntMap where
 #if MIN_VERSION_base(4,11,0)
     fold      (NEIntMap _ v m) = v <> F.fold (M.elems m)
     {-# INLINE fold #-}
-    foldMap f (NEIntMap _ v m) = f v <> foldMap f (M.elems m)
+    foldMap f (NEIntMap _ v m) = f v <> F.foldMap f (M.elems m)
     {-# INLINE foldMap #-}
 #else
     fold      (NEIntMap _ v m) = v `mappend` F.fold (M.elems m)
     {-# INLINE fold #-}
-    foldMap f (NEIntMap _ v m) = f v `mappend` foldMap f (M.elems m)
+    foldMap f (NEIntMap _ v m) = f v `mappend` F.foldMap f (M.elems m)
     {-# INLINE foldMap #-}
 #endif
     foldr   = foldr

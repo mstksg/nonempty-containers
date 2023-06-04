@@ -52,7 +52,7 @@ import           Data.List.NonEmpty      (NonEmpty(..))
 import           Data.Semigroup
 import           Data.Semigroup.Foldable (Foldable1)
 import           Data.Set.Internal       (Set(..))
-import           Prelude hiding          (foldr, foldr1, foldl, foldl1)
+import           Prelude hiding          (Foldable(..))
 import           Text.Read
 import qualified Data.Aeson              as A
 import qualified Data.Foldable           as F
@@ -336,16 +336,16 @@ instance Ord a => Semigroup (NESet a) where
 --
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
-instance Foldable NESet where
+instance F.Foldable NESet where
 #if MIN_VERSION_base(4,11,0)
     fold      (NESet x s) = x <> F.fold s
     {-# INLINE fold #-}
-    foldMap f (NESet x s) = f x <> foldMap f s
+    foldMap f (NESet x s) = f x <> F.foldMap f s
     {-# INLINE foldMap #-}
 #else
     fold      (NESet x s) = x `mappend` F.fold s
     {-# INLINE fold #-}
-    foldMap f (NESet x s) = f x `mappend` foldMap f s
+    foldMap f (NESet x s) = f x `mappend` F.foldMap f s
     {-# INLINE foldMap #-}
 #endif
     foldr   = foldr
