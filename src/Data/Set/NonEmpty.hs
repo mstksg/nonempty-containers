@@ -120,8 +120,8 @@ module Data.Set.NonEmpty (
   -- * Folds
   , foldr
   , foldl
-  , foldr1
-  , foldl1
+  , F.foldr1
+  , F.foldl1
   -- ** Strict folds
   , foldr'
   , foldl'
@@ -155,7 +155,8 @@ import           Data.Maybe
 import           Data.Set                   (Set)
 import           Data.Set.NonEmpty.Internal
 import           Data.These
-import           Prelude hiding             (foldr, foldl, filter, map, take, drop, splitAt)
+import           Prelude hiding             (Foldable(..), filter, map, take, drop, splitAt)
+import qualified Data.Foldable              as F
 import qualified Data.List.NonEmpty         as NE
 import qualified Data.Semigroup.Foldable    as F1
 import qualified Data.Set                   as S

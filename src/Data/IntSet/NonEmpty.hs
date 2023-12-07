@@ -142,7 +142,7 @@ import           Data.IntSet.NonEmpty.Internal
 import           Data.List.NonEmpty            (NonEmpty(..))
 import           Data.Maybe
 import           Data.These
-import           Prelude hiding                (foldr, foldl, foldr1, foldl1, filter, map)
+import           Prelude hiding                (Foldable(..), filter, map)
 import qualified Data.IntSet                   as S
 import qualified Data.List.NonEmpty            as NE
 

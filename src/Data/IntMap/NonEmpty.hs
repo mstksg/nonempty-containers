@@ -246,7 +246,7 @@ import           Data.List.NonEmpty            (NonEmpty(..))
 import           Data.Maybe hiding             (mapMaybe)
 import           Data.Semigroup.Foldable       (Foldable1)
 import           Data.These
-import           Prelude hiding                (map, filter, lookup, foldl, foldr, foldl1, foldr1)
+import           Prelude hiding                (Foldable(..), map, filter, lookup)
 import qualified Data.Foldable                 as F
 import qualified Data.IntMap                   as M
 import qualified Data.IntSet                   as S

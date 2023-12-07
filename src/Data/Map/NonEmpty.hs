@@ -267,7 +267,7 @@ import           Data.Set                   (Set)
 import           Data.Set.NonEmpty.Internal (NESet(..))
 import           Data.These
 import           Data.Void
-import           Prelude hiding             (lookup, foldr1, foldl1, foldr, foldl, filter, map, take, drop, splitAt)
+import           Prelude hiding             (Foldable(..), lookup, filter, map, take, drop, splitAt)
 import qualified Data.Foldable              as F
 import qualified Data.List.NonEmpty         as NE
 import qualified Data.Map                   as M
