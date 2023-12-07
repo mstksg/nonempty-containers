@@ -13,6 +13,7 @@ Version 0.3.4.x
 * **0.3.4.4**: (*September 25, 2021*)
     * `Alt` instances for `NEMap` and `NEIntMap`
     * `Invariant` instance for `NEMap`, `NEIntMap`, and `NESeq`.
+* **0.3.4.5**: Future-proof against Prelude exporting `foldl'` (@Bodgrim) (*December 6, 2023*)
 
 Version 0.3.3.0
 ---------------
