@@ -185,6 +185,7 @@ instance (NFData k, NFData a) => NFData (NEMap k a) where
 --
 -- Copyright   :  (c) Daan Leijen 2002
 --                (c) Andriy Palamarchuk 2008
+#if MIN_VERSION_base(4,16,0)
 instance (Data k, Data a, Ord k) => Data (NEMap k a) where
   gfoldl f z m = z fromList `f` toList m
   toConstr _ = fromListConstr
@@ -193,6 +194,18 @@ instance (Data k, Data a, Ord k) => Data (NEMap k a) where
     _ -> error "gunfold"
   dataTypeOf _ = mapDataType
   dataCast2 = gcast2
+#else
+#ifndef __HLINT__
+instance (Data k, Data a, Ord k) => Data (NEMap k a) where
+  gfoldl f z m = z fromList `f` toList m
+  toConstr _ = fromListConstr
+  gunfold k z c = case constrIndex c of
+    1 -> k (z fromList)
+    _ -> error "gunfold"
+  dataTypeOf _ = mapDataType
+  dataCast2 f = gcast2 f
+#endif
+#endif
 
 fromListConstr :: Constr
 fromListConstr = mkConstr mapDataType "fromList" [] Prefix

@@ -190,12 +190,23 @@ instance Eq1 NESeq where
 instance Ord1 NESeq where
   liftCompare cmp xs ys = liftCompare cmp (toNonEmpty xs) (toNonEmpty ys)
 
+#if MIN_VERSION_base(4,16,0)
 instance Data a => Data (NESeq a) where
   gfoldl f z (x :<|| xs) = z (:<||) `f` x `f` xs
   gunfold k z _ = k (k (z (:<||)))
   toConstr _ = consConstr
   dataTypeOf _ = seqDataType
   dataCast1 = gcast1
+#else
+#ifndef __HLINT__
+instance Data a => Data (NESeq a) where
+  gfoldl f z (x :<|| xs) = z (:<||) `f` x `f` xs
+  gunfold k z _ = k (k (z (:<||)))
+  toConstr _ = consConstr
+  dataTypeOf _ = seqDataType
+  dataCast1 f = gcast1 f
+#endif
+#endif
 
 consConstr :: Constr
 consConstr = mkConstr seqDataType ":<||" [] Infix

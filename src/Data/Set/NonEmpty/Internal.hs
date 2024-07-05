@@ -151,6 +151,7 @@ instance NFData a => NFData (NESet a) where
 -- Data instance code from Data.Set.Internal
 --
 -- Copyright   :  (c) Daan Leijen 2002
+#if MIN_VERSION_base(4,16,0)
 instance (Data a, Ord a) => Data (NESet a) where
   gfoldl f z set = z fromList `f` toList set
   toConstr _ = fromListConstr
@@ -159,6 +160,18 @@ instance (Data a, Ord a) => Data (NESet a) where
     _ -> error "gunfold"
   dataTypeOf _ = setDataType
   dataCast1 = gcast1
+#else
+#ifndef __HLINT__
+instance (Data a, Ord a) => Data (NESet a) where
+  gfoldl f z set = z fromList `f` toList set
+  toConstr _ = fromListConstr
+  gunfold k z c = case constrIndex c of
+    1 -> k (z fromList)
+    _ -> error "gunfold"
+  dataTypeOf _ = setDataType
+  dataCast1 f = gcast1 f
+#endif
+#endif
 
 fromListConstr :: Constr
 fromListConstr = mkConstr setDataType "fromList" [] Prefix
