@@ -1,7 +1,7 @@
-{-# LANGUAGE BangPatterns    #-}
-{-# LANGUAGE LambdaCase      #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE ViewPatterns    #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Module      : Data.Sequence.NonEmpty
@@ -57,126 +57,166 @@
 -- > import qualified Data.Sequence.NonEmpty as NESeq
 module Data.Sequence.NonEmpty (
   -- * Finite sequences
-    NESeq ((:<||), (:||>))
+  NESeq ((:<||), (:||>)),
+
   -- ** Conversions between empty and non-empty sequences
-  , pattern IsNonEmpty
-  , pattern IsEmpty
-  , nonEmptySeq
-  , toSeq
-  , withNonEmpty
-  , unsafeFromSeq
-  , insertSeqAt
+  pattern IsNonEmpty,
+  pattern IsEmpty,
+  nonEmptySeq,
+  toSeq,
+  withNonEmpty,
+  unsafeFromSeq,
+  insertSeqAt,
+
   -- * Construction
-  , singleton
-  , (<|)
-  , (|>)
-  , (><)
-  , (|><)
-  , (><|)
-  , fromList
-  , fromFunction
+  singleton,
+  (<|),
+  (|>),
+  (><),
+  (|><),
+  (><|),
+  fromList,
+  fromFunction,
+
   -- ** Repetition
-  , replicate
-  , replicateA
-  , replicateA1
-  , replicateM
-  , cycleTaking
+  replicate,
+  replicateA,
+  replicateA1,
+  replicateM,
+  cycleTaking,
+
   -- ** Iterative construction
-  , iterateN
-  , unfoldr
-  , unfoldl
+  iterateN,
+  unfoldr,
+  unfoldl,
+
   -- * Deconstruction
+
   -- | Additional functions for deconstructing sequences are available
   -- via the 'Foldable' instance of 'NESeq'.
-  , head
-  , tail
-  , last
-  , init
+  head,
+  tail,
+  last,
+  init,
+
   -- ** Queries
-  , length
+  length,
 
   -- * Scans
-  , scanl
-  , scanl1
-  , scanr
-  , scanr1
+  scanl,
+  scanl1,
+  scanr,
+  scanr1,
+
   -- * Sublists
-  , tails
-  , inits
-  , chunksOf
+  tails,
+  inits,
+  chunksOf,
+
   -- ** Sequential searches
-  , takeWhileL
-  , takeWhileR
-  , dropWhileL
-  , dropWhileR
-  , spanl
-  , spanr
-  , breakl
-  , breakr
-  , partition
-  , filter
+  takeWhileL,
+  takeWhileR,
+  dropWhileL,
+  dropWhileR,
+  spanl,
+  spanr,
+  breakl,
+  breakr,
+  partition,
+  filter,
+
   -- * Sorting
-  , sort
-  , sortBy
-  , sortOn
-  , unstableSort
-  , unstableSortBy
-  , unstableSortOn
+  sort,
+  sortBy,
+  sortOn,
+  unstableSort,
+  unstableSortBy,
+  unstableSortOn,
+
   -- * Indexing
-  , lookup
-  , (!?)
-  , index
-  , adjust
-  , adjust'
-  , update
-  , take
-  , drop
-  , insertAt
-  , deleteAt
-  , splitAt
+  lookup,
+  (!?),
+  index,
+  adjust,
+  adjust',
+  update,
+  take,
+  drop,
+  insertAt,
+  deleteAt,
+  splitAt,
+
   -- ** Indexing with predicates
+
   -- | These functions perform sequential searches from the left
   -- or right ends of the sequence  returning indices of matching
   -- elements.
-  , elemIndexL
-  , elemIndicesL
-  , elemIndexR
-  , elemIndicesR
-  , findIndexL
-  , findIndicesL
-  , findIndexR
-  , findIndicesR
-  -- * Folds
-  -- | General folds are available via the 'Foldable' instance of 'Seq'.
-  , foldMapWithIndex
-  , foldlWithIndex
-  , foldrWithIndex
-  -- * Transformations
-  , mapWithIndex
-  , traverseWithIndex
-  , traverseWithIndex1
-  , reverse
-  , intersperse
-  -- ** Zips and unzip
-  , zip
-  , zipWith
-  , zip3
-  , zipWith3
-  , zip4
-  , zipWith4
-  , unzip
-  , unzipWith
-  ) where
+  elemIndexL,
+  elemIndicesL,
+  elemIndexR,
+  elemIndicesR,
+  findIndexL,
+  findIndicesL,
+  findIndexR,
+  findIndicesR,
 
-import           Control.Applicative
-import           Control.Monad hiding            (replicateM)
-import           Data.Bifunctor
-import           Data.Functor.Apply
-import           Data.Sequence                   (Seq(..))
-import           Data.Sequence.NonEmpty.Internal
-import           Data.These
-import           Prelude hiding                  (length, scanl, scanl1, scanr, scanr1, splitAt, zip, zipWith, zip3, zipWith3, unzip, replicate, filter, reverse, lookup, take, drop, head, tail, init, last, map)
-import qualified Data.Sequence                   as Seq
+  -- * Folds
+
+  -- | General folds are available via the 'Foldable' instance of 'Seq'.
+  foldMapWithIndex,
+  foldlWithIndex,
+  foldrWithIndex,
+
+  -- * Transformations
+  mapWithIndex,
+  traverseWithIndex,
+  traverseWithIndex1,
+  reverse,
+  intersperse,
+
+  -- ** Zips and unzip
+  zip,
+  zipWith,
+  zip3,
+  zipWith3,
+  zip4,
+  zipWith4,
+  unzip,
+  unzipWith,
+) where
+
+import Control.Applicative
+import Control.Monad hiding (replicateM)
+import Data.Bifunctor
+import Data.Functor.Apply
+import Data.Sequence (Seq (..))
+import qualified Data.Sequence as Seq
+import Data.Sequence.NonEmpty.Internal
+import Data.These
+import Prelude hiding (
+  drop,
+  filter,
+  head,
+  init,
+  last,
+  length,
+  lookup,
+  map,
+  replicate,
+  reverse,
+  scanl,
+  scanl1,
+  scanr,
+  scanr1,
+  splitAt,
+  tail,
+  take,
+  unzip,
+  zip,
+  zip3,
+  zipWith,
+  zipWith3,
+ )
 
 -- | /O(1)/. The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat
 -- a 'Seq' as if it were either a @'IsNonEmpty' n@ (where @n@ is a 'NESeq')
@@ -199,7 +239,7 @@ import qualified Data.Sequence                   as Seq
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
 -- a 'NESeq' back into a 'Seq', obscuring its non-emptiness (see 'toSeq').
 pattern IsNonEmpty :: NESeq a -> Seq a
-pattern IsNonEmpty n <- (nonEmptySeq->Just n)
+pattern IsNonEmpty n <- (nonEmptySeq -> Just n)
   where
     IsNonEmpty n = toSeq n
 
@@ -217,7 +257,7 @@ pattern IsNonEmpty n <- (nonEmptySeq->Just n)
 --
 -- See 'IsNonEmpty' for more information.
 pattern IsEmpty :: Seq a
-pattern IsEmpty <- (Seq.null->True)
+pattern IsEmpty <- (Seq.null -> True)
   where
     IsEmpty = Seq.empty
 
@@ -237,7 +277,7 @@ pattern IsEmpty <- (Seq.null->True)
 -- > nonEmptySeq (Data.Sequence.fromList [1,2,3]) == Just (fromList (1) :| [2,3])
 nonEmptySeq :: Seq a -> Maybe (NESeq a)
 nonEmptySeq (x :<| xs) = Just $ x :<|| xs
-nonEmptySeq Empty      = Nothing
+nonEmptySeq Empty = Nothing
 {-# INLINE nonEmptySeq #-}
 
 -- | /O(1)/. Unsafe version of 'nonEmptySeq'.  Coerces a 'Seq' into an
@@ -245,7 +285,7 @@ nonEmptySeq Empty      = Nothing
 -- attempted) for an empty 'Seq'.
 unsafeFromSeq :: Seq a -> NESeq a
 unsafeFromSeq (x :<| xs) = x :<|| xs
-unsafeFromSeq Empty      = errorWithoutStackTrace "NESeq.unsafeFromSeq: empty seq"
+unsafeFromSeq Empty = errorWithoutStackTrace "NESeq.unsafeFromSeq: empty seq"
 {-# INLINE unsafeFromSeq #-}
 
 -- | Turn a 'Seq' into a guarantted non-empty 'NESeq' by adding an element
@@ -254,10 +294,10 @@ unsafeFromSeq Empty      = errorWithoutStackTrace "NESeq.unsafeFromSeq: empty se
 -- > insertSeqAt 1 0 (Data.Sequence.fromList [1,2,3]) == fromList (1 :| [0,2,3])
 insertSeqAt :: Int -> a -> Seq a -> NESeq a
 insertSeqAt i y
-    | i <= 0    = (y :<||)
-    | otherwise = \case
-        x :<| xs -> x :<|| Seq.insertAt (i - 1) y xs
-        Empty    -> y :<|| Seq.empty
+  | i <= 0 = (y :<||)
+  | otherwise = \case
+      x :<| xs -> x :<|| Seq.insertAt (i - 1) y xs
+      Empty -> y :<|| Seq.empty
 {-# INLINE insertSeqAt #-}
 
 -- | \( O(1) \). Add an element to the right end of a non-empty sequence.
@@ -287,8 +327,8 @@ infixr 5 ><|
 -- preferred whenever possible.
 replicateA :: Applicative f => Int -> f a -> f (NESeq a)
 replicateA n x
-    | n < 1     = error "NESeq.replicateA: must take a positive integer argument"
-    | otherwise = liftA2 (:<||) x (Seq.replicateA (n - 1) x)
+  | n < 1 = error "NESeq.replicateA: must take a positive integer argument"
+  | otherwise = liftA2 (:<||) x (Seq.replicateA (n - 1) x)
 {-# INLINE replicateA #-}
 
 -- | 'replicateA' is an 'Apply' version of 'replicate', and makes \( O(\log
@@ -297,10 +337,10 @@ replicateA n x
 -- > replicateA1 n x = sequence1 (replicate n x)
 replicateA1 :: Apply f => Int -> f a -> f (NESeq a)
 replicateA1 n x
-    | n < 1     = error "NESeq.replicateA1: must take a positive integer argument"
-    | otherwise = case runMaybeApply (Seq.replicateA (n - 1) (MaybeApply (Left x))) of
-        Left  xs -> (:<||)    <$> x <.> xs
-        Right xs -> (:<|| xs) <$> x
+  | n < 1 = error "NESeq.replicateA1: must take a positive integer argument"
+  | otherwise = case runMaybeApply (Seq.replicateA (n - 1) (MaybeApply (Left x))) of
+      Left xs -> (:<||) <$> x <.> xs
+      Right xs -> (:<|| xs) <$> x
 {-# INLINE replicateA1 #-}
 
 -- | An alias of 'replicateA'.
@@ -319,9 +359,9 @@ replicateM = replicateA
 -- @replicate k () *> xs@.
 cycleTaking :: Int -> NESeq a -> NESeq a
 cycleTaking n xs0@(x :<|| xs)
-    | n < 1             = error "NESeq.cycleTaking: must take a positive integer argument"
-    | n < Seq.length xs = x :<|| Seq.take (n - 1) xs
-    | otherwise         = xs0 |>< Seq.cycleTaking (n - length xs0) (toSeq xs0)
+  | n < 1 = error "NESeq.cycleTaking: must take a positive integer argument"
+  | n < Seq.length xs = x :<|| Seq.take (n - 1) xs
+  | otherwise = xs0 |>< Seq.cycleTaking (n - length xs0) (toSeq xs0)
 {-# INLINE cycleTaking #-}
 
 -- | \( O(n) \).  Constructs a sequence by repeated application of
@@ -330,8 +370,8 @@ cycleTaking n xs0@(x :<|| xs)
 -- > iterateN n f x = fromList (fromJust (nonEmpty ((Prelude.take n (Prelude.iterate f x)))))
 iterateN :: Int -> (a -> a) -> a -> NESeq a
 iterateN n f x
-    | n < 1     = error "NESeq.iterateN: must take a positive integer argument"
-    | otherwise = x :<|| Seq.iterateN (n - 1) f (f x)
+  | n < 1 = error "NESeq.iterateN: must take a positive integer argument"
+  | otherwise = x :<|| Seq.iterateN (n - 1) f (f x)
 {-# INLINE iterateN #-}
 
 -- | Builds a sequence from a seed value.  Takes time linear in the
@@ -382,7 +422,6 @@ init :: NESeq a -> Seq a
 init (xs :||> _) = xs
 {-# INLINE init #-}
 
-
 -- | 'scanl' is similar to 'foldl', but returns a sequence of reduced
 -- values from the left:
 --
@@ -419,7 +458,7 @@ scanr1 f (xs :||> x) = withNonEmpty (singleton x) (scanr f x) xs
 -- TODO: is this true?
 inits :: NESeq a -> NESeq (NESeq a)
 inits xs@(ys :||> _) = withNonEmpty (singleton xs) ((|> xs) . inits) ys
-{-# INLINABLE inits #-}
+{-# INLINEABLE inits #-}
 
 -- | \(O \Bigl(\bigl(\frac{n}{c}\bigr) \log c\Bigr)\). @chunksOf c xs@ splits @xs@ into chunks of size @c>0@.
 -- If @c@ does not divide the length of @xs@ evenly, then the last element
@@ -436,11 +475,11 @@ chunksOf :: Int -> NESeq a -> NESeq (NESeq a)
 chunksOf n = go
   where
     go xs = case splitAt n xs of
-      This  ys    -> singleton ys
-      That     _  -> e
+      This ys -> singleton ys
+      That _ -> e
       These ys zs -> ys <| go zs
     e = error "chunksOf: A non-empty sequence can only be broken up into positively-sized chunks."
-{-# INLINABLE chunksOf #-}
+{-# INLINEABLE chunksOf #-}
 
 -- | \( O(i) \) where \( i \) is the prefix length. 'takeWhileL', applied
 -- to a predicate @p@ and a sequence @xs@, returns the longest prefix
@@ -450,8 +489,8 @@ chunksOf n = go
 -- fails on the first item.
 takeWhileL :: (a -> Bool) -> NESeq a -> Seq a
 takeWhileL p (x :<|| xs)
-    | p x       = x Seq.<| Seq.takeWhileL p xs
-    | otherwise = Seq.empty
+  | p x = x Seq.<| Seq.takeWhileL p xs
+  | otherwise = Seq.empty
 {-# INLINE takeWhileL #-}
 
 -- | \( O(i) \) where \( i \) is the suffix length.  'takeWhileR', applied
@@ -464,8 +503,8 @@ takeWhileL p (x :<|| xs)
 -- @'takeWhileR' p xs@ is equivalent to @'reverse' ('takeWhileL' p ('reverse' xs))@.
 takeWhileR :: (a -> Bool) -> NESeq a -> Seq a
 takeWhileR p (xs :||> x)
-    | p x       = Seq.takeWhileR p xs Seq.|> x
-    | otherwise = Seq.empty
+  | p x = Seq.takeWhileR p xs Seq.|> x
+  | otherwise = Seq.empty
 {-# INLINE takeWhileR #-}
 
 -- | \( O(i) \) where \( i \) is the prefix length.  @'dropWhileL' p xs@ returns
@@ -475,8 +514,8 @@ takeWhileR p (xs :||> x)
 -- passes for all items.
 dropWhileL :: (a -> Bool) -> NESeq a -> Seq a
 dropWhileL p xs0@(x :<|| xs)
-    | p x       = Seq.dropWhileL p xs
-    | otherwise = toSeq xs0
+  | p x = Seq.dropWhileL p xs
+  | otherwise = toSeq xs0
 {-# INLINE dropWhileL #-}
 
 -- | \( O(i) \) where \( i \) is the suffix length.  @'dropWhileR' p xs@ returns
@@ -488,8 +527,8 @@ dropWhileL p xs0@(x :<|| xs)
 -- @'dropWhileR' p xs@ is equivalent to @'reverse' ('dropWhileL' p ('reverse' xs))@.
 dropWhileR :: (a -> Bool) -> NESeq a -> Seq a
 dropWhileR p xs0@(xs :||> x)
-    | p x       = Seq.dropWhileR p xs
-    | otherwise = toSeq xs0
+  | p x = Seq.dropWhileR p xs
+  | otherwise = toSeq xs0
 {-# INLINE dropWhileR #-}
 
 -- | \( O(i) \) where \( i \) is the prefix length.  'spanl', applied to
@@ -504,15 +543,15 @@ dropWhileR p xs0@(xs :||> x)
 --     predicae) and @zs@ (the remainder of the sequence)
 spanl :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 spanl p xs0@(x :<|| xs)
-    | p x       = case (nonEmptySeq ys, nonEmptySeq zs) of
-        (Nothing , Nothing ) -> This  (singleton x)
-        (Just _  , Nothing ) -> This  xs0
-        (Nothing , Just zs') -> These (singleton x) zs'
-        (Just ys', Just zs') -> These (x <| ys')    zs'
-    | otherwise = That xs0
+  | p x = case (nonEmptySeq ys, nonEmptySeq zs) of
+      (Nothing, Nothing) -> This (singleton x)
+      (Just _, Nothing) -> This xs0
+      (Nothing, Just zs') -> These (singleton x) zs'
+      (Just ys', Just zs') -> These (x <| ys') zs'
+  | otherwise = That xs0
   where
     (ys, zs) = Seq.spanl p xs
-{-# INLINABLE spanl #-}
+{-# INLINEABLE spanl #-}
 
 -- | \( O(i) \) where \( i \) is the suffix length.  'spanr', applied to
 -- a predicate @p@ and a sequence @xs@, returns a 'These' based on the
@@ -526,15 +565,15 @@ spanl p xs0@(x :<|| xs)
 --     predicae) and @zs@ (the remainder of the sequence, before the suffix)
 spanr :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 spanr p xs0@(xs :||> x)
-    | p x       = case (nonEmptySeq ys, nonEmptySeq zs) of
-        (Nothing , Nothing ) -> This  (singleton x)
-        (Just _  , Nothing ) -> This  xs0
-        (Nothing , Just zs') -> These (singleton x) zs'
-        (Just ys', Just zs') -> These (ys' |> x   ) zs'
-    | otherwise = That xs0
+  | p x = case (nonEmptySeq ys, nonEmptySeq zs) of
+      (Nothing, Nothing) -> This (singleton x)
+      (Just _, Nothing) -> This xs0
+      (Nothing, Just zs') -> These (singleton x) zs'
+      (Just ys', Just zs') -> These (ys' |> x) zs'
+  | otherwise = That xs0
   where
     (ys, zs) = Seq.spanr p xs
-{-# INLINABLE spanr #-}
+{-# INLINEABLE spanr #-}
 
 -- | \( O(i) \) where \( i \) is the breakpoint index.
 --
@@ -563,21 +602,21 @@ breakr p = spanr (not . p)
 --     predicate was false).
 partition :: (a -> Bool) -> NESeq a -> These (NESeq a) (NESeq a)
 partition p xs0@(x :<|| xs) = case (nonEmptySeq ys, nonEmptySeq zs) of
-    (Nothing , Nothing )
-      | p x       -> This  (singleton x)
-      | otherwise -> That                (singleton x)
-    (Just ys', Nothing )
-      | p x       -> This  xs0
-      | otherwise -> These ys'           (singleton x)
-    (Nothing, Just zs' )
-      | p x       -> These (singleton x) zs'
-      | otherwise -> That                xs0
-    (Just ys', Just zs')
-      | p x       -> These (x <| ys')    zs'
-      | otherwise -> These ys'           (x <| zs')
+  (Nothing, Nothing)
+    | p x -> This (singleton x)
+    | otherwise -> That (singleton x)
+  (Just ys', Nothing)
+    | p x -> This xs0
+    | otherwise -> These ys' (singleton x)
+  (Nothing, Just zs')
+    | p x -> These (singleton x) zs'
+    | otherwise -> That xs0
+  (Just ys', Just zs')
+    | p x -> These (x <| ys') zs'
+    | otherwise -> These ys' (x <| zs')
   where
     (ys, zs) = Seq.partition p xs
-{-# INLINABLE partition #-}
+{-# INLINEABLE partition #-}
 
 -- | \( O(n) \).  The 'filter' function takes a predicate @p@ and a sequence
 -- @xs@ and returns a sequence of those elements which satisfy the
@@ -587,8 +626,8 @@ partition p xs0@(x :<|| xs) = case (nonEmptySeq ys, nonEmptySeq zs) of
 -- predicate fails for all items in the sequence.
 filter :: (a -> Bool) -> NESeq a -> Seq a
 filter p (x :<|| xs)
-    | p x       = x Seq.<| Seq.filter p xs
-    | otherwise = Seq.filter p xs
+  | p x = x Seq.<| Seq.filter p xs
+  | otherwise = Seq.filter p xs
 {-# INLINE filter #-}
 
 -- | \( O(n \log n) \).  'sort' sorts the specified 'NESeq' by the natural
@@ -604,9 +643,10 @@ sort = sortBy compare
 
 -- TODO: benchmark against just unsafe unwrapping and wrapping
 sortBy :: (a -> a -> Ordering) -> NESeq a -> NESeq a
-sortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
-                     . Seq.sortBy c
-                     $ xs
+sortBy c (x :<|| xs) =
+  withNonEmpty (singleton x) (insertBy c x)
+    . Seq.sortBy c
+    $ xs
 {-# INLINE sortBy #-}
 
 -- | \( O(n \log n) \). 'sortOn' sorts the specified 'NESeq' by comparing
@@ -631,9 +671,10 @@ sortBy c (x :<|| xs) = withNonEmpty (singleton x) (insertBy c x)
 
 -- TODO: benchmark against just unsafe unwrapping and wrapping
 sortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
-sortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)
-                     . sortOnSeq f
-                     $ xs
+sortOn f (x :<|| xs) =
+  withNonEmpty (singleton x) (insertOn f x)
+    . sortOnSeq f
+    $ xs
 {-# INLINE sortOn #-}
 
 -- | \( O(n \log n) \).  'unstableSort' sorts the specified 'NESeq' by the
@@ -688,22 +729,22 @@ unstableSortOn f = unsafeFromSeq . unstableSortOnSeq f . toSeq
 
 insertBy :: (a -> a -> Ordering) -> a -> NESeq a -> NESeq a
 insertBy c x xs = case spanl ltx xs of
-    This  ys    -> ys |> x
-    That     zs -> x <| zs
-    These ys zs -> ys >< (x <| zs)
+  This ys -> ys |> x
+  That zs -> x <| zs
+  These ys zs -> ys >< (x <| zs)
   where
     ltx y = c x y == GT
-{-# INLINABLE insertBy #-}
+{-# INLINEABLE insertBy #-}
 
 insertOn :: Ord b => (a -> b) -> a -> NESeq a -> NESeq a
 insertOn f x xs = case spanl ltx xs of
-    This  ys    -> ys |> x
-    That     zs -> x <| zs
-    These ys zs -> ys >< (x <| zs)
+  This ys -> ys |> x
+  That zs -> x <| zs
+  These ys zs -> ys >< (x <| zs)
   where
     fx = f x
     ltx y = fx > f y
-{-# INLINABLE insertOn #-}
+{-# INLINEABLE insertOn #-}
 
 -- | \( O(\log(\min(i,n-i))) \). The element at the specified position,
 -- counting from 0. If the specified position is negative or at
@@ -712,7 +753,7 @@ insertOn f x xs = case spanl ltx xs of
 -- Unlike 'index', this can be used to retrieve an element without
 -- forcing it.
 lookup :: Int -> NESeq a -> Maybe a
-lookup 0 (x :<|| _ ) = Just x
+lookup 0 (x :<|| _) = Just x
 lookup i (_ :<|| xs) = Seq.lookup (i - 1) xs
 {-# INLINE lookup #-}
 
@@ -743,7 +784,7 @@ adjust f i (x :<|| xs) = x :<|| Seq.adjust f (i - 1) xs
 --              in update i x' xs
 -- @
 adjust' :: (a -> a) -> Int -> NESeq a -> NESeq a
-adjust' f 0 (x :<|| xs) = let !y  = f x in y :<|| xs
+adjust' f 0 (x :<|| xs) = let !y = f x in y :<|| xs
 adjust' f i (x :<|| xs) = x :<|| Seq.adjust f (i - 1) xs
 {-# INLINE adjust' #-}
 
@@ -760,8 +801,8 @@ update i y (x :<|| xs) = x :<|| Seq.update (i - 1) y xs
 -- is returned.
 take :: Int -> NESeq a -> Seq a
 take i (x :<|| xs)
-    | i <= 0    = Seq.empty
-    | otherwise = x Seq.<| Seq.take (i - 1) xs
+  | i <= 0 = Seq.empty
+  | otherwise = x Seq.<| Seq.take (i - 1) xs
 {-# INLINE take #-}
 
 -- | \( O(\log(\min(i,n-i))) \). Elements of a sequence after the first @i@.
@@ -770,8 +811,8 @@ take i (x :<|| xs)
 -- is returned.
 drop :: Int -> NESeq a -> Seq a
 drop i xs0@(_ :<|| xs)
-    | i <= 0    = toSeq xs0
-    | otherwise = Seq.drop (i - 1) xs
+  | i <= 0 = toSeq xs0
+  | otherwise = Seq.drop (i - 1) xs
 {-# INLINE drop #-}
 
 -- | \( O(\log(\min(i,n-i))) \). @'insertAt' i x xs@ inserts @x@ into @xs@
@@ -786,8 +827,8 @@ drop i xs0@(_ :<|| xs)
 -- prop> insertAt i x xs = take i xs >< singleton x >< drop i xs
 insertAt :: Int -> a -> NESeq a -> NESeq a
 insertAt i y xs0@(x :<|| xs)
-    | i <= 0    = y <| xs0
-    | otherwise = x :<|| Seq.insertAt (i - 1) y xs
+  | i <= 0 = y <| xs0
+  | otherwise = x :<|| Seq.insertAt (i - 1) y xs
 {-# INLINE insertAt #-}
 
 -- | \( O(\log(\min(i,n-i))) \). Delete the element of a sequence at a given
@@ -799,9 +840,9 @@ insertAt i y xs0@(x :<|| xs)
 -- @
 deleteAt :: Int -> NESeq a -> Seq a
 deleteAt i xs0@(x :<|| xs) = case compare i 0 of
-    LT -> toSeq xs0
-    EQ -> xs
-    GT -> x Seq.<| Seq.deleteAt (i - 1) xs
+  LT -> toSeq xs0
+  EQ -> xs
+  GT -> x Seq.<| Seq.deleteAt (i - 1) xs
 {-# INLINE deleteAt #-}
 
 -- | \( O(\log(\min(i,n-i))) \). Split a sequence at a given position.
@@ -815,15 +856,15 @@ deleteAt i xs0@(x :<|| xs) = case compare i 0 of
 --     after the given position, @drop n xs@).
 splitAt :: Int -> NESeq a -> These (NESeq a) (NESeq a)
 splitAt n xs0@(x :<|| xs)
-    | n <= 0    = That xs0
-    | otherwise = case (nonEmptySeq ys, nonEmptySeq zs) of
-        (Nothing , Nothing ) -> This  (singleton x)
-        (Just _  , Nothing ) -> This  xs0
-        (Nothing , Just zs') -> These (singleton x) zs'
-        (Just ys', Just zs') -> These (x <| ys')    zs'
+  | n <= 0 = That xs0
+  | otherwise = case (nonEmptySeq ys, nonEmptySeq zs) of
+      (Nothing, Nothing) -> This (singleton x)
+      (Just _, Nothing) -> This xs0
+      (Nothing, Just zs') -> These (singleton x) zs'
+      (Just ys', Just zs') -> These (x <| ys') zs'
   where
     (ys, zs) = Seq.splitAt (n - 1) xs
-{-# INLINABLE splitAt #-}
+{-# INLINEABLE splitAt #-}
 
 -- | 'elemIndexL' finds the leftmost index of the specified element,
 -- if it is present, and otherwise 'Nothing'.
@@ -854,7 +895,7 @@ elemIndicesR x = findIndicesR (== x)
 findIndexL :: (a -> Bool) -> NESeq a -> Maybe Int
 findIndexL p (x :<|| xs) = here_ <|> there_
   where
-    here_  = 0 <$ guard (p x)
+    here_ = 0 <$ guard (p x)
     there_ = (+ 1) <$> Seq.findIndexL p xs
 {-# INLINE findIndexL #-}
 
@@ -863,7 +904,7 @@ findIndexL p (x :<|| xs) = here_ <|> there_
 findIndexR :: (a -> Bool) -> NESeq a -> Maybe Int
 findIndexR p (xs :||> x) = here_ <|> there_
   where
-    here_  = Seq.length xs <$ guard (p x)
+    here_ = Seq.length xs <$ guard (p x)
     there_ = Seq.findIndexR p xs
 {-# INLINE findIndexR #-}
 
@@ -873,8 +914,8 @@ findIndexR p (xs :||> x) = here_ <|> there_
 -- TODO: use build
 findIndicesL :: (a -> Bool) -> NESeq a -> [Int]
 findIndicesL p (x :<|| xs)
-    | p x       = 0 : ixs
-    | otherwise = ixs
+  | p x = 0 : ixs
+  | otherwise = ixs
   where
     ixs = (+ 1) <$> Seq.findIndicesL p xs
 {-# INLINE findIndicesL #-}
@@ -885,8 +926,8 @@ findIndicesL p (x :<|| xs)
 -- TODO: use build
 findIndicesR :: (a -> Bool) -> NESeq a -> [Int]
 findIndicesR p (xs :||> x)
-    | p x       = Seq.length xs : ixs
-    | otherwise = ixs
+  | p x = Seq.length xs : ixs
+  | otherwise = ixs
   where
     ixs = Seq.findIndicesR p xs
 {-# INLINE findIndicesR #-}
@@ -909,14 +950,18 @@ foldrWithIndex f z (x :<|| xs) = f 0 x . Seq.foldrWithIndex (f . (+ 1)) z $ xs
 mapWithIndex :: (Int -> a -> b) -> NESeq a -> NESeq b
 mapWithIndex f (x :<|| xs) = f 0 x :<|| Seq.mapWithIndex (f . (+ 1)) xs
 {-# NOINLINE [1] mapWithIndex #-}
+
 {-# RULES
-"mapWithIndex/mapWithIndex" forall f g xs . mapWithIndex f (mapWithIndex g xs) =
-  mapWithIndex (\k a -> f k (g k a)) xs
-"mapWithIndex/map" forall f g xs . mapWithIndex f (map g xs) =
-  mapWithIndex (\k a -> f k (g a)) xs
-"map/mapWithIndex" forall f g xs . map f (mapWithIndex g xs) =
-  mapWithIndex (\k a -> f (g k a)) xs
- #-}
+"mapWithIndex/mapWithIndex" forall f g xs.
+  mapWithIndex f (mapWithIndex g xs) =
+    mapWithIndex (\k a -> f k (g k a)) xs
+"mapWithIndex/map" forall f g xs.
+  mapWithIndex f (map g xs) =
+    mapWithIndex (\k a -> f k (g a)) xs
+"map/mapWithIndex" forall f g xs.
+  map f (mapWithIndex g xs) =
+    mapWithIndex (\k a -> f (g k a)) xs
+  #-}
 
 -- | 'traverseWithIndex' is a version of 'traverse' that also offers
 -- access to the index of each element.
@@ -926,12 +971,15 @@ mapWithIndex f (x :<|| xs) = f 0 x :<|| Seq.mapWithIndex (f . (+ 1)) xs
 traverseWithIndex :: Applicative f => (Int -> a -> f b) -> NESeq a -> f (NESeq b)
 traverseWithIndex f (x :<|| xs) = (:<||) <$> f 0 x <*> Seq.traverseWithIndex (f . (+ 1)) xs
 {-# NOINLINE [1] traverseWithIndex #-}
+
 {-# RULES
-"travWithIndex/mapWithIndex" forall f g xs . traverseWithIndex f (mapWithIndex g xs) =
-  traverseWithIndex (\k a -> f k (g k a)) xs
-"travWithIndex/map" forall f g xs . traverseWithIndex f (map g xs) =
-  traverseWithIndex (\k a -> f k (g a)) xs
- #-}
+"travWithIndex/mapWithIndex" forall f g xs.
+  traverseWithIndex f (mapWithIndex g xs) =
+    traverseWithIndex (\k a -> f k (g k a)) xs
+"travWithIndex/map" forall f g xs.
+  traverseWithIndex f (map g xs) =
+    traverseWithIndex (\k a -> f k (g a)) xs
+  #-}
 
 -- | \( O(n) \). The reverse of a sequence.
 reverse :: NESeq a -> NESeq a
@@ -944,9 +992,9 @@ mapReverse :: (a -> b) -> NESeq a -> NESeq b
 mapReverse f (x :<|| xs) = fmap f (Seq.reverse xs) :||> f x
 
 {-# RULES
-"map/reverse" forall f xs . map f (reverse xs) = mapReverse f xs
-"reverse/map" forall f xs . reverse (map f xs) = mapReverse f xs
- #-}
+"map/reverse" forall f xs. map f (reverse xs) = mapReverse f xs
+"reverse/map" forall f xs. reverse (map f xs) = mapReverse f xs
+  #-}
 
 -- | \( O(n) \). Intersperse an element between the elements of a sequence.
 --
@@ -1009,6 +1057,7 @@ unzipWith f (x :<|| xs) = bimap (y :<||) (z :<||) . unzipWithSeq f $ xs
 {-# NOINLINE [1] unzipWith #-}
 
 {-# RULES
-"unzipWith/map" forall f g xs. unzipWith f (map g xs) =
-                                     unzipWith (f . g) xs
- #-}
+"unzipWith/map" forall f g xs.
+  unzipWith f (map g xs) =
+    unzipWith (f . g) xs
+  #-}

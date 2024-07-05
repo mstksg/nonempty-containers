@@ -1,8 +1,8 @@
-{-# LANGUAGE BangPatterns    #-}
-{-# LANGUAGE LambdaCase      #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TupleSections   #-}
-{-# LANGUAGE ViewPatterns    #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Module      : Data.IntMap.NonEmpty
@@ -61,198 +61,199 @@
 -- a strict interface by manually forcing values before returning results.
 module Data.IntMap.NonEmpty (
   -- * Non-Empty IntMap Type
-    NEIntMap
-  , Key
+  NEIntMap,
+  Key,
 
   -- ** Conversions between empty and non-empty maps
-  , pattern IsNonEmpty
-  , pattern IsEmpty
-  , nonEmptyMap
-  , toMap
-  , withNonEmpty
-  , insertMap
-  , insertMapWith
-  , insertMapWithKey
-  , insertMapMin
-  , insertMapMax
-  , unsafeFromMap
+  pattern IsNonEmpty,
+  pattern IsEmpty,
+  nonEmptyMap,
+  toMap,
+  withNonEmpty,
+  insertMap,
+  insertMapWith,
+  insertMapWithKey,
+  insertMapMin,
+  insertMapMax,
+  unsafeFromMap,
 
   -- * Construction
-  , singleton
-  , fromSet
+  singleton,
+  fromSet,
 
   -- ** From Unordered Lists
-  , fromList
-  , fromListWith
-  , fromListWithKey
+  fromList,
+  fromListWith,
+  fromListWithKey,
 
   -- ** From Ascending Lists
-  , fromAscList
-  , fromAscListWith
-  , fromAscListWithKey
-  , fromDistinctAscList
+  fromAscList,
+  fromAscListWith,
+  fromAscListWithKey,
+  fromDistinctAscList,
 
   -- * Insertion
-  , insert
-  , insertWith
-  , insertWithKey
-  , insertLookupWithKey
+  insert,
+  insertWith,
+  insertWithKey,
+  insertLookupWithKey,
 
   -- * Deletion\/Update
-  , delete
-  , adjust
-  , adjustWithKey
-  , update
-  , updateWithKey
-  , updateLookupWithKey
-  , alter
-  , alterF
-  , alter'
-  , alterF'
+  delete,
+  adjust,
+  adjustWithKey,
+  update,
+  updateWithKey,
+  updateLookupWithKey,
+  alter,
+  alterF,
+  alter',
+  alterF',
 
   -- * Query
+
   -- ** Lookup
-  , lookup
-  , (!?)
-  , (!)
-  , findWithDefault
-  , member
-  , notMember
-  , lookupLT
-  , lookupGT
-  , lookupLE
-  , lookupGE
+  lookup,
+  (!?),
+  (!),
+  findWithDefault,
+  member,
+  notMember,
+  lookupLT,
+  lookupGT,
+  lookupLE,
+  lookupGE,
 
   -- ** Size
-  , size
+  size,
 
   -- * Combine
 
   -- ** Union
-  , union
-  , unionWith
-  , unionWithKey
-  , unions
-  , unionsWith
+  union,
+  unionWith,
+  unionWithKey,
+  unions,
+  unionsWith,
 
   -- ** Difference
-  , difference
-  , (\\)
-  , differenceWith
-  , differenceWithKey
+  difference,
+  (\\),
+  differenceWith,
+  differenceWithKey,
 
   -- ** Intersection
-  , intersection
-  , intersectionWith
-  , intersectionWithKey
-
+  intersection,
+  intersectionWith,
+  intersectionWithKey,
   -- -- ** Universal combining function
   -- , mergeWithKey
 
   -- * Traversal
+
   -- ** Map
-  , map
-  , mapWithKey
-  , traverseWithKey1
-  , traverseWithKey
-  , mapAccum
-  , mapAccumWithKey
-  , mapAccumRWithKey
-  , mapKeys
-  , mapKeysWith
-  , mapKeysMonotonic
+  map,
+  mapWithKey,
+  traverseWithKey1,
+  traverseWithKey,
+  mapAccum,
+  mapAccumWithKey,
+  mapAccumRWithKey,
+  mapKeys,
+  mapKeysWith,
+  mapKeysMonotonic,
 
   -- * Folds
-  , foldr
-  , foldl
-  , foldr1
-  , foldl1
-  , foldrWithKey
-  , foldlWithKey
-  , foldMapWithKey
+  foldr,
+  foldl,
+  foldr1,
+  foldl1,
+  foldrWithKey,
+  foldlWithKey,
+  foldMapWithKey,
 
   -- ** Strict folds
-  , foldr'
-  , foldr1'
-  , foldl'
-  , foldl1'
-  , foldrWithKey'
-  , foldlWithKey'
+  foldr',
+  foldr1',
+  foldl',
+  foldl1',
+  foldrWithKey',
+  foldlWithKey',
 
   -- * Conversion
-  , elems
-  , keys
-  , assocs
-  , keysSet
+  elems,
+  keys,
+  assocs,
+  keysSet,
 
   -- ** Lists
-  , toList
+  toList,
 
   -- ** Ordered lists
-  , toAscList
-  , toDescList
+  toAscList,
+  toDescList,
 
   -- * Filter
-  , filter
-  , filterWithKey
-  , restrictKeys
-  , withoutKeys
-  , partition
-  , partitionWithKey
-
-  , mapMaybe
-  , mapMaybeWithKey
-  , mapEither
-  , mapEitherWithKey
-
-  , split
-  , splitLookup
-  , splitRoot
+  filter,
+  filterWithKey,
+  restrictKeys,
+  withoutKeys,
+  partition,
+  partitionWithKey,
+  mapMaybe,
+  mapMaybeWithKey,
+  mapEither,
+  mapEitherWithKey,
+  split,
+  splitLookup,
+  splitRoot,
 
   -- * Submap
-  , isSubmapOf, isSubmapOfBy
-  , isProperSubmapOf, isProperSubmapOfBy
+  isSubmapOf,
+  isSubmapOfBy,
+  isProperSubmapOf,
+  isProperSubmapOfBy,
 
   -- * Min\/Max
-  , findMin
-  , findMax
-  , deleteMin
-  , deleteMax
-  , deleteFindMin
-  , deleteFindMax
-  , updateMin
-  , updateMax
-  , adjustMin
-  , adjustMax
-  , updateMinWithKey
-  , updateMaxWithKey
-  , adjustMinWithKey
-  , adjustMaxWithKey
-  , minView
-  , maxView
+  findMin,
+  findMax,
+  deleteMin,
+  deleteMax,
+  deleteFindMin,
+  deleteFindMax,
+  updateMin,
+  updateMax,
+  adjustMin,
+  adjustMax,
+  updateMinWithKey,
+  updateMaxWithKey,
+  adjustMinWithKey,
+  adjustMaxWithKey,
+  minView,
+  maxView,
 
   -- * Debugging
-  , valid
-  ) where
+  valid,
+) where
 
-import           Control.Applicative
-import           Data.Bifunctor
-import           Data.Functor.Identity
-import           Data.IntMap.Internal          (IntMap(..))
-import           Data.IntMap.NonEmpty.Internal
-import           Data.IntSet                   (IntSet)
-import           Data.IntSet.NonEmpty.Internal (NEIntSet(..))
-import           Data.List.NonEmpty            (NonEmpty(..))
-import           Data.Maybe hiding             (mapMaybe)
-import           Data.Semigroup.Foldable       (Foldable1)
-import           Data.These
-import           Prelude hiding                (Foldable(..), map, filter, lookup)
-import qualified Data.Foldable                 as F
-import qualified Data.IntMap                   as M
-import qualified Data.IntSet                   as S
-import qualified Data.List.NonEmpty            as NE
-import qualified Data.Maybe                    as Maybe
-import qualified Data.Semigroup.Foldable       as F1
+import Control.Applicative
+import Data.Bifunctor
+import qualified Data.Foldable as F
+import Data.Functor.Identity
+import qualified Data.IntMap as M
+import Data.IntMap.Internal (IntMap (..))
+import Data.IntMap.NonEmpty.Internal
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as S
+import Data.IntSet.NonEmpty.Internal (NEIntSet (..))
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import Data.Maybe hiding (mapMaybe)
+import qualified Data.Maybe as Maybe
+import Data.Semigroup.Foldable (Foldable1)
+import qualified Data.Semigroup.Foldable as F1
+import Data.These
+import Prelude hiding (Foldable (..), filter, lookup, map)
 
 -- | /O(1)/ match, /O(log n)/ usage of contents. The 'IsNonEmpty' and
 -- 'IsEmpty' patterns allow you to treat a 'IntMap' as if it were either
@@ -280,7 +281,7 @@ import qualified Data.Semigroup.Foldable       as F1
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
 -- a 'NEIntMap' back into a 'IntMap', obscuring its non-emptiness (see 'toMap').
 pattern IsNonEmpty :: NEIntMap a -> IntMap a
-pattern IsNonEmpty n <- (nonEmptyMap->Just n)
+pattern IsNonEmpty n <- (nonEmptyMap -> Just n)
   where
     IsNonEmpty n = toMap n
 
@@ -298,7 +299,7 @@ pattern IsNonEmpty n <- (nonEmptyMap->Just n)
 --
 -- See 'IsNonEmpty' for more information.
 pattern IsEmpty :: IntMap a
-pattern IsEmpty <- (M.null->True)
+pattern IsEmpty <- (M.null -> True)
   where
     IsEmpty = M.empty
 
@@ -307,9 +308,9 @@ pattern IsEmpty <- (M.null->True)
 -- | /O(log n)/. Unsafe version of 'nonEmptyMap'.  Coerces a 'IntMap' into an
 -- 'NEIntMap', but is undefined (throws a runtime exception when evaluation is
 -- attempted) for an empty 'IntMap'.
-unsafeFromMap
-    :: IntMap a
-    -> NEIntMap a
+unsafeFromMap ::
+  IntMap a ->
+  NEIntMap a
 unsafeFromMap = withNonEmpty e id
   where
     e = errorWithoutStackTrace "NEIntMap.unsafeFromMap: empty map"
@@ -336,12 +337,12 @@ insertMap k v = withNonEmpty (singleton k v) (insert k v)
 --
 -- > insertMapWith (++) 4 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(4,"c"), (5,"a")])
 -- > insertMapWith (++) 5 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3,"b") :| [(5,"ca")])
-insertMapWith
-    :: (a -> a -> a)
-    -> Key
-    -> a
-    -> IntMap a
-    -> NEIntMap a
+insertMapWith ::
+  (a -> a -> a) ->
+  Key ->
+  a ->
+  IntMap a ->
+  NEIntMap a
 insertMapWith f k v = withNonEmpty (singleton k v) (insertWith f k v)
 {-# INLINE insertMapWith #-}
 
@@ -355,12 +356,12 @@ insertMapWith f k v = withNonEmpty (singleton k v) (insertWith f k v)
 -- > insertWithKey f 5 "xxx" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3, "b") :| [(5, "5:xxx|a")])
 -- > insertWithKey f 7 "xxx" (Data.IntMap.fromList [(5,"a"), (3,"b")]) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
 -- > insertWithKey f 5 "xxx" Data.IntMap.empty                         == singleton 5 "xxx"
-insertMapWithKey
-    :: (Key -> a -> a -> a)
-    -> Key
-    -> a
-    -> IntMap a
-    -> NEIntMap a
+insertMapWithKey ::
+  (Key -> a -> a -> a) ->
+  Key ->
+  a ->
+  IntMap a ->
+  NEIntMap a
 insertMapWithKey f k v = withNonEmpty (singleton k v) (insertWithKey f k v)
 {-# INLINE insertMapWithKey #-}
 
@@ -373,11 +374,11 @@ insertMapWithKey f k v = withNonEmpty (singleton k v) (insertWithKey f k v)
 -- > valid (insertMapMin 2 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == True
 -- > valid (insertMapMin 7 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
 -- > valid (insertMapMin 3 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
-insertMapMin
-    :: Key
-    -> a
-    -> IntMap a
-    -> NEIntMap a
+insertMapMin ::
+  Key ->
+  a ->
+  IntMap a ->
+  NEIntMap a
 insertMapMin = NEIntMap
 {-# INLINE insertMapMin #-}
 
@@ -397,11 +398,11 @@ insertMapMin = NEIntMap
 -- > valid (insertMap 7 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == True
 -- > valid (insertMap 2 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
 -- > valid (insertMap 5 "c" (Data.IntMap.fromList [(5,"a"), (3,"b")])) == False
-insertMapMax
-    :: Key
-    -> a
-    -> IntMap a
-    -> NEIntMap a
+insertMapMax ::
+  Key ->
+  a ->
+  IntMap a ->
+  NEIntMap a
 insertMapMax k v = withNonEmpty (singleton k v) go
   where
     go (NEIntMap k0 v0 m0) = NEIntMap k0 v0 . insertMaxMap k v $ m0
@@ -411,10 +412,10 @@ insertMapMax k v = withNonEmpty (singleton k v) go
 -- a function which for each key computes its value.
 --
 -- > fromSet (\k -> replicate k 'a') (Data.Set.NonEmpty.fromList (3 :| [5])) == fromList ((5,"aaaaa") :| [(3,"aaa")])
-fromSet
-    :: (Key -> a)
-    -> NEIntSet
-    -> NEIntMap a
+fromSet ::
+  (Key -> a) ->
+  NEIntSet ->
+  NEIntMap a
 fromSet f (NEIntSet k ks) = NEIntMap k (f k) (M.fromSet f ks)
 {-# INLINE fromSet #-}
 
@@ -422,10 +423,10 @@ fromSet f (NEIntSet k ks) = NEIntMap k (f k) (M.fromSet f ks)
 -- with a combining function. See also 'fromAscListWith'.
 --
 -- > fromListWith (++) ((5,"a") :| [(5,"b"), (3,"b"), (3,"a"), (5,"a")]) == fromList ((3, "ab") :| [(5, "aba")])
-fromListWith
-    :: (a -> a -> a)
-    -> NonEmpty (Key, a)
-    -> NEIntMap a
+fromListWith ::
+  (a -> a -> a) ->
+  NonEmpty (Key, a) ->
+  NEIntMap a
 fromListWith f = fromListWithKey (const f)
 {-# INLINE fromListWith #-}
 
@@ -434,10 +435,10 @@ fromListWith f = fromListWithKey (const f)
 --
 -- > let f k a1 a2 = (show k) ++ a1 ++ a2
 -- > fromListWithKey f ((5,"a") :| [(5,"b"), (3,"b"), (3,"a"), (5,"a")]) == fromList ((3, "3ab") :| [(5, "5a5ba")])
-fromListWithKey
-    :: (Key -> a -> a -> a)
-    -> NonEmpty (Key, a)
-    -> NEIntMap a
+fromListWithKey ::
+  (Key -> a -> a -> a) ->
+  NonEmpty (Key, a) ->
+  NEIntMap a
 fromListWithKey f ((k0, v0) :| xs) = F.foldl' go (singleton k0 v0) xs
   where
     go m (k, v) = insertWithKey f k v m
@@ -451,9 +452,9 @@ fromListWithKey f ((k0, v0) :| xs) = F.foldl' go (singleton k0 v0) xs
 -- > fromAscList ((3,"b") :| [(5,"a"), (5,"b")]) == fromList ((3, "b") :| [(5, "b")])
 -- > valid (fromAscList ((3,"b") :| [(5,"a"), (5,"b")])) == True
 -- > valid (fromAscList ((5,"a") :| [(3,"b"), (5,"b")])) == False
-fromAscList
-    :: NonEmpty (Key, a)
-    -> NEIntMap a
+fromAscList ::
+  NonEmpty (Key, a) ->
+  NEIntMap a
 fromAscList = fromDistinctAscList . combineEq
 {-# INLINE fromAscList #-}
 
@@ -464,10 +465,10 @@ fromAscList = fromDistinctAscList . combineEq
 -- > fromAscListWith (++) ((3,"b") :| [(5,"a"), (5,"b")]) == fromList ((3, "b") :| [(5, "ba")])
 -- > valid (fromAscListWith (++) ((3,"b") :| [(5,"a"), (5,"b"))]) == True
 -- > valid (fromAscListWith (++) ((5,"a") :| [(3,"b"), (5,"b"))]) == False
-fromAscListWith
-    :: (a -> a -> a)
-    -> NonEmpty (Key, a)
-    -> NEIntMap a
+fromAscListWith ::
+  (a -> a -> a) ->
+  NonEmpty (Key, a) ->
+  NEIntMap a
 fromAscListWith f = fromAscListWithKey (const f)
 {-# INLINE fromAscListWith #-}
 
@@ -479,10 +480,10 @@ fromAscListWith f = fromAscListWithKey (const f)
 -- > fromAscListWithKey f ((3,"b") :| [(5,"a"), (5,"b"), (5,"b")]) == fromList ((3, "b") :| [(5, "5:b5:ba")])
 -- > valid (fromAscListWithKey f ((3,"b") :| [(5,"a"), (5,"b"), (5,"b")])) == True
 -- > valid (fromAscListWithKey f ((5,"a") :| [(3,"b"), (5,"b"), (5,"b")])) == False
-fromAscListWithKey
-    :: (Key -> a -> a -> a)
-    -> NonEmpty (Key, a)
-    -> NEIntMap a
+fromAscListWithKey ::
+  (Key -> a -> a -> a) ->
+  NonEmpty (Key, a) ->
+  NEIntMap a
 fromAscListWithKey f = fromDistinctAscList . combineEqWith f
 {-# INLINE fromAscListWithKey #-}
 
@@ -493,9 +494,10 @@ fromAscListWithKey f = fromDistinctAscList . combineEqWith f
 -- > valid (fromDistinctAscList ((3,"b") :| [(5,"a")]))          == True
 -- > valid (fromDistinctAscList ((3,"b") :| [(5,"a"), (5,"b")])) == False
 fromDistinctAscList :: NonEmpty (Key, a) -> NEIntMap a
-fromDistinctAscList ((k, v) :| xs) = insertMapMin k v
-                                   . M.fromDistinctAscList
-                                   $ xs
+fromDistinctAscList ((k, v) :| xs) =
+  insertMapMin k v
+    . M.fromDistinctAscList
+    $ xs
 {-# INLINE fromDistinctAscList #-}
 
 -- | /O(log n)/. Insert a new key and value in the map.
@@ -507,15 +509,15 @@ fromDistinctAscList ((k, v) :| xs) = insertMapMin k v
 --
 -- > insert 5 'x' (fromList ((5,'a') :| [(3,'b')])) == fromList ((3, 'b') :| [(5, 'x')])
 -- > insert 7 'x' (fromList ((5,'a') :| [(3,'b')])) == fromList ((3, 'b') :| [(5, 'a'), (7, 'x')])
-insert
-    :: Key
-    -> a
-    -> NEIntMap a
-    -> NEIntMap a
+insert ::
+  Key ->
+  a ->
+  NEIntMap a ->
+  NEIntMap a
 insert k v n@(NEIntMap k0 v0 m) = case compare k k0 of
-    LT -> NEIntMap k  v  . toMap        $ n
-    EQ -> NEIntMap k  v  m
-    GT -> NEIntMap k0 v0 . M.insert k v $ m
+  LT -> NEIntMap k v . toMap $ n
+  EQ -> NEIntMap k v m
+  GT -> NEIntMap k0 v0 . M.insert k v $ m
 {-# INLINE insert #-}
 
 -- | /O(log n)/. Insert with a function, combining key, new value and old
@@ -530,16 +532,16 @@ insert k v n@(NEIntMap k0 v0 m) = case compare k k0 of
 -- > let f key new_value old_value = (show key) ++ ":" ++ new_value ++ "|" ++ old_value
 -- > insertWithKey f 5 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "5:xxx|a")])
 -- > insertWithKey f 7 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
-insertWithKey
-    :: (Key -> a -> a -> a)
-    -> Key
-    -> a
-    -> NEIntMap a
-    -> NEIntMap a
+insertWithKey ::
+  (Key -> a -> a -> a) ->
+  Key ->
+  a ->
+  NEIntMap a ->
+  NEIntMap a
 insertWithKey f k v n@(NEIntMap k0 v0 m) = case compare k k0 of
-    LT -> NEIntMap k  v          . toMap               $ n
-    EQ -> NEIntMap k  (f k v v0) m
-    GT -> NEIntMap k0 v0         $ M.insertWithKey f k v m
+  LT -> NEIntMap k v . toMap $ n
+  EQ -> NEIntMap k (f k v v0) m
+  GT -> NEIntMap k0 v0 $ M.insertWithKey f k v m
 {-# INLINE insertWithKey #-}
 
 -- | /O(log n)/. Combines insert operation with old value retrieval. The
@@ -556,16 +558,16 @@ insertWithKey f k v n@(NEIntMap k0 v0 m) = case compare k k0 of
 -- > let insertLookup kx x t = insertLookupWithKey (\_ a _ -> a) kx x t
 -- > insertLookup 5 "x" (fromList ((5,"a") :| [(3,"b")])) == (Just "a", fromList ((3, "b") :| [(5, "x")]))
 -- > insertLookup 7 "x" (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  fromList ((3, "b") :| [(5, "a"), (7, "x")]))
-insertLookupWithKey
-    :: (Key -> a -> a -> a)
-    -> Key
-    -> a
-    -> NEIntMap a
-    -> (Maybe a, NEIntMap a)
+insertLookupWithKey ::
+  (Key -> a -> a -> a) ->
+  Key ->
+  a ->
+  NEIntMap a ->
+  (Maybe a, NEIntMap a)
 insertLookupWithKey f k v n@(NEIntMap k0 v0 m) = case compare k k0 of
-    LT -> (Nothing, NEIntMap k  v . toMap $ n )
-    EQ -> (Just v , NEIntMap k  (f k v v0)  m )
-    GT -> NEIntMap k0 v0 <$> M.insertLookupWithKey f k v m
+  LT -> (Nothing, NEIntMap k v . toMap $ n)
+  EQ -> (Just v, NEIntMap k (f k v v0) m)
+  GT -> NEIntMap k0 v0 <$> M.insertLookupWithKey f k v m
 {-# INLINE insertLookupWithKey #-}
 
 -- | /O(log n)/. Delete a key and its value from the non-empty map.
@@ -577,9 +579,9 @@ insertLookupWithKey f k v n@(NEIntMap k0 v0 m) = case compare k k0 of
 -- > delete 7 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.Singleton [(3, "b"), (5, "a")]
 delete :: Key -> NEIntMap a -> IntMap a
 delete k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> toMap n
-    EQ -> m
-    GT -> insertMinMap k0 v . M.delete k $ m
+  LT -> toMap n
+  EQ -> m
+  GT -> insertMinMap k0 v . M.delete k $ m
 {-# INLINE delete #-}
 
 -- | /O(log n)/. Update a value at a specific key with the result of the
@@ -588,11 +590,11 @@ delete k n@(NEIntMap k0 v m) = case compare k k0 of
 --
 -- > adjust ("new " ++) 5 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "new a")])
 -- > adjust ("new " ++) 7 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a")])
-adjust
-    :: (a -> a)
-    -> Key
-    -> NEIntMap a
-    -> NEIntMap a
+adjust ::
+  (a -> a) ->
+  Key ->
+  NEIntMap a ->
+  NEIntMap a
 adjust f = adjustWithKey (const f)
 {-# INLINE adjust #-}
 
@@ -602,15 +604,15 @@ adjust f = adjustWithKey (const f)
 -- > let f key x = (show key) ++ ":new " ++ x
 -- > adjustWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "5:new a")])
 -- > adjustWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a")])
-adjustWithKey
-    :: (Key -> a -> a)
-    -> Key
-    -> NEIntMap a
-    -> NEIntMap a
+adjustWithKey ::
+  (Key -> a -> a) ->
+  Key ->
+  NEIntMap a ->
+  NEIntMap a
 adjustWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> n
-    EQ -> NEIntMap k0 (f k0 v) m
-    GT -> NEIntMap k0 v . M.adjustWithKey f k $ m
+  LT -> n
+  EQ -> NEIntMap k0 (f k0 v) m
+  GT -> NEIntMap k0 v . M.adjustWithKey f k $ m
 {-# INLINE adjustWithKey #-}
 
 -- | /O(log n)/. The expression (@'update' f k map@) updates the value @x@
@@ -625,11 +627,11 @@ adjustWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
 -- > update f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "new a")]
 -- > update f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "a")]
 -- > update f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
-update
-    :: (a -> Maybe a)
-    -> Key
-    -> NEIntMap a
-    -> IntMap a
+update ::
+  (a -> Maybe a) ->
+  Key ->
+  NEIntMap a ->
+  IntMap a
 update f = updateWithKey (const f)
 {-# INLINE update #-}
 
@@ -646,15 +648,15 @@ update f = updateWithKey (const f)
 -- > updateWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "5:new a")]
 -- > updateWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "a")]
 -- > updateWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
-updateWithKey
-    :: (Key -> a -> Maybe a)
-    -> Key
-    -> NEIntMap a
-    -> IntMap a
+updateWithKey ::
+  (Key -> a -> Maybe a) ->
+  Key ->
+  NEIntMap a ->
+  IntMap a
 updateWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> toMap n
-    EQ -> maybe m (flip (insertMinMap k0) m) . f k0 $ v
-    GT -> insertMinMap k0 v . M.updateWithKey f k   $ m
+  LT -> toMap n
+  EQ -> maybe m (flip (insertMinMap k0) m) . f k0 $ v
+  GT -> insertMinMap k0 v . M.updateWithKey f k $ m
 {-# INLINE updateWithKey #-}
 
 -- | /O(min(n,W))/. Lookup and update.
@@ -669,16 +671,17 @@ updateWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
 -- > updateLookupWithKey f 5 (fromList ((5,"a") :| [(3,"b")])) == (Just "5:new a", Data.IntMap.fromList ((3, "b") :| [(5, "5:new a")]))
 -- > updateLookupWithKey f 7 (fromList ((5,"a") :| [(3,"b")])) == (Nothing,  Data.IntMap.fromList ((3, "b") :| [(5, "a")]))
 -- > updateLookupWithKey f 3 (fromList ((5,"a") :| [(3,"b")])) == (Just "b", Data.IntMap.singleton 5 "a")
-updateLookupWithKey
-    :: (Key -> a -> Maybe a)
-    -> Key
-    -> NEIntMap a
-    -> (Maybe a, IntMap a)
+updateLookupWithKey ::
+  (Key -> a -> Maybe a) ->
+  Key ->
+  NEIntMap a ->
+  (Maybe a, IntMap a)
 updateLookupWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> (Nothing, toMap n)
-    EQ -> let u = f k0 v
-          in  (Just v, maybe m (flip (insertMinMap k0) m) u)
-    GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
+  LT -> (Nothing, toMap n)
+  EQ ->
+    let u = f k0 v
+     in (Just v, maybe m (flip (insertMinMap k0) m) u)
+  GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
 {-# INLINE updateLookupWithKey #-}
 
 -- | /O(log n)/. The expression (@'alter' f k map@) alters the value @x@ at
@@ -700,15 +703,15 @@ updateLookupWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
 -- > let f _ = Just "c"
 -- > alter f 7 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "a"), (7, "c")]
 -- > alter f 5 (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3, "b"), (5, "c")]
-alter
-    :: (Maybe a -> Maybe a)
-    -> Key
-    -> NEIntMap a
-    -> IntMap a
+alter ::
+  (Maybe a -> Maybe a) ->
+  Key ->
+  NEIntMap a ->
+  IntMap a
 alter f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> ($ toMap n) . maybe id (insertMinMap k ) $ f Nothing
-    EQ -> ($ m      ) . maybe id (insertMinMap k0) $ f (Just v)
-    GT -> insertMinMap k0 v . M.alter f k $ m
+  LT -> ($ toMap n) . maybe id (insertMinMap k) $ f Nothing
+  EQ -> ($ m) . maybe id (insertMinMap k0) $ f (Just v)
+  GT -> insertMinMap k0 v . M.alter f k $ m
 {-# INLINE alter #-}
 
 -- | /O(log n)/. The expression (@'alterF' f k map@) alters the value @x@
@@ -759,38 +762,43 @@ alter f k n@(NEIntMap k0 v m) = case compare k k0 of
 -- However, it match the shape expected from most functions expecting
 -- lenses, getters, and setters, so can be thought of as a "psuedo-lens",
 -- with virtually the same practical applications as a legitimate lens.
-alterF
-    :: Functor f
-    => (Maybe a -> f (Maybe a))
-    -> Key
-    -> NEIntMap a
-    -> f (IntMap a)
+alterF ::
+  Functor f =>
+  (Maybe a -> f (Maybe a)) ->
+  Key ->
+  NEIntMap a ->
+  f (IntMap a)
 alterF f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> ($ toMap n) . maybe id (insertMinMap k ) <$> f Nothing
-    EQ -> ($ m      ) . maybe id (insertMinMap k0) <$> f (Just v)
-    GT -> insertMinMap k0 v <$> M.alterF f k m
-{-# INLINABLE [2] alterF #-}
+  LT -> ($ toMap n) . maybe id (insertMinMap k) <$> f Nothing
+  EQ -> ($ m) . maybe id (insertMinMap k0) <$> f (Just v)
+  GT -> insertMinMap k0 v <$> M.alterF f k m
+{-# INLINEABLE [2] alterF #-}
 
 -- if f ~ Const b, it's a lookup
 {-# RULES
-"alterF/Const" forall k (f :: Maybe a -> Const b (Maybe a)) . alterF f k = \m -> Const . getConst . f $ lookup k m
- #-}
+"alterF/Const" forall k (f :: Maybe a -> Const b (Maybe a)).
+  alterF f k =
+    \m -> Const . getConst . f $ lookup k m
+  #-}
+
 -- if f ~ Identity, it's an 'alter'
 {-# RULES
-"alterF/Identity" forall k (f :: Maybe a -> Identity (Maybe a)) . alterF f k = Identity . alter (runIdentity . f) k
- #-}
+"alterF/Identity" forall k (f :: Maybe a -> Identity (Maybe a)).
+  alterF f k =
+    Identity . alter (runIdentity . f) k
+  #-}
 
 -- | /O(log n)/. Variant of 'alter' that disallows deletion.  Allows us to
 -- guarantee that the result is also a non-empty IntMap.
-alter'
-    :: (Maybe a -> a)
-    -> Key
-    -> NEIntMap a
-    -> NEIntMap a
+alter' ::
+  (Maybe a -> a) ->
+  Key ->
+  NEIntMap a ->
+  NEIntMap a
 alter' f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> NEIntMap k  (f Nothing) . toMap      $ n
-    EQ -> NEIntMap k0 (f (Just v))             $ m
-    GT -> NEIntMap k0 v . M.alter (Just . f) k $ m
+  LT -> NEIntMap k (f Nothing) . toMap $ n
+  EQ -> NEIntMap k0 (f (Just v)) $ m
+  GT -> NEIntMap k0 v . M.alter (Just . f) k $ m
 {-# INLINE alter' #-}
 
 -- | /O(log n)/. Variant of 'alterF' that disallows deletion.  Allows us to
@@ -815,26 +823,31 @@ alter' f k n@(NEIntMap k0 v m) = case compare k k0 of
 -- map.  The rewrite rule for 'alterF'' has chosen to be faithful to
 -- @Data.IntMap.insertWith@, and /not/ @Data.IntMap.alterF@, for the sake of
 -- a cleaner implementation.
-alterF'
-    :: Functor f
-    => (Maybe a -> f a)
-    -> Key
-    -> NEIntMap a
-    -> f (NEIntMap a)
+alterF' ::
+  Functor f =>
+  (Maybe a -> f a) ->
+  Key ->
+  NEIntMap a ->
+  f (NEIntMap a)
 alterF' f k n@(NEIntMap k0 v m) = case compare k k0 of
-    LT -> flip (NEIntMap k ) (toMap n) <$> f Nothing
-    EQ -> flip (NEIntMap k0) m         <$> f (Just v)
-    GT -> NEIntMap k0 v <$> M.alterF (fmap Just . f) k m
-{-# INLINABLE [2] alterF' #-}
+  LT -> flip (NEIntMap k) (toMap n) <$> f Nothing
+  EQ -> flip (NEIntMap k0) m <$> f (Just v)
+  GT -> NEIntMap k0 v <$> M.alterF (fmap Just . f) k m
+{-# INLINEABLE [2] alterF' #-}
 
 -- if f ~ Const b, it's a lookup
 {-# RULES
-"alterF'/Const" forall k (f :: Maybe a -> Const b a) . alterF' f k = \m -> Const . getConst . f $ lookup k m
- #-}
+"alterF'/Const" forall k (f :: Maybe a -> Const b a).
+  alterF' f k =
+    \m -> Const . getConst . f $ lookup k m
+  #-}
+
 -- if f ~ Identity, it's an insertWith
 {-# RULES
-"alterF'/Identity" forall k (f :: Maybe a -> Identity a) . alterF' f k = Identity . insertWith (\_ -> runIdentity . f . Just) k (runIdentity (f Nothing))
- #-}
+"alterF'/Identity" forall k (f :: Maybe a -> Identity a).
+  alterF' f k =
+    Identity . insertWith (\_ -> runIdentity . f . Just) k (runIdentity (f Nothing))
+  #-}
 
 -- | /O(log n)/. Lookup the value at a key in the map.
 --
@@ -864,14 +877,14 @@ alterF' f k n@(NEIntMap k0 v m) = case compare k k0 of
 --
 -- >   John's currency: Just "Euro"
 -- >   Pete's currency: Nothing
-lookup
-    :: Key
-    -> NEIntMap a
-    -> Maybe a
+lookup ::
+  Key ->
+  NEIntMap a ->
+  Maybe a
 lookup k (NEIntMap k0 v m) = case compare k k0 of
-    LT -> Nothing
-    EQ -> Just v
-    GT -> M.lookup k m
+  LT -> Nothing
+  EQ -> Just v
+  GT -> M.lookup k m
 {-# INLINE lookup #-}
 
 -- | /O(log n)/. Find the value at a key. Returns 'Nothing' when the
@@ -903,15 +916,15 @@ infixl 9 !
 --
 -- > findWithDefault 'x' 1 (fromList ((5,'a') :| [(3,'b')])) == 'x'
 -- > findWithDefault 'x' 5 (fromList ((5,'a') :| [(3,'b')])) == 'a'
-findWithDefault
-    :: a
-    -> Key
-    -> NEIntMap a
-    -> a
+findWithDefault ::
+  a ->
+  Key ->
+  NEIntMap a ->
+  a
 findWithDefault def k (NEIntMap k0 v m) = case compare k k0 of
-    LT -> def
-    EQ -> v
-    GT -> M.findWithDefault def k m
+  LT -> def
+  EQ -> v
+  GT -> M.findWithDefault def k m
 {-# INLINE findWithDefault #-}
 
 -- | /O(log n)/. Is the key a member of the map? See also 'notMember'.
@@ -920,9 +933,9 @@ findWithDefault def k (NEIntMap k0 v m) = case compare k k0 of
 -- > member 1 (fromList ((5,'a') :| [(3,'b')])) == False
 member :: Key -> NEIntMap a -> Bool
 member k (NEIntMap k0 _ m) = case compare k k0 of
-    LT -> False
-    EQ -> True
-    GT -> M.member k m
+  LT -> False
+  EQ -> True
+  GT -> M.member k m
 {-# INLINE member #-}
 
 -- | /O(log n)/. Is the key not a member of the map? See also 'member'.
@@ -931,9 +944,9 @@ member k (NEIntMap k0 _ m) = case compare k k0 of
 -- > notMember 1 (fromList ((5,'a') :| [(3,'b')])) == True
 notMember :: Key -> NEIntMap a -> Bool
 notMember k (NEIntMap k0 _ m) = case compare k k0 of
-    LT -> True
-    EQ -> False
-    GT -> M.notMember k m
+  LT -> True
+  EQ -> False
+  GT -> M.notMember k m
 {-# INLINE notMember #-}
 
 -- | /O(log n)/. Find largest key smaller than the given one and return the
@@ -943,9 +956,9 @@ notMember k (NEIntMap k0 _ m) = case compare k k0 of
 -- > lookupLT 4 (fromList ((3,'a') :| [(5,'b')])) == Just (3, 'a')
 lookupLT :: Key -> NEIntMap a -> Maybe (Key, a)
 lookupLT k (NEIntMap k0 v m) = case compare k k0 of
-    LT -> Nothing
-    EQ -> Nothing
-    GT -> M.lookupLT k m <|> Just (k0, v)
+  LT -> Nothing
+  EQ -> Nothing
+  GT -> M.lookupLT k m <|> Just (k0, v)
 {-# INLINE lookupLT #-}
 
 -- | /O(log n)/. Find smallest key greater than the given one and return the
@@ -955,9 +968,9 @@ lookupLT k (NEIntMap k0 v m) = case compare k k0 of
 -- > lookupGT 5 (fromList ((3,'a') :| [(5,'b')])) == Nothing
 lookupGT :: Key -> NEIntMap a -> Maybe (Key, a)
 lookupGT k (NEIntMap k0 v m) = case compare k k0 of
-    LT -> Just (k0, v)
-    EQ -> lookupMinMap m
-    GT -> M.lookupGT k m
+  LT -> Just (k0, v)
+  EQ -> lookupMinMap m
+  GT -> M.lookupGT k m
 {-# INLINE lookupGT #-}
 
 -- | /O(log n)/. Find largest key smaller or equal to the given one and return
@@ -968,9 +981,9 @@ lookupGT k (NEIntMap k0 v m) = case compare k k0 of
 -- > lookupLE 5 (fromList ((3,'a') :| [(5,'b')])) == Just (5, 'b')
 lookupLE :: Key -> NEIntMap a -> Maybe (Key, a)
 lookupLE k (NEIntMap k0 v m) = case compare k k0 of
-    LT -> Nothing
-    EQ -> Just (k0, v)
-    GT -> M.lookupLE k m <|> Just (k0, v)
+  LT -> Nothing
+  EQ -> Just (k0, v)
+  GT -> M.lookupLE k m <|> Just (k0, v)
 {-# INLINE lookupLE #-}
 
 -- | /O(log n)/. Find smallest key greater or equal to the given one and return
@@ -981,23 +994,23 @@ lookupLE k (NEIntMap k0 v m) = case compare k k0 of
 -- > lookupGE 6 (fromList ((3,'a') :| [(5,'b')])) == Nothing
 lookupGE :: Key -> NEIntMap a -> Maybe (Key, a)
 lookupGE k (NEIntMap k0 v m) = case compare k k0 of
-    LT -> Just (k0, v)
-    EQ -> Just (k0, v)
-    GT -> M.lookupGE k m
+  LT -> Just (k0, v)
+  EQ -> Just (k0, v)
+  GT -> M.lookupGE k m
 {-# INLINE lookupGE #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Union with a combining function.
 --
 -- > unionWith (++) (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "aA"), (7, "C")])
-unionWith
-    :: (a -> a -> a)
-    -> NEIntMap a
-    -> NEIntMap a
-    -> NEIntMap a
+unionWith ::
+  (a -> a -> a) ->
+  NEIntMap a ->
+  NEIntMap a ->
+  NEIntMap a
 unionWith f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
-    LT -> NEIntMap k1 v1        . M.unionWith f m1 . toMap $ n2
-    EQ -> NEIntMap k1 (f v1 v2) . M.unionWith f m1         $ m2
-    GT -> NEIntMap k2 v2        . M.unionWith f (toMap n1) $ m2
+  LT -> NEIntMap k1 v1 . M.unionWith f m1 . toMap $ n2
+  EQ -> NEIntMap k1 (f v1 v2) . M.unionWith f m1 $ m2
+  GT -> NEIntMap k2 v2 . M.unionWith f (toMap n1) $ m2
 {-# INLINE unionWith #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/.
@@ -1005,15 +1018,15 @@ unionWith f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 o
 --
 -- > let f key left_value right_value = (show key) ++ ":" ++ left_value ++ "|" ++ right_value
 -- > unionWithKey f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "5:a|A"), (7, "C")])
-unionWithKey
-    :: (Key -> a -> a -> a)
-    -> NEIntMap a
-    -> NEIntMap a
-    -> NEIntMap a
+unionWithKey ::
+  (Key -> a -> a -> a) ->
+  NEIntMap a ->
+  NEIntMap a ->
+  NEIntMap a
 unionWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
-    LT -> NEIntMap k1 v1           . M.unionWithKey f m1 . toMap $ n2
-    EQ -> NEIntMap k1 (f k1 v1 v2) . M.unionWithKey f m1         $ m2
-    GT -> NEIntMap k2 v2           . M.unionWithKey f (toMap n1) $ m2
+  LT -> NEIntMap k1 v1 . M.unionWithKey f m1 . toMap $ n2
+  EQ -> NEIntMap k1 (f k1 v1 v2) . M.unionWithKey f m1 $ m2
+  GT -> NEIntMap k2 v2 . M.unionWithKey f (toMap n1) $ m2
 {-# INLINE unionWithKey #-}
 
 -- | The union of a non-empty list of maps, with a combining operation:
@@ -1021,12 +1034,12 @@ unionWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k
 --
 -- > unionsWith (++) (fromList ((5, "a") :| [(3, "b")]) :| [fromList ((5, "A") :| [(7, "C")]), fromList ((5, "A3") :| [(3, "B3")])])
 -- >     == fromList ((3, "bB3") :| [(5, "aAA3"), (7, "C")])
-unionsWith
-    :: Foldable1 f
-    => (a -> a -> a)
-    -> f (NEIntMap a)
-    -> NEIntMap a
-unionsWith f (F1.toNonEmpty->(m :| ms)) = F.foldl' (unionWith f) m ms
+unionsWith ::
+  Foldable1 f =>
+  (a -> a -> a) ->
+  f (NEIntMap a) ->
+  NEIntMap a
+unionsWith f (F1.toNonEmpty -> (m :| ms)) = F.foldl' (unionWith f) m ms
 {-# INLINE unionsWith #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two maps.
@@ -1036,24 +1049,24 @@ unionsWith f (F1.toNonEmpty->(m :| ms)) = F.foldl' (unionWith f) m ms
 -- a subset of the second map.
 --
 -- > difference (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.IntMap.singleton 3 "b"
-difference
-    :: NEIntMap a
-    -> NEIntMap b
-    -> IntMap a
+difference ::
+  NEIntMap a ->
+  NEIntMap b ->
+  IntMap a
 difference n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 _ m2) = case compare k1 k2 of
-    -- k1 is not in n2, so cannot be deleted
-    LT -> insertMinMap k1 v1 $ m1 `M.difference` toMap n2
-    -- k2 deletes k1, and only k1
-    EQ -> m1 `M.difference` m2
-    -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
-    GT -> toMap n1 `M.difference` m2
+  -- k1 is not in n2, so cannot be deleted
+  LT -> insertMinMap k1 v1 $ m1 `M.difference` toMap n2
+  -- k2 deletes k1, and only k1
+  EQ -> m1 `M.difference` m2
+  -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
+  GT -> toMap n1 `M.difference` m2
 {-# INLINE difference #-}
 
 -- | Same as 'difference'.
-(\\)
-    :: NEIntMap a
-    -> NEIntMap b
-    -> IntMap a
+(\\) ::
+  NEIntMap a ->
+  NEIntMap b ->
+  IntMap a
 (\\) = difference
 {-# INLINE (\\) #-}
 
@@ -1070,11 +1083,11 @@ difference n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 _ m2) = case compare k1 k2 of
 -- > let f al ar = if al == "b" then Just (al ++ ":" ++ ar) else Nothing
 -- > differenceWith f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(3, "B"), (7, "C")]))
 -- >     == Data.IntMap.singleton 3 "b:B"
-differenceWith
-    :: (a -> b -> Maybe a)
-    -> NEIntMap a
-    -> NEIntMap b
-    -> IntMap a
+differenceWith ::
+  (a -> b -> Maybe a) ->
+  NEIntMap a ->
+  NEIntMap b ->
+  IntMap a
 differenceWith f = differenceWithKey (const f)
 {-# INLINE differenceWith #-}
 
@@ -1090,18 +1103,18 @@ differenceWith f = differenceWithKey (const f)
 -- > let f k al ar = if al == "b" then Just ((show k) ++ ":" ++ al ++ "|" ++ ar) else Nothing
 -- > differenceWithKey f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(3, "B"), (10, "C")]))
 -- >     == Data.IntMap.singleton 3 "3:b|B"
-differenceWithKey
-    :: (Key -> a -> b -> Maybe a)
-    -> NEIntMap a
-    -> NEIntMap b
-    -> IntMap a
+differenceWithKey ::
+  (Key -> a -> b -> Maybe a) ->
+  NEIntMap a ->
+  NEIntMap b ->
+  IntMap a
 differenceWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
-    -- k1 is not in n2, so cannot be deleted
-    LT -> insertMinMap k1 v1 $ M.differenceWithKey f m1 (toMap n2)
-    -- k2 deletes k1, and only k1
-    EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinMap k1) $ f k1 v1 v2
-    -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
-    GT -> M.differenceWithKey f (toMap n1) m2
+  -- k1 is not in n2, so cannot be deleted
+  LT -> insertMinMap k1 v1 $ M.differenceWithKey f m1 (toMap n2)
+  -- k2 deletes k1, and only k1
+  EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinMap k1) $ f k1 v1 v2
+  -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
+  GT -> M.differenceWithKey f (toMap n1) m2
 {-# INLINE differenceWithKey #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Intersection of two maps.
@@ -1112,17 +1125,17 @@ differenceWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare
 -- keys in common.
 --
 -- > intersection (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.IntMap.singleton 5 "a"
-intersection
-    :: NEIntMap a
-    -> NEIntMap b
-    -> IntMap a
+intersection ::
+  NEIntMap a ->
+  NEIntMap b ->
+  IntMap a
 intersection n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 _ m2) = case compare k1 k2 of
-    -- k1 is not in n2
-    LT -> m1 `M.intersection` toMap n2
-    -- k1 and k2 are a part of the result
-    EQ -> insertMinMap k1 v1 $ m1 `M.intersection` m2
-    -- k2 is not in n1
-    GT -> toMap n1 `M.intersection` m2
+  -- k1 is not in n2
+  LT -> m1 `M.intersection` toMap n2
+  -- k1 and k2 are a part of the result
+  EQ -> insertMinMap k1 v1 $ m1 `M.intersection` m2
+  -- k2 is not in n1
+  GT -> toMap n1 `M.intersection` m2
 {-# INLINE intersection #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Intersection with a combining function.
@@ -1131,11 +1144,11 @@ intersection n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 _ m2) = case compare k1 k2 o
 -- keys in common.
 --
 -- > intersectionWith (++) (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.IntMap.singleton 5 "aA"
-intersectionWith
-    :: (a -> b -> c)
-    -> NEIntMap a
-    -> NEIntMap b
-    -> IntMap c
+intersectionWith ::
+  (a -> b -> c) ->
+  NEIntMap a ->
+  NEIntMap b ->
+  IntMap c
 intersectionWith f = intersectionWithKey (const f)
 {-# INLINE intersectionWith #-}
 
@@ -1146,18 +1159,18 @@ intersectionWith f = intersectionWithKey (const f)
 --
 -- > let f k al ar = (show k) ++ ":" ++ al ++ "|" ++ ar
 -- > intersectionWithKey f (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == Data.IntMap.singleton 5 "5:a|A"
-intersectionWithKey
-    :: (Key -> a -> b -> c)
-    -> NEIntMap a
-    -> NEIntMap b
-    -> IntMap c
+intersectionWithKey ::
+  (Key -> a -> b -> c) ->
+  NEIntMap a ->
+  NEIntMap b ->
+  IntMap c
 intersectionWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
-    -- k1 is not in n2
-    LT -> M.intersectionWithKey f m1 (toMap n2)
-    -- k1 and k2 are a part of the result
-    EQ -> insertMinMap k1 (f k1 v1 v2) $ M.intersectionWithKey f m1 m2
-    -- k2 is not in n1
-    GT -> M.intersectionWithKey f (toMap n1) m2
+  -- k1 is not in n2
+  LT -> M.intersectionWithKey f m1 (toMap n2)
+  -- k1 and k2 are a part of the result
+  EQ -> insertMinMap k1 (f k1 v1 v2) $ M.intersectionWithKey f m1 m2
+  -- k2 is not in n1
+  GT -> M.intersectionWithKey f (toMap n1) m2
 {-# INLINE intersectionWithKey #-}
 
 -- | /O(n)/. IntMap a function over all values in the map.
@@ -1167,25 +1180,29 @@ intersectionWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compa
 mapWithKey :: (Key -> a -> b) -> NEIntMap a -> NEIntMap b
 mapWithKey f (NEIntMap k v m) = NEIntMap k (f k v) (M.mapWithKey f m)
 {-# NOINLINE [1] mapWithKey #-}
+
 {-# RULES
-"mapWithKey/mapWithKey" forall f g xs . mapWithKey f (mapWithKey g xs) =
-  mapWithKey (\k a -> f k (g k a)) xs
-"mapWithKey/map" forall f g xs . mapWithKey f (map g xs) =
-  mapWithKey (\k a -> f k (g a)) xs
-"map/mapWithKey" forall f g xs . map f (mapWithKey g xs) =
-  mapWithKey (\k a -> f (g k a)) xs
- #-}
+"mapWithKey/mapWithKey" forall f g xs.
+  mapWithKey f (mapWithKey g xs) =
+    mapWithKey (\k a -> f k (g k a)) xs
+"mapWithKey/map" forall f g xs.
+  mapWithKey f (map g xs) =
+    mapWithKey (\k a -> f k (g a)) xs
+"map/mapWithKey" forall f g xs.
+  map f (mapWithKey g xs) =
+    mapWithKey (\k a -> f (g k a)) xs
+  #-}
 
 -- | /O(n)/. The function 'mapAccum' threads an accumulating argument
 -- through the map in ascending order of keys.
 --
 -- > let f a b = (a ++ b, b ++ "X")
 -- > mapAccum f "Everything: " (fromList ((5,"a") :| [(3,"b")])) == ("Everything: ba", fromList ((3, "bX") :| [(5, "aX")]))
-mapAccum
-    :: (a -> b -> (a, c))
-    -> a
-    -> NEIntMap b
-    -> (a, NEIntMap c)
+mapAccum ::
+  (a -> b -> (a, c)) ->
+  a ->
+  NEIntMap b ->
+  (a, NEIntMap c)
 mapAccum f = mapAccumWithKey (\x _ -> f x)
 {-# INLINE mapAccum #-}
 
@@ -1194,11 +1211,11 @@ mapAccum f = mapAccumWithKey (\x _ -> f x)
 --
 -- > let f a k b = (a ++ " " ++ (show k) ++ "-" ++ b, b ++ "X")
 -- > mapAccumWithKey f "Everything:" (fromList ((5,"a") :| [(3,"b")])) == ("Everything: 3-b 5-a", fromList ((3, "bX") :| [(5, "aX")]))
-mapAccumWithKey
-    :: (a -> Key -> b -> (a, c))
-    -> a
-    -> NEIntMap b
-    -> (a, NEIntMap c)
+mapAccumWithKey ::
+  (a -> Key -> b -> (a, c)) ->
+  a ->
+  NEIntMap b ->
+  (a, NEIntMap c)
 mapAccumWithKey f z0 (NEIntMap k v m) = (z2, NEIntMap k v' m')
   where
     ~(z1, v') = f z0 k v
@@ -1207,11 +1224,11 @@ mapAccumWithKey f z0 (NEIntMap k v m) = (z2, NEIntMap k v' m')
 
 -- | /O(n)/. The function 'mapAccumRWithKey' threads an accumulating
 -- argument through the map in descending order of keys.
-mapAccumRWithKey
-    :: (a -> Key -> b -> (a, c))
-    -> a
-    -> NEIntMap b
-    -> (a, NEIntMap c)
+mapAccumRWithKey ::
+  (a -> Key -> b -> (a, c)) ->
+  a ->
+  NEIntMap b ->
+  (a, NEIntMap c)
 mapAccumRWithKey f z0 (NEIntMap k v m) = (z2, NEIntMap k v' m')
   where
     ~(z1, m') = M.mapAccumRWithKey f z0 m
@@ -1232,15 +1249,16 @@ mapAccumRWithKey f z0 (NEIntMap k v m) = (z2, NEIntMap k v' m')
 -- > mapKeys (+ 1) (fromList ((5,"a") :| [(3,"b")]))                        == fromList ((4, "b") :| [(6, "a")])
 -- > mapKeys (\ _ -> 1) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 1 "c"
 -- > mapKeys (\ _ -> 3) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 3 "c"
-mapKeys
-    :: (Key -> Key)
-    -> NEIntMap a
-    -> NEIntMap a
-mapKeys f (NEIntMap k0 v0 m) = fromListWith const
-                             . ((f k0, v0) :|)
-                             . M.foldrWithKey (\k v kvs -> (f k, v) : kvs) []
-                             $ m
-{-# INLINABLE mapKeys #-}
+mapKeys ::
+  (Key -> Key) ->
+  NEIntMap a ->
+  NEIntMap a
+mapKeys f (NEIntMap k0 v0 m) =
+  fromListWith const
+    . ((f k0, v0) :|)
+    . M.foldrWithKey (\k v kvs -> (f k, v) : kvs) []
+    $ m
+{-# INLINEABLE mapKeys #-}
 
 -- | /O(n*log n)/.
 -- @'mapKeysWith' c f s@ is the map obtained by applying @f@ to each key of @s@.
@@ -1256,16 +1274,17 @@ mapKeys f (NEIntMap k0 v0 m) = fromListWith const
 --
 -- > mapKeysWith (++) (\ _ -> 1) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 1 "cdab"
 -- > mapKeysWith (++) (\ _ -> 3) (fromList ((1,"b") :| [(2,"a"), (3,"d"), (4,"c")])) == singleton 3 "cdab"
-mapKeysWith
-    :: (a -> a -> a)
-    -> (Key -> Key)
-    -> NEIntMap a
-    -> NEIntMap a
-mapKeysWith c f (NEIntMap k0 v0 m) = fromListWith c
-                                   . ((f k0, v0) :|)
-                                   . M.foldrWithKey (\k v kvs -> (f k, v) : kvs) []
-                                   $ m
-{-# INLINABLE mapKeysWith #-}
+mapKeysWith ::
+  (a -> a -> a) ->
+  (Key -> Key) ->
+  NEIntMap a ->
+  NEIntMap a
+mapKeysWith c f (NEIntMap k0 v0 m) =
+  fromListWith c
+    . ((f k0, v0) :|)
+    . M.foldrWithKey (\k v kvs -> (f k, v) : kvs) []
+    $ m
+{-# INLINEABLE mapKeysWith #-}
 
 -- | /O(n)/.
 -- @'mapKeysMonotonic' f s == 'mapKeys' f s@, but works only when @f@
@@ -1288,13 +1307,14 @@ mapKeysWith c f (NEIntMap k0 v0 m) = fromListWith c
 -- > mapKeysMonotonic (\ k -> k * 2) (fromList ((5,"a") :| [(3,"b")])) == fromList ((6, "b") :| [(10, "a")])
 -- > valid (mapKeysMonotonic (\ k -> k * 2) (fromList ((5,"a") :| [(3,"b")]))) == True
 -- > valid (mapKeysMonotonic (\ _ -> 1)     (fromList ((5,"a") :| [(3,"b")]))) == False
-mapKeysMonotonic
-    :: (Key -> Key)
-    -> NEIntMap a
-    -> NEIntMap a
-mapKeysMonotonic f (NEIntMap k v m) = NEIntMap (f k) v
-                                 . M.mapKeysMonotonic f
-                                 $ m
+mapKeysMonotonic ::
+  (Key -> Key) ->
+  NEIntMap a ->
+  NEIntMap a
+mapKeysMonotonic f (NEIntMap k v m) =
+  NEIntMap (f k) v
+    . M.mapKeysMonotonic f
+    $ m
 {-# INLINE mapKeysMonotonic #-}
 
 -- | /O(n)/. Fold the keys and values in the map using the given right-associative
@@ -1324,8 +1344,8 @@ foldlWithKey f z (NEIntMap k v m) = M.foldlWithKey f (f z k v) m
 -- function is strict in the starting value.
 foldr1' :: (a -> a -> a) -> NEIntMap a -> a
 foldr1' f (NEIntMap _ v m) = case M.maxView m of
-    Nothing      -> v
-    Just (y, m') -> let !z = M.foldr' f y m' in v `f` z
+  Nothing -> v
+  Just (y, m') -> let !z = M.foldr' f y m' in v `f` z
 {-# INLINE foldr1' #-}
 
 -- | /O(n)/. A strict version of 'foldl1'. Each application of the operator
@@ -1401,13 +1421,13 @@ toDescList (NEIntMap k0 v0 m) = M.foldlWithKey' go ((k0, v0) :| []) m
 -- > filter (> "a") (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 3 "b"
 -- > filter (> "x") (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.empty
 -- > filter (< "a") (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.empty
-filter
-    :: (a -> Bool)
-    -> NEIntMap a
-    -> IntMap a
+filter ::
+  (a -> Bool) ->
+  NEIntMap a ->
+  IntMap a
 filter f (NEIntMap k v m)
-    | f v       = insertMinMap k v . M.filter f $ m
-    | otherwise = M.filter f m
+  | f v = insertMinMap k v . M.filter f $ m
+  | otherwise = M.filter f m
 {-# INLINE filter #-}
 
 -- | /O(n)/. Filter all keys\/values that satisfy the predicate.
@@ -1416,13 +1436,13 @@ filter f (NEIntMap k v m)
 -- potentailly filter out all items in the original 'NEIntMap'.
 --
 -- > filterWithKey (\k _ -> k > 4) (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
-filterWithKey
-    :: (Key -> a -> Bool)
-    -> NEIntMap a
-    -> IntMap a
+filterWithKey ::
+  (Key -> a -> Bool) ->
+  NEIntMap a ->
+  IntMap a
 filterWithKey f (NEIntMap k v m)
-    | f k v     = insertMinMap k v . M.filterWithKey f $ m
-    | otherwise = M.filterWithKey f m
+  | f k v = insertMinMap k v . M.filterWithKey f $ m
+  | otherwise = M.filterWithKey f m
 {-# INLINE filterWithKey #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Restrict an 'NEIntMap' to only those keys
@@ -1432,19 +1452,19 @@ filterWithKey f (NEIntMap k v m)
 -- m \`restrictKeys\` s = 'filterWithKey' (\k _ -> k ``Set.member`` s) m
 -- m \`restrictKeys\` s = m ``intersection`` 'fromSet' (const ()) s
 -- @
-restrictKeys
-    :: NEIntMap a
-    -> IntSet
-    -> IntMap a
+restrictKeys ::
+  NEIntMap a ->
+  IntSet ->
+  IntMap a
 restrictKeys n@(NEIntMap k v m) xs = case S.minView xs of
-    Nothing      -> M.empty
-    Just (y, ys) -> case compare k y of
-      -- k is not in xs
-      LT -> m `M.restrictKeys` xs
-      -- k and y are a part of the result
-      EQ -> insertMinMap k v $ m `M.restrictKeys` ys
-      -- y is not in m
-      GT -> toMap n `M.restrictKeys` ys
+  Nothing -> M.empty
+  Just (y, ys) -> case compare k y of
+    -- k is not in xs
+    LT -> m `M.restrictKeys` xs
+    -- k and y are a part of the result
+    EQ -> insertMinMap k v $ m `M.restrictKeys` ys
+    -- y is not in m
+    GT -> toMap n `M.restrictKeys` ys
 {-# INLINE restrictKeys #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Remove all keys in a 'Data.Set.Set' from
@@ -1454,19 +1474,19 @@ restrictKeys n@(NEIntMap k v m) xs = case S.minView xs of
 -- m \`withoutKeys\` s = 'filterWithKey' (\k _ -> k ``Set.notMember`` s) m
 -- m \`withoutKeys\` s = m ``difference`` 'fromSet' (const ()) s
 -- @
-withoutKeys
-    :: NEIntMap a
-    -> IntSet
-    -> IntMap a
+withoutKeys ::
+  NEIntMap a ->
+  IntSet ->
+  IntMap a
 withoutKeys n@(NEIntMap k v m) xs = case S.minView xs of
-    Nothing      -> toMap n
-    Just (y, ys) -> case compare k y of
-      -- k is not in xs, so cannot be deleted
-      LT -> insertMinMap k v $ m `M.withoutKeys` xs
-      -- y deletes k, and only k
-      EQ -> m `M.withoutKeys` ys
-      -- y is not in n, so cannot delete anything, so we can just difference n and ys
-      GT -> toMap n `M.withoutKeys` ys
+  Nothing -> toMap n
+  Just (y, ys) -> case compare k y of
+    -- k is not in xs, so cannot be deleted
+    LT -> insertMinMap k v $ m `M.withoutKeys` xs
+    -- y deletes k, and only k
+    EQ -> m `M.withoutKeys` ys
+    -- y is not in n, so cannot delete anything, so we can just difference n and ys
+    GT -> toMap n `M.withoutKeys` ys
 {-# INLINE withoutKeys #-}
 
 -- | /O(n)/. Partition the map according to a predicate.
@@ -1484,10 +1504,10 @@ withoutKeys n@(NEIntMap k v m) xs = case S.minView xs of
 -- > partition (> "a") (fromList ((5,"a") :| [(3,"b")])) == These (singleton 3 "b") (singleton 5 "a")
 -- > partition (< "x") (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
 -- > partition (> "x") (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
-partition
-    :: (a -> Bool)
-    -> NEIntMap a
-    -> These (NEIntMap a) (NEIntMap a)
+partition ::
+  (a -> Bool) ->
+  NEIntMap a ->
+  These (NEIntMap a) (NEIntMap a)
 partition f = partitionWithKey (const f)
 {-# INLINE partition #-}
 
@@ -1508,26 +1528,26 @@ partition f = partitionWithKey (const f)
 -- > partitionWithKey (\ k _ -> k > 3) (fromList ((5,"a") :| [(3,"b")])) == These (singleton 5 "a") (singleton 3 "b")
 -- > partitionWithKey (\ k _ -> k < 7) (fromList ((5,"a") :| [(3,"b")])) == This  (fromList ((3, "b") :| [(5, "a")]))
 -- > partitionWithKey (\ k _ -> k > 7) (fromList ((5,"a") :| [(3,"b")])) == That  (fromList ((3, "b") :| [(5, "a")]))
-partitionWithKey
-    :: (Key -> a -> Bool)
-    -> NEIntMap a
-    -> These (NEIntMap a) (NEIntMap a)
+partitionWithKey ::
+  (Key -> a -> Bool) ->
+  NEIntMap a ->
+  These (NEIntMap a) (NEIntMap a)
 partitionWithKey f n@(NEIntMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
-    (Nothing, Nothing)
-      | f k v     -> This  n
-      | otherwise -> That                        n
-    (Just n1, Nothing)
-      | f k v     -> This  n
-      | otherwise -> These n1                    (singleton k v)
-    (Nothing, Just n2)
-      | f k v     -> These (singleton k v)       n2
-      | otherwise -> That                        n
-    (Just n1, Just n2)
-      | f k v     -> These (insertMapMin k v m1) n2
-      | otherwise -> These n1                    (insertMapMin k v m2)
+  (Nothing, Nothing)
+    | f k v -> This n
+    | otherwise -> That n
+  (Just n1, Nothing)
+    | f k v -> This n
+    | otherwise -> These n1 (singleton k v)
+  (Nothing, Just n2)
+    | f k v -> These (singleton k v) n2
+    | otherwise -> That n
+  (Just n1, Just n2)
+    | f k v -> These (insertMapMin k v m1) n2
+    | otherwise -> These n1 (insertMapMin k v m2)
   where
     (m1, m2) = M.partitionWithKey f m0
-{-# INLINABLE partitionWithKey #-}
+{-# INLINEABLE partitionWithKey #-}
 
 -- | /O(n)/. Map values and collect the 'Just' results.
 --
@@ -1536,10 +1556,10 @@ partitionWithKey f n@(NEIntMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) o
 --
 -- > let f x = if x == "a" then Just "new a" else Nothing
 -- > mapMaybe f (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "new a"
-mapMaybe
-    :: (a -> Maybe b)
-    -> NEIntMap a
-    -> IntMap b
+mapMaybe ::
+  (a -> Maybe b) ->
+  NEIntMap a ->
+  IntMap b
 mapMaybe f = mapMaybeWithKey (const f)
 {-# INLINE mapMaybe #-}
 
@@ -1550,13 +1570,14 @@ mapMaybe f = mapMaybeWithKey (const f)
 --
 -- > let f k _ = if k < 5 then Just ("key : " ++ (show k)) else Nothing
 -- > mapMaybeWithKey f (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 3 "key : 3"
-mapMaybeWithKey
-    :: (Key -> a -> Maybe b)
-    -> NEIntMap a
-    -> IntMap b
-mapMaybeWithKey f (NEIntMap k v m) = ($ M.mapMaybeWithKey f m)
-                                . maybe id (insertMinMap k)
-                                $ f k v
+mapMaybeWithKey ::
+  (Key -> a -> Maybe b) ->
+  NEIntMap a ->
+  IntMap b
+mapMaybeWithKey f (NEIntMap k v m) =
+  ($ M.mapMaybeWithKey f m)
+    . maybe id (insertMinMap k)
+    $ f k v
 {-# INLINE mapMaybeWithKey #-}
 
 -- | /O(n)/. Map values and separate the 'Left' and 'Right' results.
@@ -1574,10 +1595,10 @@ mapMaybeWithKey f (NEIntMap k v m) = ($ M.mapMaybeWithKey f m)
 -- >
 -- > mapEither (\ a -> Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
 -- >     == That (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
-mapEither
-    :: (a -> Either b c)
-    -> NEIntMap a
-    -> These (NEIntMap b) (NEIntMap c)
+mapEither ::
+  (a -> Either b c) ->
+  NEIntMap a ->
+  These (NEIntMap b) (NEIntMap c)
 mapEither f = mapEitherWithKey (const f)
 {-# INLINE mapEither #-}
 
@@ -1596,26 +1617,26 @@ mapEither f = mapEitherWithKey (const f)
 -- >
 -- > mapEitherWithKey (\_ a -> Right a) (fromList ((5,"a") :| [(3,"b"), (1,"x"), (7,"z")]))
 -- >     == That (fromList ((1,"x") :| [(3,"b"), (5,"a"), (7,"z")]))
-mapEitherWithKey
-    :: (Key -> a -> Either b c)
-    -> NEIntMap a
-    -> These (NEIntMap b) (NEIntMap c)
+mapEitherWithKey ::
+  (Key -> a -> Either b c) ->
+  NEIntMap a ->
+  These (NEIntMap b) (NEIntMap c)
 mapEitherWithKey f (NEIntMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
-    (Nothing, Nothing) -> case f k v of
-      Left  v' -> This  (singleton k v')
-      Right v' -> That                         (singleton k v')
-    (Just n1, Nothing) -> case f k v of
-      Left  v' -> This  (insertMapMin k v' m1)
-      Right v' -> These n1                     (singleton k v')
-    (Nothing, Just n2) -> case f k v of
-      Left  v' -> These (singleton k v')       n2
-      Right v' -> That                         (insertMapMin k v' m2)
-    (Just n1, Just n2) -> case f k v of
-      Left  v' -> These (insertMapMin k v' m1) n2
-      Right v' -> These n1                     (insertMapMin k v' m2)
+  (Nothing, Nothing) -> case f k v of
+    Left v' -> This (singleton k v')
+    Right v' -> That (singleton k v')
+  (Just n1, Nothing) -> case f k v of
+    Left v' -> This (insertMapMin k v' m1)
+    Right v' -> These n1 (singleton k v')
+  (Nothing, Just n2) -> case f k v of
+    Left v' -> These (singleton k v') n2
+    Right v' -> That (insertMapMin k v' m2)
+  (Just n1, Just n2) -> case f k v of
+    Left v' -> These (insertMapMin k v' m1) n2
+    Right v' -> These n1 (insertMapMin k v' m2)
   where
     (m1, m2) = M.mapEitherWithKey f m0
-{-# INLINABLE mapEitherWithKey #-}
+{-# INLINEABLE mapEitherWithKey #-}
 
 -- | /O(log n)/. The expression (@'split' k map@) is potentially a 'These'
 -- containing up to two 'NEIntMap's based on splitting the map into maps
@@ -1640,21 +1661,21 @@ mapEitherWithKey f (NEIntMap k v m0) = case (nonEmptyMap m1, nonEmptyMap m2) of
 -- > split 5 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (singleton 3 "b")                  )
 -- > split 6 (fromList ((5,"a") :| [(3,"b")])) == Just (This  (fromList ((3,"b") :| [(5,"a")]))  )
 -- > split 5 (singleton 5 "a")                 == Nothing
-split
-    :: Key
-    -> NEIntMap a
-    -> Maybe (These (NEIntMap a) (NEIntMap a))
+split ::
+  Key ->
+  NEIntMap a ->
+  Maybe (These (NEIntMap a) (NEIntMap a))
 split k n@(NEIntMap k0 v m0) = case compare k k0 of
-    LT -> Just $ That n
-    EQ -> That <$> nonEmptyMap m0
-    GT -> Just $ case (nonEmptyMap m1, nonEmptyMap m2) of
-      (Nothing, Nothing) -> This  (singleton k0 v)
-      (Just _ , Nothing) -> This  (insertMapMin k0 v m1)
-      (Nothing, Just n2) -> These (singleton k0 v)       n2
-      (Just _ , Just n2) -> These (insertMapMin k0 v m1) n2
+  LT -> Just $ That n
+  EQ -> That <$> nonEmptyMap m0
+  GT -> Just $ case (nonEmptyMap m1, nonEmptyMap m2) of
+    (Nothing, Nothing) -> This (singleton k0 v)
+    (Just _, Nothing) -> This (insertMapMin k0 v m1)
+    (Nothing, Just n2) -> These (singleton k0 v) n2
+    (Just _, Just n2) -> These (insertMapMin k0 v m1) n2
   where
     (m1, m2) = M.split k m0
-{-# INLINABLE split #-}
+{-# INLINEABLE split #-}
 
 -- | /O(log n)/. The expression (@'splitLookup' k map@) splits a map just
 -- like 'split' but also returns @'lookup' k map@, as the first field in
@@ -1666,21 +1687,21 @@ split k n@(NEIntMap k0 v m0) = case compare k k0 of
 -- > splitLookup 5 (fromList ((5,"a") :| [(3,"b")])) == These "a" (This  (singleton 3 "b"))
 -- > splitLookup 6 (fromList ((5,"a") :| [(3,"b")])) == That      (This  (fromList ((3,"b") :| [(5,"a")])))
 -- > splitLookup 5 (singleton 5 "a")                 == This  "a"
-splitLookup
-    :: Key
-    -> NEIntMap a
-    -> These a (These (NEIntMap a) (NEIntMap a))
+splitLookup ::
+  Key ->
+  NEIntMap a ->
+  These a (These (NEIntMap a) (NEIntMap a))
 splitLookup k n@(NEIntMap k0 v0 m0) = case compare k k0 of
-    LT -> That . That $ n
-    EQ -> maybe (This v0) (These v0 . That) . nonEmptyMap $ m0
-    GT -> maybe That These v $ case (nonEmptyMap m1, nonEmptyMap m2) of
-      (Nothing, Nothing) -> This  (singleton k0 v0)
-      (Just _ , Nothing) -> This  (insertMapMin k0 v0 m1)
-      (Nothing, Just n2) -> These (singleton k0 v0)       n2
-      (Just _ , Just n2) -> These (insertMapMin k0 v0 m1) n2
+  LT -> That . That $ n
+  EQ -> maybe (This v0) (These v0 . That) . nonEmptyMap $ m0
+  GT -> maybe That These v $ case (nonEmptyMap m1, nonEmptyMap m2) of
+    (Nothing, Nothing) -> This (singleton k0 v0)
+    (Just _, Nothing) -> This (insertMapMin k0 v0 m1)
+    (Nothing, Just n2) -> These (singleton k0 v0) n2
+    (Just _, Just n2) -> These (insertMapMin k0 v0 m1) n2
   where
     (m1, v, m2) = M.splitLookup k m0
-{-# INLINABLE splitLookup #-}
+{-# INLINEABLE splitLookup #-}
 
 -- | /O(1)/.  Decompose a map into pieces based on the structure of the
 -- underlying tree.  This function is useful for consuming a map in
@@ -1694,11 +1715,12 @@ splitLookup k n@(NEIntMap k0 v0 m0) = case compare k k0 of
 -- Note that the current implementation does not return more than four
 -- submaps, but you should not depend on this behaviour because it can
 -- change in the future without notice.
-splitRoot
-    :: NEIntMap a
-    -> NonEmpty (NEIntMap a)
-splitRoot (NEIntMap k v m) = singleton k v
-                       :| Maybe.mapMaybe nonEmptyMap (M.splitRoot m)
+splitRoot ::
+  NEIntMap a ->
+  NonEmpty (NEIntMap a)
+splitRoot (NEIntMap k v m) =
+  singleton k v
+    :| Maybe.mapMaybe nonEmptyMap (M.splitRoot m)
 {-# INLINE splitRoot #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/.
@@ -1722,13 +1744,14 @@ isSubmapOf = isSubmapOfBy (==)
 -- > isSubmapOfBy (==) (singleton 'a' 2) (fromList (('a',1) :| [('b',2)]))
 -- > isSubmapOfBy (<)  (singleton 'a' 1) (fromList (('a',1) :| [('b',2)]))
 -- > isSubmapOfBy (==) (fromList (('a',1) :| [('b',2)])) (singleton 'a' 1)
-isSubmapOfBy
-    :: (a -> b -> Bool)
-    -> NEIntMap a
-    -> NEIntMap b
-    -> Bool
-isSubmapOfBy f (NEIntMap k v m0) (toMap->m1) = kvSub
-                                         && M.isSubmapOfBy f m0 m1
+isSubmapOfBy ::
+  (a -> b -> Bool) ->
+  NEIntMap a ->
+  NEIntMap b ->
+  Bool
+isSubmapOfBy f (NEIntMap k v m0) (toMap -> m1) =
+  kvSub
+    && M.isSubmapOfBy f m0 m1
   where
     kvSub = case M.lookup k m1 of
       Just v0 -> f v v0
@@ -1756,13 +1779,14 @@ isProperSubmapOf = isProperSubmapOfBy (==)
 --  > isProperSubmapOfBy (==) (fromList ((1,1) :| [(2,2)])) (fromList ((1,1) :| [(2,2)]))
 --  > isProperSubmapOfBy (==) (fromList ((1,1) :| [(2,2)])) (singleton 1 1))
 --  > isProperSubmapOfBy (<)  (singleton 1 1)               (fromList ((1,1) :| [(2,2)]))
-isProperSubmapOfBy
-    :: (a -> b -> Bool)
-    -> NEIntMap a
-    -> NEIntMap b
-    -> Bool
-isProperSubmapOfBy f m1 m2 = M.size (neimIntMap m1) < M.size (neimIntMap m2)
-                          && isSubmapOfBy f m1 m2
+isProperSubmapOfBy ::
+  (a -> b -> Bool) ->
+  NEIntMap a ->
+  NEIntMap b ->
+  Bool
+isProperSubmapOfBy f m1 m2 =
+  M.size (neimIntMap m1) < M.size (neimIntMap m2)
+    && isSubmapOfBy f m1 m2
 {-# INLINE isProperSubmapOfBy #-}
 
 -- | /O(1)/. The minimal key of the map.  Note that this is total, making
@@ -1801,8 +1825,8 @@ deleteMin (NEIntMap _ _ m) = m
 -- > deleteMax (singleton 5 "a") == Data.IntMap.empty
 deleteMax :: NEIntMap a -> IntMap a
 deleteMax (NEIntMap k v m) = case M.maxView m of
-    Nothing      -> M.empty
-    Just (_, m') -> insertMinMap k v m'
+  Nothing -> M.empty
+  Just (_, m') -> insertMinMap k v m'
 {-# INLINE deleteMax #-}
 
 -- | /O(1)/ if delete, /O(log n)/ otherwise. Update the value at the
@@ -1869,20 +1893,22 @@ adjustMax f = adjustMaxWithKey (const f)
 -- > updateMinWithKey (\ _ _ -> Nothing)                     (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
 updateMaxWithKey :: (Key -> a -> Maybe a) -> NEIntMap a -> IntMap a
 updateMaxWithKey f (NEIntMap k v m)
-    | M.null m  = maybe m (M.singleton k) $ f k v
-    | otherwise = insertMinMap k v
-                . M.updateMaxWithKey f
-                $ m
+  | M.null m = maybe m (M.singleton k) $ f k v
+  | otherwise =
+      insertMinMap k v
+        . M.updateMaxWithKey f
+        $ m
 {-# INLINE updateMaxWithKey #-}
 
 -- | /O(log n)/. A version of 'updateMaxWithKey' that disallows deletion,
 -- allowing us to guarantee that the result is also non-empty.
 adjustMaxWithKey :: (Key -> a -> a) -> NEIntMap a -> NEIntMap a
 adjustMaxWithKey f (NEIntMap k0 v m)
-    | M.null m  = NEIntMap k0 (f k0 v) m
-    | otherwise = insertMapMin k0 v
-                . M.updateMaxWithKey (\k -> Just . f k)
-                $ m
+  | M.null m = NEIntMap k0 (f k0 v) m
+  | otherwise =
+      insertMapMin k0 v
+        . M.updateMaxWithKey (\k -> Just . f k)
+        $ m
 {-# INLINE adjustMaxWithKey #-}
 
 -- | /O(1)/. Retrieves the value associated with minimal key of the
@@ -1935,9 +1961,10 @@ maxView = first snd . deleteFindMax
 --
 -- > deleteFindMax (fromList ((5,"a") :| [(3,"b"), (10,"c")])) == ((10,"c"), Data.IntMap.fromList [(3,"b"), (5,"a")])
 deleteFindMax :: NEIntMap a -> ((Key, a), IntMap a)
-deleteFindMax (NEIntMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k v))
-                            . M.maxViewWithKey
-                            $ m
+deleteFindMax (NEIntMap k v m) =
+  maybe ((k, v), M.empty) (second (insertMinMap k v))
+    . M.maxViewWithKey
+    $ m
 {-# INLINE deleteFindMax #-}
 
 -- ---------------------------
@@ -1952,23 +1979,23 @@ deleteFindMax (NEIntMap k v m) = maybe ((k, v), M.empty) (second (insertMinMap k
 
 combineEq :: NonEmpty (Key, b) -> NonEmpty (Key, b)
 combineEq = \case
-    x :| []       -> x :| []
-    x :| xx@(_:_) -> go x xx
+  x :| [] -> x :| []
+  x :| xx@(_ : _) -> go x xx
   where
     go z [] = z :| []
-    go z@(kz,_) (x@(kx,xx):xs')
-      | kx==kz    = go (kx,xx) xs'
+    go z@(kz, _) (x@(kx, xx) : xs')
+      | kx == kz = go (kx, xx) xs'
       | otherwise = z NE.<| go x xs'
 
-combineEqWith
-    :: (Key -> b -> b -> b)
-    -> NonEmpty (Key, b)
-    -> NonEmpty (Key, b)
+combineEqWith ::
+  (Key -> b -> b -> b) ->
+  NonEmpty (Key, b) ->
+  NonEmpty (Key, b)
 combineEqWith f = \case
-    x :| []       -> x :| []
-    x :| xx@(_:_) -> go x xx
+  x :| [] -> x :| []
+  x :| xx@(_ : _) -> go x xx
   where
     go z [] = z :| []
-    go z@(kz,zz) (x@(kx,xx):xs')
-      | kx==kz    = let yy = f kx xx zz in go (kx,yy) xs'
+    go z@(kz, zz) (x@(kx, xx) : xs')
+      | kx == kz = let yy = f kx xx zz in go (kx, yy) xs'
       | otherwise = z NE.<| go x xs'

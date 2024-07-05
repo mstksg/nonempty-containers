@@ -1,8 +1,8 @@
-{-# LANGUAGE LambdaCase             #-}
-{-# LANGUAGE PatternSynonyms        #-}
-{-# LANGUAGE TypeFamilies           #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
-{-# LANGUAGE ViewPatterns           #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Module      : Data.Containers.NonEmpty
@@ -22,39 +22,40 @@
 -- types.  Instances are provided for all modules in this package, as well
 -- as for 'NonEmpty' in /base/ and 'NonEmptyVector'.
 module Data.Containers.NonEmpty (
-    HasNonEmpty(..)
-  , pattern IsNonEmpty, pattern IsEmpty
-  , overNonEmpty
-  , onNonEmpty
-  ) where
+  HasNonEmpty (..),
+  pattern IsNonEmpty,
+  pattern IsEmpty,
+  overNonEmpty,
+  onNonEmpty,
+) where
 
-import           Data.IntMap            (IntMap)
-import           Data.IntMap.NonEmpty   (NEIntMap)
-import           Data.IntSet            (IntSet)
-import           Data.IntSet.NonEmpty   (NEIntSet)
-import           Data.List.NonEmpty     (NonEmpty(..))
-import           Data.Map               (Map)
-import           Data.Map.NonEmpty      (NEMap)
-import           Data.Maybe
-import           Data.Sequence          (Seq(..))
-import           Data.Sequence.NonEmpty (NESeq(..))
-import           Data.Set               (Set)
-import           Data.Set.NonEmpty      (NESet)
-import           Data.Vector            (Vector)
-import           Data.Vector.NonEmpty   (NonEmptyVector)
-import qualified Data.IntMap            as IM
-import qualified Data.IntMap.NonEmpty   as NEIM
-import qualified Data.IntSet            as IS
-import qualified Data.IntSet.NonEmpty   as NEIS
-import qualified Data.List.NonEmpty     as NE
-import qualified Data.Map               as M
-import qualified Data.Map.NonEmpty      as NEM
-import qualified Data.Sequence          as Seq
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IM
+import Data.IntMap.NonEmpty (NEIntMap)
+import qualified Data.IntMap.NonEmpty as NEIM
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IS
+import Data.IntSet.NonEmpty (NEIntSet)
+import qualified Data.IntSet.NonEmpty as NEIS
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
+import qualified Data.Map as M
+import Data.Map.NonEmpty (NEMap)
+import qualified Data.Map.NonEmpty as NEM
+import Data.Maybe
+import Data.Sequence (Seq (..))
+import qualified Data.Sequence as Seq
+import Data.Sequence.NonEmpty (NESeq (..))
 import qualified Data.Sequence.NonEmpty as NESeq
-import qualified Data.Set               as S
-import qualified Data.Set.NonEmpty      as NES
-import qualified Data.Vector            as V
-import qualified Data.Vector.NonEmpty   as NEV
+import Data.Set (Set)
+import qualified Data.Set as S
+import Data.Set.NonEmpty (NESet)
+import qualified Data.Set.NonEmpty as NES
+import Data.Vector (Vector)
+import qualified Data.Vector as V
+import Data.Vector.NonEmpty (NonEmptyVector)
+import qualified Data.Vector.NonEmpty as NEV
 
 -- | If @s@ is an instance of @HasNonEmpty@, it means that there is
 -- a corresponding "non-empty" version of @s@, @'NE' s@.
@@ -71,44 +72,44 @@ import qualified Data.Vector.NonEmpty   as NEV
 -- *    Usually, @not (isEmpty x) ==> isJust (nonEmpty x)@, but this isn't
 --      necessary.
 class HasNonEmpty s where
-    {-# MINIMAL (nonEmpty | withNonEmpty), fromNonEmpty, empty #-}
+  {-# MINIMAL (nonEmpty | withNonEmpty), fromNonEmpty, empty #-}
 
-    -- | @'NE' s@ is the "non-empty" version of @s@.
-    type NE s = t | t -> s
+  -- | @'NE' s@ is the "non-empty" version of @s@.
+  type NE s = t | t -> s
 
-    -- | "Smart constructor" for @'NE' s@ given a (potentailly empty) @s@.
-    -- Will return 'Nothing' if the @s@ was empty, and @'Just' n@ if the
-    -- @s@ was not empty, with @n :: 'NE' s@.
-    --
-    -- Should form an isomorphism with @'maybe' 'empty' 'fromNonEmpty'@.
-    nonEmpty         :: s -> Maybe (NE s)
-    nonEmpty = withNonEmpty Nothing Just
+  -- | "Smart constructor" for @'NE' s@ given a (potentailly empty) @s@.
+  -- Will return 'Nothing' if the @s@ was empty, and @'Just' n@ if the
+  -- @s@ was not empty, with @n :: 'NE' s@.
+  --
+  -- Should form an isomorphism with @'maybe' 'empty' 'fromNonEmpty'@.
+  nonEmpty :: s -> Maybe (NE s)
+  nonEmpty = withNonEmpty Nothing Just
 
-    -- | Convert a @'NE' s@ (non-empty @s@) back into an @s@, "obscuring"
-    -- its non-emptiness from its type.
-    fromNonEmpty     :: NE s -> s
+  -- | Convert a @'NE' s@ (non-empty @s@) back into an @s@, "obscuring"
+  -- its non-emptiness from its type.
+  fromNonEmpty :: NE s -> s
 
-    -- | Continuation-based version of 'nonEmpty', which can be more
-    -- efficient in certain situations.
-    --
-    -- @'withNonEmpty' 'empty' 'fromNonEmpty'@ should be @id@.
-    withNonEmpty     :: r -> (NE s -> r) -> s -> r
-    withNonEmpty def f = maybe def f . nonEmpty
+  -- | Continuation-based version of 'nonEmpty', which can be more
+  -- efficient in certain situations.
+  --
+  -- @'withNonEmpty' 'empty' 'fromNonEmpty'@ should be @id@.
+  withNonEmpty :: r -> (NE s -> r) -> s -> r
+  withNonEmpty def f = maybe def f . nonEmpty
 
-    -- | An empty @s@.
-    empty            :: s
+  -- | An empty @s@.
+  empty :: s
 
-    -- | Check if an @s@ is empty.
-    isEmpty :: s -> Bool
-    isEmpty = isNothing . nonEmpty
+  -- | Check if an @s@ is empty.
+  isEmpty :: s -> Bool
+  isEmpty = isNothing . nonEmpty
 
-    -- | Unsafely coerce an @s@ into an @'NE' s@ (non-empty @s@).  Is
-    -- undefined (throws a runtime exception when evaluation is attempted)
-    -- when the @s@ is empty.
-    unsafeToNonEmpty :: s -> NE s
-    unsafeToNonEmpty = fromMaybe e . nonEmpty
-      where
-        e = errorWithoutStackTrace "unsafeToNonEmpty: empty input provided"
+  -- | Unsafely coerce an @s@ into an @'NE' s@ (non-empty @s@).  Is
+  -- undefined (throws a runtime exception when evaluation is attempted)
+  -- when the @s@ is empty.
+  unsafeToNonEmpty :: s -> NE s
+  unsafeToNonEmpty = fromMaybe e . nonEmpty
+    where
+      e = errorWithoutStackTrace "unsafeToNonEmpty: empty input provided"
 
 -- | Useful function for mapping over the "non-empty" representation of
 -- a type.
@@ -128,67 +129,67 @@ onNonEmpty :: HasNonEmpty s => (NE s -> r) -> s -> Maybe r
 onNonEmpty f = withNonEmpty Nothing (Just . f)
 
 instance HasNonEmpty [a] where
-    type NE [a] = NonEmpty a
-    nonEmpty         = NE.nonEmpty
-    fromNonEmpty     = NE.toList
-    withNonEmpty def f = \case
-      []   -> def
-      x:xs -> f (x :| xs)
-    empty            = []
-    isEmpty          = null
-    unsafeToNonEmpty = NE.fromList
+  type NE [a] = NonEmpty a
+  nonEmpty = NE.nonEmpty
+  fromNonEmpty = NE.toList
+  withNonEmpty def f = \case
+    [] -> def
+    x : xs -> f (x :| xs)
+  empty = []
+  isEmpty = null
+  unsafeToNonEmpty = NE.fromList
 
 instance HasNonEmpty (Map k a) where
-    type NE (Map k a) = NEMap k a
-    nonEmpty         = NEM.nonEmptyMap
-    fromNonEmpty     = NEM.toMap
-    withNonEmpty     = NEM.withNonEmpty
-    empty            = M.empty
-    isEmpty          = M.null
-    unsafeToNonEmpty = NEM.unsafeFromMap
+  type NE (Map k a) = NEMap k a
+  nonEmpty = NEM.nonEmptyMap
+  fromNonEmpty = NEM.toMap
+  withNonEmpty = NEM.withNonEmpty
+  empty = M.empty
+  isEmpty = M.null
+  unsafeToNonEmpty = NEM.unsafeFromMap
 
 instance HasNonEmpty (IntMap a) where
-    type NE (IntMap a) = NEIntMap a
-    nonEmpty         = NEIM.nonEmptyMap
-    fromNonEmpty     = NEIM.toMap
-    withNonEmpty     = NEIM.withNonEmpty
-    empty            = IM.empty
-    isEmpty          = IM.null
-    unsafeToNonEmpty = NEIM.unsafeFromMap
+  type NE (IntMap a) = NEIntMap a
+  nonEmpty = NEIM.nonEmptyMap
+  fromNonEmpty = NEIM.toMap
+  withNonEmpty = NEIM.withNonEmpty
+  empty = IM.empty
+  isEmpty = IM.null
+  unsafeToNonEmpty = NEIM.unsafeFromMap
 
 instance HasNonEmpty (Set a) where
-    type NE (Set a) = NESet a
-    nonEmpty         = NES.nonEmptySet
-    fromNonEmpty     = NES.toSet
-    withNonEmpty     = NES.withNonEmpty
-    empty            = S.empty
-    isEmpty          = S.null
-    unsafeToNonEmpty = NES.unsafeFromSet
+  type NE (Set a) = NESet a
+  nonEmpty = NES.nonEmptySet
+  fromNonEmpty = NES.toSet
+  withNonEmpty = NES.withNonEmpty
+  empty = S.empty
+  isEmpty = S.null
+  unsafeToNonEmpty = NES.unsafeFromSet
 
 instance HasNonEmpty IntSet where
-    type NE IntSet = NEIntSet
-    nonEmpty         = NEIS.nonEmptySet
-    fromNonEmpty     = NEIS.toSet
-    withNonEmpty     = NEIS.withNonEmpty
-    empty            = IS.empty
-    isEmpty          = IS.null
-    unsafeToNonEmpty = NEIS.unsafeFromSet
+  type NE IntSet = NEIntSet
+  nonEmpty = NEIS.nonEmptySet
+  fromNonEmpty = NEIS.toSet
+  withNonEmpty = NEIS.withNonEmpty
+  empty = IS.empty
+  isEmpty = IS.null
+  unsafeToNonEmpty = NEIS.unsafeFromSet
 
 instance HasNonEmpty (Seq a) where
-    type NE (Seq a) = NESeq a
-    nonEmpty         = NESeq.nonEmptySeq
-    fromNonEmpty     = NESeq.toSeq
-    withNonEmpty     = NESeq.withNonEmpty
-    empty            = Seq.empty
-    isEmpty          = Seq.null
-    unsafeToNonEmpty = NESeq.unsafeFromSeq
+  type NE (Seq a) = NESeq a
+  nonEmpty = NESeq.nonEmptySeq
+  fromNonEmpty = NESeq.toSeq
+  withNonEmpty = NESeq.withNonEmpty
+  empty = Seq.empty
+  isEmpty = Seq.null
+  unsafeToNonEmpty = NESeq.unsafeFromSeq
 
 instance HasNonEmpty (Vector a) where
-    type NE (Vector a) = NonEmptyVector a
-    nonEmpty           = NEV.fromVector
-    fromNonEmpty       = NEV.toVector
-    empty              = V.empty
-    isEmpty            = V.null
+  type NE (Vector a) = NonEmptyVector a
+  nonEmpty = NEV.fromVector
+  fromNonEmpty = NEV.toVector
+  empty = V.empty
+  isEmpty = V.null
 
 -- | The 'IsNonEmpty' and 'IsEmpty' patterns allow you to treat a @s@ as
 -- if it were either a @'IsNonEmpty' n@ (where @n@ is a non-empty version
@@ -218,7 +219,7 @@ instance HasNonEmpty (Vector a) where
 -- a @'NE' s@ back into an @s@, "obscuring" its non-emptiness (see
 -- 'fromNonEmpty').
 pattern IsNonEmpty :: HasNonEmpty s => NE s -> s
-pattern IsNonEmpty n <- (nonEmpty->Just n)
+pattern IsNonEmpty n <- (nonEmpty -> Just n)
   where
     IsNonEmpty n = fromNonEmpty n
 
@@ -241,6 +242,6 @@ pattern IsNonEmpty n <- (nonEmpty->Just n)
 --
 -- See 'IsNonEmpty' for more information.
 pattern IsEmpty :: HasNonEmpty s => s
-pattern IsEmpty <- (isEmpty->True)
+pattern IsEmpty <- (isEmpty -> True)
   where
     IsEmpty = empty

@@ -1,7 +1,7 @@
-{-# LANGUAGE BangPatterns    #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TupleSections   #-}
-{-# LANGUAGE ViewPatterns    #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Module      : Data.IntSet.NonEmpty
@@ -48,103 +48,103 @@
 -- constant-time.
 module Data.IntSet.NonEmpty (
   -- * Non-Empty Set Type
-    NEIntSet
-  , Key
+  NEIntSet,
+  Key,
 
   -- ** Conversions between empty and non-empty sets
-  , pattern IsNonEmpty
-  , pattern IsEmpty
-  , nonEmptySet
-  , toSet
-  , withNonEmpty
-  , insertSet
-  , insertSetMin
-  , insertSetMax
-  , unsafeFromSet
+  pattern IsNonEmpty,
+  pattern IsEmpty,
+  nonEmptySet,
+  toSet,
+  withNonEmpty,
+  insertSet,
+  insertSetMin,
+  insertSetMax,
+  unsafeFromSet,
 
   -- * Construction
-  , singleton
-  , fromList
-  , fromAscList
-  , fromDistinctAscList
+  singleton,
+  fromList,
+  fromAscList,
+  fromDistinctAscList,
 
   -- * Insertion
-  , insert
+  insert,
 
   -- * Deletion
-  , delete
+  delete,
 
   -- * Query
-  , member
-  , notMember
-  , lookupLT
-  , lookupGT
-  , lookupLE
-  , lookupGE
-  , size
-  , isSubsetOf
-  , isProperSubsetOf
-  , disjoint
+  member,
+  notMember,
+  lookupLT,
+  lookupGT,
+  lookupLE,
+  lookupGE,
+  size,
+  isSubsetOf,
+  isProperSubsetOf,
+  disjoint,
 
   -- * Combine
-  , union
-  , unions
-  , difference
-  , (\\)
-  , intersection
+  union,
+  unions,
+  difference,
+  (\\),
+  intersection,
 
   -- * Filter
-  , filter
-  , partition
-  , split
-  , splitMember
-  , splitRoot
+  filter,
+  partition,
+  split,
+  splitMember,
+  splitRoot,
 
   -- * Map
-  , map
+  map,
 
   -- * Folds
-  , foldr
-  , foldl
-  , foldr1
-  , foldl1
+  foldr,
+  foldl,
+  foldr1,
+  foldl1,
+
   -- ** Strict folds
-  , foldr'
-  , foldl'
-  , foldr1'
-  , foldl1'
+  foldr',
+  foldl',
+  foldr1',
+  foldl1',
 
   -- * Min\/Max
-  , findMin
-  , findMax
-  , deleteMin
-  , deleteMax
-  , deleteFindMin
-  , deleteFindMax
+  findMin,
+  findMax,
+  deleteMin,
+  deleteMax,
+  deleteFindMin,
+  deleteFindMax,
 
   -- * Conversion
 
   -- ** List
-  , elems
-  , toList
-  , toAscList
-  , toDescList
+  elems,
+  toList,
+  toAscList,
+  toDescList,
 
   -- * Debugging
-  , valid
-  ) where
+  valid,
+) where
 
-
-import           Control.Applicative
-import           Data.Bifunctor
-import           Data.IntSet                   (IntSet)
-import           Data.IntSet.NonEmpty.Internal
-import           Data.List.NonEmpty            (NonEmpty(..))
-import           Data.Maybe
-import           Data.These
-import           Prelude hiding                (Foldable(..), filter, map)
-import qualified Data.IntSet                   as S
-import qualified Data.List.NonEmpty            as NE
+import Control.Applicative
+import Data.Bifunctor
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as S
+import Data.IntSet.NonEmpty.Internal
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import Data.Maybe
+import Data.These
+import Prelude hiding (Foldable (..), filter, map)
 
 -- | /O(1)/ match, /O(log n)/ usage of contents. The 'IsNonEmpty' and
 -- 'IsEmpty' patterns allow you to treat a 'IntSet' as if it were either
@@ -172,7 +172,7 @@ import qualified Data.List.NonEmpty            as NE
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
 -- a 'NEIntSet' back into a 'IntSet', obscuring its non-emptiness (see 'toSet').
 pattern IsNonEmpty :: NEIntSet -> IntSet
-pattern IsNonEmpty n <- (nonEmptySet->Just n)
+pattern IsNonEmpty n <- (nonEmptySet -> Just n)
   where
     IsNonEmpty n = toSet n
 
@@ -190,7 +190,7 @@ pattern IsNonEmpty n <- (nonEmptySet->Just n)
 --
 -- See 'IsNonEmpty' for more information.
 pattern IsEmpty :: IntSet
-pattern IsEmpty <- (S.null->True)
+pattern IsEmpty <- (S.null -> True)
   where
     IsEmpty = S.empty
 
@@ -247,9 +247,9 @@ insertSetMax x = withNonEmpty (singleton x) go
 -- | /O(log n)/. Unsafe version of 'nonEmptySet'.  Coerces a 'IntSet'
 -- into an 'NEIntSet', but is undefined (throws a runtime exception when
 -- evaluation is attempted) for an empty 'IntSet'.
-unsafeFromSet
-    :: IntSet
-    -> NEIntSet
+unsafeFromSet ::
+  IntSet ->
+  NEIntSet
 unsafeFromSet = withNonEmpty e id
   where
     e = errorWithoutStackTrace "NEIntSet.unsafeFromSet: empty set"
@@ -264,9 +264,10 @@ fromAscList = fromDistinctAscList . combineEq
 -- | /O(n)/. Build a set from an ascending list of distinct elements in linear time.
 -- /The precondition (input list is strictly ascending) is not checked./
 fromDistinctAscList :: NonEmpty Key -> NEIntSet
-fromDistinctAscList (x :| xs) = insertSetMin x
-                              . S.fromDistinctAscList
-                              $ xs
+fromDistinctAscList (x :| xs) =
+  insertSetMin x
+    . S.fromDistinctAscList
+    $ xs
 {-# INLINE fromDistinctAscList #-}
 
 -- | /O(log n)/. Insert an element in a set.
@@ -274,33 +275,33 @@ fromDistinctAscList (x :| xs) = insertSetMin x
 -- it is replaced with the new value.
 insert :: Key -> NEIntSet -> NEIntSet
 insert x n@(NEIntSet x0 s) = case compare x x0 of
-    LT -> NEIntSet x  $ toSet n
-    EQ -> NEIntSet x  s
-    GT -> NEIntSet x0 $ S.insert x s
+  LT -> NEIntSet x $ toSet n
+  EQ -> NEIntSet x s
+  GT -> NEIntSet x0 $ S.insert x s
 {-# INLINE insert #-}
 
 -- | /O(log n)/. Delete an element from a set.
 delete :: Key -> NEIntSet -> IntSet
 delete x n@(NEIntSet x0 s) = case compare x x0 of
-    LT -> toSet n
-    EQ -> s
-    GT -> insertMinSet x0 . S.delete x $ s
+  LT -> toSet n
+  EQ -> s
+  GT -> insertMinSet x0 . S.delete x $ s
 {-# INLINE delete #-}
 
 -- | /O(log n)/. Is the element in the set?
 member :: Key -> NEIntSet -> Bool
 member x (NEIntSet x0 s) = case compare x x0 of
-    LT -> False
-    EQ -> True
-    GT -> S.member x s
+  LT -> False
+  EQ -> True
+  GT -> S.member x s
 {-# INLINE member #-}
 
 -- | /O(log n)/. Is the element not in the set?
 notMember :: Key -> NEIntSet -> Bool
 notMember x (NEIntSet x0 s) = case compare x x0 of
-    LT -> True
-    EQ -> False
-    GT -> S.notMember x s
+  LT -> True
+  EQ -> False
+  GT -> S.notMember x s
 {-# INLINE notMember #-}
 
 -- | /O(log n)/. Find largest element smaller than the given one.
@@ -309,9 +310,9 @@ notMember x (NEIntSet x0 s) = case compare x x0 of
 -- > lookupLT 5 (fromList (3 :| [5])) == Just 3
 lookupLT :: Key -> NEIntSet -> Maybe Key
 lookupLT x (NEIntSet x0 s) = case compare x x0 of
-    LT -> Nothing
-    EQ -> Nothing
-    GT -> S.lookupLT x s <|> Just x0
+  LT -> Nothing
+  EQ -> Nothing
+  GT -> S.lookupLT x s <|> Just x0
 {-# INLINE lookupLT #-}
 
 -- | /O(log n)/. Find smallest element greater than the given one.
@@ -320,9 +321,9 @@ lookupLT x (NEIntSet x0 s) = case compare x x0 of
 -- > lookupLT 5 (fromList (3 :| [5])) == Nothing
 lookupGT :: Key -> NEIntSet -> Maybe Key
 lookupGT x (NEIntSet x0 s) = case compare x x0 of
-    LT -> Just x0
-    EQ -> fst <$> S.minView s
-    GT -> S.lookupGT x s
+  LT -> Just x0
+  EQ -> fst <$> S.minView s
+  GT -> S.lookupGT x s
 {-# INLINE lookupGT #-}
 
 -- | /O(log n)/. Find largest element smaller or equal to the given one.
@@ -332,9 +333,9 @@ lookupGT x (NEIntSet x0 s) = case compare x x0 of
 -- > lookupLT 5 (fromList (3 :| [5])) == Just 5
 lookupLE :: Key -> NEIntSet -> Maybe Key
 lookupLE x (NEIntSet x0 s) = case compare x x0 of
-    LT -> Nothing
-    EQ -> Just x0
-    GT -> S.lookupLE x s <|> Just x0
+  LT -> Nothing
+  EQ -> Just x0
+  GT -> S.lookupLE x s <|> Just x0
 {-# INLINE lookupLE #-}
 
 -- | /O(log n)/. Find smallest element greater or equal to the given one.
@@ -344,9 +345,9 @@ lookupLE x (NEIntSet x0 s) = case compare x x0 of
 -- > lookupLT 6 (fromList (3 :| [5])) == Nothing
 lookupGE :: Key -> NEIntSet -> Maybe Key
 lookupGE x (NEIntSet x0 s) = case compare x x0 of
-    LT -> Just x0
-    EQ -> Just x0
-    GT -> S.lookupGE x s
+  LT -> Just x0
+  EQ -> Just x0
+  GT -> S.lookupGE x s
 {-# INLINE lookupGE #-}
 
 -- | /O(n)/. Fold the elements in the set using the given right-associative
@@ -374,9 +375,10 @@ foldr' f z (NEIntSet x s) = x `f` y
 -- Note that, unlike 'Data.Foldable.foldr1' for 'IntSet', this function is
 -- total if the input function is total.
 foldr1 :: (Key -> Key -> Key) -> NEIntSet -> Key
-foldr1 f (NEIntSet x s) = maybe x (f x . uncurry (S.foldr f))
-                        . S.maxView
-                        $ s
+foldr1 f (NEIntSet x s) =
+  maybe x (f x . uncurry (S.foldr f))
+    . S.maxView
+    $ s
 {-# INLINE foldr1 #-}
 
 -- | /O(n)/. Fold the elements in the set using the given left-associative
@@ -412,8 +414,8 @@ foldl1 f (NEIntSet x s) = S.foldl f x s
 -- function is strict in the starting value.
 foldr1' :: (Key -> Key -> Key) -> NEIntSet -> Key
 foldr1' f (NEIntSet x s) = case S.maxView s of
-    Nothing      -> x
-    Just (y, s') -> let !z = S.foldr' f y s' in x `f` z
+  Nothing -> x
+  Just (y, s') -> let !z = S.foldr' f y s' in x `f` z
 {-# INLINE foldr1' #-}
 
 -- | /O(n)/. A strict version of 'foldl1'. Each application of the operator
@@ -431,21 +433,23 @@ size (NEIntSet _ s) = 1 + S.size s
 
 -- | /O(n+m)/. Is this a subset?
 -- @(s1 \`isSubsetOf\` s2)@ tells whether @s1@ is a subset of @s2@.
-isSubsetOf
-    :: NEIntSet
-    -> NEIntSet
-    -> Bool
-isSubsetOf (NEIntSet x s0) (toSet->s1) = x `S.member` s1
-                                         && s0 `S.isSubsetOf` s1
+isSubsetOf ::
+  NEIntSet ->
+  NEIntSet ->
+  Bool
+isSubsetOf (NEIntSet x s0) (toSet -> s1) =
+  x `S.member` s1
+    && s0 `S.isSubsetOf` s1
 {-# INLINE isSubsetOf #-}
 
 -- | /O(n+m)/. Is this a proper subset? (ie. a subset but not equal).
-isProperSubsetOf
-    :: NEIntSet
-    -> NEIntSet
-    -> Bool
-isProperSubsetOf s0 s1 = S.size (neisIntSet s0) < S.size (neisIntSet s1)
-                      && s0 `isSubsetOf` s1
+isProperSubsetOf ::
+  NEIntSet ->
+  NEIntSet ->
+  Bool
+isProperSubsetOf s0 s1 =
+  S.size (neisIntSet s0) < S.size (neisIntSet s1)
+    && s0 `isSubsetOf` s1
 {-# INLINE isProperSubsetOf #-}
 
 -- | /O(n+m)/. Check whether two sets are disjoint (i.e. their intersection
@@ -454,17 +458,17 @@ isProperSubsetOf s0 s1 = S.size (neisIntSet s0) < S.size (neisIntSet s1)
 -- > disjoint (fromList (2:|[4,6]))   (fromList (1:|[3]))     == True
 -- > disjoint (fromList (2:|[4,6,8])) (fromList (2:|[3,5,7])) == False
 -- > disjoint (fromList (1:|[2]))     (fromList (1:|[2,3,4])) == False
-disjoint
-    :: NEIntSet
-    -> NEIntSet
-    -> Bool
+disjoint ::
+  NEIntSet ->
+  NEIntSet ->
+  Bool
 disjoint n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
-    -- x1 is not in n2
-    LT -> s1 `disjointSet` toSet n2
-    -- k1 and k2 are a part of the result
-    EQ -> False
-    -- k2 is not in n1
-    GT -> toSet n1 `disjointSet` s2
+  -- x1 is not in n2
+  LT -> s1 `disjointSet` toSet n2
+  -- k1 and k2 are a part of the result
+  EQ -> False
+  -- k2 is not in n1
+  GT -> toSet n1 `disjointSet` s2
 {-# INLINE disjoint #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two sets.
@@ -472,24 +476,24 @@ disjoint n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
 -- Returns a potentially empty set ('IntSet') because the first set might be
 -- a subset of the second set, and therefore have all of its elements
 -- removed.
-difference
-    :: NEIntSet
-    -> NEIntSet
-    -> IntSet
+difference ::
+  NEIntSet ->
+  NEIntSet ->
+  IntSet
 difference n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
-    -- x1 is not in n2, so cannot be deleted
-    LT -> insertMinSet x1 $ s1 `S.difference` toSet n2
-    -- x2 deletes x1, and only x1
-    EQ -> s1 `S.difference` s2
-    -- x2 is not in n1, so cannot delete anything, so we can just difference n1 // s2.
-    GT -> toSet n1 `S.difference` s2
+  -- x1 is not in n2, so cannot be deleted
+  LT -> insertMinSet x1 $ s1 `S.difference` toSet n2
+  -- x2 deletes x1, and only x1
+  EQ -> s1 `S.difference` s2
+  -- x2 is not in n1, so cannot delete anything, so we can just difference n1 // s2.
+  GT -> toSet n1 `S.difference` s2
 {-# INLINE difference #-}
 
 -- | Same as 'difference'.
-(\\)
-    :: NEIntSet
-    -> NEIntSet
-    -> IntSet
+(\\) ::
+  NEIntSet ->
+  NEIntSet ->
+  IntSet
 (\\) = difference
 {-# INLINE (\\) #-}
 
@@ -508,30 +512,30 @@ difference n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
 -- >               NES.singleton B `NES.intersection` NES.singleton A)
 --
 -- prints @(fromList (A:|[]),fromList (B:|[]))@.
-intersection
-    :: NEIntSet
-    -> NEIntSet
-    -> IntSet
+intersection ::
+  NEIntSet ->
+  NEIntSet ->
+  IntSet
 intersection n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
-    -- x1 is not in n2
-    LT -> s1 `S.intersection` toSet n2
-    -- x1 and x2 are a part of the result
-    EQ -> insertMinSet x1 $ s1 `S.intersection` s2
-    -- x2 is not in n1
-    GT -> toSet n1 `S.intersection` s2
+  -- x1 is not in n2
+  LT -> s1 `S.intersection` toSet n2
+  -- x1 and x2 are a part of the result
+  EQ -> insertMinSet x1 $ s1 `S.intersection` s2
+  -- x2 is not in n1
+  GT -> toSet n1 `S.intersection` s2
 {-# INLINE intersection #-}
 
 -- | /O(n)/. Filter all elements that satisfy the predicate.
 --
 -- Returns a potentially empty set ('IntSet') because the predicate might
 -- filter out all items in the original non-empty set.
-filter
-    :: (Key -> Bool)
-    -> NEIntSet
-    -> IntSet
+filter ::
+  (Key -> Bool) ->
+  NEIntSet ->
+  IntSet
 filter f (NEIntSet x s1)
-    | f x       = insertMinSet x . S.filter f $ s1
-    | otherwise = S.filter f s1
+  | f x = insertMinSet x . S.filter f $ s1
+  | otherwise = S.filter f s1
 {-# INLINE filter #-}
 
 -- | /O(n)/. Partition the map according to a predicate.
@@ -549,26 +553,26 @@ filter f (NEIntSet x s1)
 -- > partition (> 3) (fromList (5 :| [3])) == These (singleton 5) (singleton 3)
 -- > partition (< 7) (fromList (5 :| [3])) == This  (fromList (3 :| [5]))
 -- > partition (> 7) (fromList (5 :| [3])) == That  (fromList (3 :| [5]))
-partition
-    :: (Key -> Bool)
-    -> NEIntSet
-    -> These NEIntSet NEIntSet
+partition ::
+  (Key -> Bool) ->
+  NEIntSet ->
+  These NEIntSet NEIntSet
 partition f n@(NEIntSet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
-    (Nothing, Nothing)
-      | f x       -> This  n
-      | otherwise -> That                      n
-    (Just n1, Nothing)
-      | f x       -> This  n
-      | otherwise -> These n1                  (singleton x)
-    (Nothing, Just n2)
-      | f x       -> These (singleton x)       n2
-      | otherwise -> That                      n
-    (Just n1, Just n2)
-      | f x       -> These (insertSetMin x s1) n2
-      | otherwise -> These n1                  (insertSetMin x s2)
+  (Nothing, Nothing)
+    | f x -> This n
+    | otherwise -> That n
+  (Just n1, Nothing)
+    | f x -> This n
+    | otherwise -> These n1 (singleton x)
+  (Nothing, Just n2)
+    | f x -> These (singleton x) n2
+    | otherwise -> That n
+  (Just n1, Just n2)
+    | f x -> These (insertSetMin x s1) n2
+    | otherwise -> These n1 (insertSetMin x s2)
   where
     (s1, s2) = S.partition f s0
-{-# INLINABLE partition #-}
+{-# INLINEABLE partition #-}
 
 -- | /O(log n)/. The expression (@'split' x set@) is potentially a 'These'
 -- containing up to two 'NEIntSet's based on splitting the set into sets
@@ -593,21 +597,21 @@ partition f n@(NEIntSet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
 -- > split 5 (fromList (5 :| [3])) == Just (This  (singleton 3)              )
 -- > split 6 (fromList (5 :| [3])) == Just (This  (fromList (3 :| [5]))      )
 -- > split 5 (singleton 5)         == Nothing
-split
-    :: Key
-    -> NEIntSet
-    -> Maybe (These NEIntSet NEIntSet)
+split ::
+  Key ->
+  NEIntSet ->
+  Maybe (These NEIntSet NEIntSet)
 split x n@(NEIntSet x0 s0) = case compare x x0 of
-    LT -> Just $ That n
-    EQ -> That <$> nonEmptySet s0
-    GT -> case (nonEmptySet s1, nonEmptySet s2) of
-      (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
-      (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
+  LT -> Just $ That n
+  EQ -> That <$> nonEmptySet s0
+  GT -> case (nonEmptySet s1, nonEmptySet s2) of
+    (Nothing, Nothing) -> Just $ This (singleton x0)
+    (Just _, Nothing) -> Just $ This (insertSetMin x0 s1)
+    (Nothing, Just n2) -> Just $ These (singleton x0) n2
+    (Just _, Just n2) -> Just $ These (insertSetMin x0 s1) n2
   where
     (s1, s2) = S.split x s0
-{-# INLINABLE split #-}
+{-# INLINEABLE split #-}
 
 -- | /O(log n)/. The expression (@'splitMember' x set@) splits a set just
 -- like 'split' but also returns @'member' x set@ (whether or not @x@ was
@@ -619,21 +623,21 @@ split x n@(NEIntSet x0 s0) = case compare x x0 of
 -- > splitMember 5 (fromList (5 :| [3])) == (True , Just (This  (singleton 3))
 -- > splitMember 6 (fromList (5 :| [3])) == (False, Just (This  (fromList (3 :| [5])))
 -- > splitMember 5 (singleton 5)         == (True , Nothing)
-splitMember
-    :: Key
-    -> NEIntSet
-    -> (Bool, Maybe (These NEIntSet NEIntSet))
+splitMember ::
+  Key ->
+  NEIntSet ->
+  (Bool, Maybe (These NEIntSet NEIntSet))
 splitMember x n@(NEIntSet x0 s0) = case compare x x0 of
-    LT -> (False, Just $ That n)
-    EQ -> (True , That <$> nonEmptySet s0)
-    GT -> (mem  ,) $ case (nonEmptySet s1, nonEmptySet s2) of
-      (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
-      (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
+  LT -> (False, Just $ That n)
+  EQ -> (True, That <$> nonEmptySet s0)
+  GT -> (mem,) $ case (nonEmptySet s1, nonEmptySet s2) of
+    (Nothing, Nothing) -> Just $ This (singleton x0)
+    (Just _, Nothing) -> Just $ This (insertSetMin x0 s1)
+    (Nothing, Just n2) -> Just $ These (singleton x0) n2
+    (Just _, Just n2) -> Just $ These (insertSetMin x0 s1) n2
   where
     (s1, mem, s2) = S.splitMember x s0
-{-# INLINABLE splitMember #-}
+{-# INLINEABLE splitMember #-}
 
 -- | /O(1)/.  Decompose a set into pieces based on the structure of the underlying
 -- tree.  This function is useful for consuming a set in parallel.
@@ -646,11 +650,12 @@ splitMember x n@(NEIntSet x0 s0) = case compare x x0 of
 --  Note that the current implementation does not return more than four
 --  subsets, but you should not depend on this behaviour because it can
 --  change in the future without notice.
-splitRoot
-    :: NEIntSet
-    -> NonEmpty NEIntSet
-splitRoot (NEIntSet x s) = singleton x
-                     :| mapMaybe nonEmptySet (S.splitRoot s)
+splitRoot ::
+  NEIntSet ->
+  NonEmpty NEIntSet
+splitRoot (NEIntSet x s) =
+  singleton x
+    :| mapMaybe nonEmptySet (S.splitRoot s)
 {-# INLINE splitRoot #-}
 
 -- | /O(n*log n)/.
@@ -658,13 +663,15 @@ splitRoot (NEIntSet x s) = singleton x
 --
 -- It's worth noting that the size of the result may be smaller if,
 -- for some @(x,y)@, @x \/= y && f x == f y@
-map :: (Key -> Key)
-    -> NEIntSet
-    -> NEIntSet
-map f (NEIntSet x0 s) = fromList
-                      . (f x0 :|)
-                      . S.foldr (\x xs -> f x : xs) []
-                      $ s
+map ::
+  (Key -> Key) ->
+  NEIntSet ->
+  NEIntSet
+map f (NEIntSet x0 s) =
+  fromList
+    . (f x0 :|)
+    . S.foldr (\x xs -> f x : xs) []
+    $ s
 {-# INLINE map #-}
 
 -- | /O(1)/. The minimal element of a set.  Note that this is total, making
@@ -701,8 +708,8 @@ deleteMin (NEIntSet _ s) = s
 -- > deleteMax (singleton 5) == Data.IntSet.empty
 deleteMax :: NEIntSet -> IntSet
 deleteMax (NEIntSet x s) = case S.maxView s of
-    Nothing      -> S.empty
-    Just (_, s') -> insertMinSet x s'
+  Nothing -> S.empty
+  Just (_, s') -> insertMinSet x s'
 {-# INLINE deleteMax #-}
 
 -- | /O(1)/. Delete and find the minimal element.  It is constant-time, so
@@ -727,9 +734,10 @@ deleteFindMin (NEIntSet x s) = (x, s)
 --
 -- > deleteFindMax (fromList (5 :| [3, 10])) == (10, Data.IntSet.fromList [3, 5])
 deleteFindMax :: NEIntSet -> (Key, IntSet)
-deleteFindMax (NEIntSet x s) = maybe (x, S.empty) (second (insertMinSet x))
-                             . S.maxView
-                             $ s
+deleteFindMax (NEIntSet x s) =
+  maybe (x, S.empty) (second (insertMinSet x))
+    . S.maxView
+    $ s
 {-# INLINE deleteFindMax #-}
 
 -- | /O(n)/. An alias of 'toAscList'. The elements of a set in ascending
@@ -752,6 +760,6 @@ combineEq :: NonEmpty Key -> NonEmpty Key
 combineEq (x :| xs) = go x xs
   where
     go z [] = z :| []
-    go z (y:ys)
-      | z == y    = go z ys
+    go z (y : ys)
+      | z == y = go z ys
       | otherwise = z NE.<| go y ys

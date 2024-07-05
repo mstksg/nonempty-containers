@@ -1,9 +1,9 @@
-{-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE LambdaCase         #-}
-{-# LANGUAGE ViewPatterns       #-}
-{-# OPTIONS_HADDOCK not-home    #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_HADDOCK not-home #-}
 
 -- |
 -- Module      : Data.Map.NonEmpty.Internal
@@ -19,60 +19,64 @@
 -- the abstraction of 'NEMap' and produce unsound maps, so be wary!
 module Data.Map.NonEmpty.Internal (
   -- * Non-Empty Map type
-    NEMap(..)
-  , singleton
-  , nonEmptyMap
-  , withNonEmpty
-  , fromList
-  , toList
-  , map
-  , insertWith
-  , union
-  , unions
-  , elems
-  , size
-  , toMap
-  -- * Folds
-  , foldr
-  , foldr'
-  , foldr1
-  , foldl
-  , foldl'
-  , foldl1
-  -- * Traversals
-  , traverseWithKey
-  , traverseWithKey1
-  , foldMapWithKey
-  -- * Unsafe Map Functions
-  , insertMinMap
-  , insertMaxMap
-  -- * Debug
-  , valid
-  ) where
+  NEMap (..),
+  singleton,
+  nonEmptyMap,
+  withNonEmpty,
+  fromList,
+  toList,
+  map,
+  insertWith,
+  union,
+  unions,
+  elems,
+  size,
+  toMap,
 
-import           Control.Applicative
-import           Control.Comonad
-import           Control.DeepSeq
-import           Control.Monad
-import           Data.Coerce
-import           Data.Data
-import           Data.Function
-import           Data.Functor.Alt
-import           Data.Functor.Classes
-import           Data.Functor.Invariant
-import           Data.List.NonEmpty         (NonEmpty(..))
-import           Data.Map.Internal          (Map(..))
-import           Data.Maybe
-import           Data.Semigroup
-import           Data.Semigroup.Foldable    (Foldable1(fold1))
-import           Data.Semigroup.Traversable (Traversable1(..))
-import           Prelude hiding             (Foldable(..), map)
-import           Text.Read
-import qualified Data.Aeson                 as A
-import qualified Data.Foldable              as F
-import qualified Data.Map                   as M
-import qualified Data.Map.Internal          as M
-import qualified Data.Semigroup.Foldable    as F1
+  -- * Folds
+  foldr,
+  foldr',
+  foldr1,
+  foldl,
+  foldl',
+  foldl1,
+
+  -- * Traversals
+  traverseWithKey,
+  traverseWithKey1,
+  foldMapWithKey,
+
+  -- * Unsafe Map Functions
+  insertMinMap,
+  insertMaxMap,
+
+  -- * Debug
+  valid,
+) where
+
+import Control.Applicative
+import Control.Comonad
+import Control.DeepSeq
+import Control.Monad
+import qualified Data.Aeson as A
+import Data.Coerce
+import Data.Data
+import qualified Data.Foldable as F
+import Data.Function
+import Data.Functor.Alt
+import Data.Functor.Classes
+import Data.Functor.Invariant
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.Map as M
+import Data.Map.Internal (Map (..))
+import qualified Data.Map.Internal as M
+import Data.Maybe
+import Data.Semigroup
+import Data.Semigroup.Foldable (Foldable1 (fold1))
+import qualified Data.Semigroup.Foldable as F1
+import Data.Semigroup.Traversable (Traversable1 (..))
+import Text.Read
+import Prelude hiding (Foldable (..), map)
 
 -- | A non-empty (by construction) map from keys @k@ to values @a@.  At
 -- least one key-value pair exists in an @'NEMap' k v@ at all times.
@@ -109,81 +113,86 @@ import qualified Data.Semigroup.Foldable    as F1
 -- You can convert an 'NEMap' into a 'Map' with 'toMap' or
 -- 'Data.Map.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
 -- property from the type.
-data NEMap k a =
-    NEMap { nemK0  :: !k   -- ^ invariant: must be smaller than smallest key in map
-          , nemV0  :: a
-          , nemMap :: !(Map k a)
-          }
+data NEMap k a
+  = NEMap
+  { nemK0 :: !k
+  -- ^ invariant: must be smaller than smallest key in map
+  , nemV0 :: a
+  , nemMap :: !(Map k a)
+  }
   deriving (Typeable)
 
 instance (Eq k, Eq a) => Eq (NEMap k a) where
-    t1 == t2 = M.size (nemMap t1) == M.size (nemMap t2)
-            && toList t1 == toList t2
+  t1 == t2 =
+    M.size (nemMap t1) == M.size (nemMap t2)
+      && toList t1 == toList t2
 
 instance (Ord k, Ord a) => Ord (NEMap k a) where
-    compare = compare `on` toList
-    (<)     = (<) `on` toList
-    (>)     = (>) `on` toList
-    (<=)    = (<=) `on` toList
-    (>=)    = (>=) `on` toList
+  compare = compare `on` toList
+  (<) = (<) `on` toList
+  (>) = (>) `on` toList
+  (<=) = (<=) `on` toList
+  (>=) = (>=) `on` toList
 
 instance Eq2 NEMap where
-    liftEq2 eqk eqv m n =
-        size m == size n && liftEq (liftEq2 eqk eqv) (toList m) (toList n)
+  liftEq2 eqk eqv m n =
+    size m == size n && liftEq (liftEq2 eqk eqv) (toList m) (toList n)
 
 instance Eq k => Eq1 (NEMap k) where
-    liftEq = liftEq2 (==)
+  liftEq = liftEq2 (==)
 
 instance Ord2 NEMap where
-    liftCompare2 cmpk cmpv m n =
-        liftCompare (liftCompare2 cmpk cmpv) (toList m) (toList n)
+  liftCompare2 cmpk cmpv m n =
+    liftCompare (liftCompare2 cmpk cmpv) (toList m) (toList n)
 
 instance Ord k => Ord1 (NEMap k) where
-    liftCompare = liftCompare2 compare
+  liftCompare = liftCompare2 compare
 
 instance Show2 NEMap where
-    liftShowsPrec2 spk slk spv slv d m =
-        showsUnaryWith (liftShowsPrec sp sl) "fromList" d (toList m)
-      where
-        sp = liftShowsPrec2 spk slk spv slv
-        sl = liftShowList2 spk slk spv slv
+  liftShowsPrec2 spk slk spv slv d m =
+    showsUnaryWith (liftShowsPrec sp sl) "fromList" d (toList m)
+    where
+      sp = liftShowsPrec2 spk slk spv slv
+      sl = liftShowList2 spk slk spv slv
 
 instance Show k => Show1 (NEMap k) where
-    liftShowsPrec = liftShowsPrec2 showsPrec showList
+  liftShowsPrec = liftShowsPrec2 showsPrec showList
 
 instance (Ord k, Read k) => Read1 (NEMap k) where
-    liftReadsPrec rp rl = readsData $
-        readsUnaryWith (liftReadsPrec rp' rl') "fromList" fromList
-      where
-        rp' = liftReadsPrec rp rl
-        rl' = liftReadList rp rl
+  liftReadsPrec rp rl =
+    readsData $
+      readsUnaryWith (liftReadsPrec rp' rl') "fromList" fromList
+    where
+      rp' = liftReadsPrec rp rl
+      rl' = liftReadList rp rl
 
 instance (Ord k, Read k, Read e) => Read (NEMap k e) where
-    readPrec = parens $ prec 10 $ do
-      Ident "fromList" <- lexP
-      xs <- parens . prec 10 $ readPrec
-      return (fromList xs)
-    readListPrec = readListPrecDefault
+  readPrec = parens $ prec 10 $ do
+    Ident "fromList" <- lexP
+    xs <- parens . prec 10 $ readPrec
+    return (fromList xs)
+  readListPrec = readListPrecDefault
 
 instance (Show k, Show a) => Show (NEMap k a) where
-    showsPrec d m  = showParen (d > 10) $
+  showsPrec d m =
+    showParen (d > 10) $
       showString "fromList (" . shows (toList m) . showString ")"
 
 instance (NFData k, NFData a) => NFData (NEMap k a) where
-    rnf (NEMap k v a) = rnf k `seq` rnf v `seq` rnf a
+  rnf (NEMap k v a) = rnf k `seq` rnf v `seq` rnf a
 
 -- Data instance code from Data.Map.Internal
 --
 -- Copyright   :  (c) Daan Leijen 2002
 --                (c) Andriy Palamarchuk 2008
 instance (Data k, Data a, Ord k) => Data (NEMap k a) where
-    gfoldl f z m   = z fromList `f` toList m
-    toConstr _     = fromListConstr
-    gunfold k z c  = case constrIndex c of
-      1 -> k (z fromList)
-      _ -> error "gunfold"
-    dataTypeOf _   = mapDataType
-    dataCast2 f    = gcast2 f
+  gfoldl f z m = z fromList `f` toList m
+  toConstr _ = fromListConstr
+  gunfold k z c = case constrIndex c of
+    1 -> k (z fromList)
+    _ -> error "gunfold"
+  dataTypeOf _ = mapDataType
+  dataCast2 = gcast2
 
 fromListConstr :: Constr
 fromListConstr = mkConstr mapDataType "fromList" [] Prefix
@@ -192,19 +201,20 @@ mapDataType :: DataType
 mapDataType = mkDataType "Data.Map.NonEmpty.NonEmpty.Internal.NEMap" [fromListConstr]
 
 instance (A.ToJSONKey k, A.ToJSON a) => A.ToJSON (NEMap k a) where
-    toJSON     = A.toJSON . toMap
-    toEncoding = A.toEncoding . toMap
+  toJSON = A.toJSON . toMap
+  toEncoding = A.toEncoding . toMap
 
 instance (A.FromJSONKey k, Ord k, A.FromJSON a) => A.FromJSON (NEMap k a) where
-    parseJSON = withNonEmpty (fail err) pure
-            <=< A.parseJSON
-      where
-        err = "NEMap: Non-empty map expected, but empty map found"
+  parseJSON =
+    withNonEmpty (fail err) pure
+      <=< A.parseJSON
+    where
+      err = "NEMap: Non-empty map expected, but empty map found"
 
 -- | @since 0.3.4.4
 instance Ord k => Alt (NEMap k) where
-    (<!>) = union
-    {-# INLINE (<!>) #-}
+  (<!>) = union
+  {-# INLINE (<!>) #-}
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
@@ -232,9 +242,10 @@ foldr' f z (NEMap _ v m) = v `f` y
 -- Note that, unlike 'Data.Foldable.foldr1' for 'Map', this function is
 -- total if the input function is total.
 foldr1 :: (a -> a -> a) -> NEMap k a -> a
-foldr1 f (NEMap _ v m) = maybe v (f v . uncurry (M.foldr f))
-                       . M.maxView
-                       $ m
+foldr1 f (NEMap _ v m) =
+  maybe v (f v . uncurry (M.foldr f))
+    . M.maxView
+    $ m
 {-# INLINE foldr1 #-}
 
 -- | /O(n)/. Fold the values in the map using the given left-associative
@@ -276,11 +287,11 @@ foldl1 f (NEMap _ v m) = M.foldl f v m
 -- some monoids.
 
 -- TODO: benchmark against maxView method
-foldMapWithKey
-    :: Semigroup m
-    => (k -> a -> m)
-    -> NEMap k a
-    -> m
+foldMapWithKey ::
+  Semigroup m =>
+  (k -> a -> m) ->
+  NEMap k a ->
+  m
 #if MIN_VERSION_base(4,11,0)
 foldMapWithKey f (NEMap k0 v m) = maybe (f k0 v) (f k0 v <>)
                                 . M.foldMapWithKey (\k -> Just . f k)
@@ -298,12 +309,13 @@ foldMapWithKey f (NEMap k0 v m) = option (f k0 v) (f k0 v <>)
 map :: (a -> b) -> NEMap k a -> NEMap k b
 map f (NEMap k0 v m) = NEMap k0 (f v) (M.map f m)
 {-# NOINLINE [1] map #-}
+
 {-# RULES
-"map/map" forall f g xs . map f (map g xs) = map (f . g) xs
- #-}
+"map/map" forall f g xs. map f (map g xs) = map (f . g) xs
+  #-}
 {-# RULES
 "map/coerce" map coerce = coerce
- #-}
+  #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/.
 -- The expression (@'union' t1 t2@) takes the left-biased union of @t1@ and
@@ -311,15 +323,15 @@ map f (NEMap k0 v m) = NEMap k0 (f v) (M.map f m)
 -- (@'union' == 'Data.Map.NonEmpty.unionWith' 'const'@).
 --
 -- > union (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "a"), (7, "C")])
-union
-    :: Ord k
-    => NEMap k a
-    -> NEMap k a
-    -> NEMap k a
+union ::
+  Ord k =>
+  NEMap k a ->
+  NEMap k a ->
+  NEMap k a
 union n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
-    LT -> NEMap k1 v1 . M.union m1 . toMap $ n2
-    EQ -> NEMap k1 v1 . M.union m1         $ m2
-    GT -> NEMap k2 v2 . M.union (toMap n1) $ m2
+  LT -> NEMap k1 v1 . M.union m1 . toMap $ n2
+  EQ -> NEMap k1 v1 . M.union m1 $ m2
+  GT -> NEMap k2 v2 . M.union (toMap n1) $ m2
 {-# INLINE union #-}
 
 -- | The left-biased union of a non-empty list of maps.
@@ -328,11 +340,11 @@ union n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
 -- >     == fromList [(3, "b"), (5, "a"), (7, "C")]
 -- > unions (fromList ((5, "A3") :| [(3, "B3")]) :| [fromList ((5, "A") :| [(7, "C")]), fromList ((5, "a") :| [(3, "b")])])
 -- >     == fromList ((3, "B3") :| [(5, "A3"), (7, "C")])
-unions
-    :: (Foldable1 f, Ord k)
-    => f (NEMap k a)
-    -> NEMap k a
-unions (F1.toNonEmpty->(m :| ms)) = F.foldl' union m ms
+unions ::
+  (Foldable1 f, Ord k) =>
+  f (NEMap k a) ->
+  NEMap k a
+unions (F1.toNonEmpty -> (m :| ms)) = F.foldl' union m ms
 {-# INLINE unions #-}
 
 -- | /O(n)/.
@@ -380,11 +392,11 @@ toMap (NEMap k v m) = insertMinMap k v m
 -- @
 -- 'traverseWithKey' f = 'unwrapApplicative' . 'traverseWithKey1' (\\k -> WrapApplicative . f k)
 -- @
-traverseWithKey
-    :: Applicative t
-    => (k -> a -> t b)
-    -> NEMap k a
-    -> t (NEMap k b)
+traverseWithKey ::
+  Applicative t =>
+  (k -> a -> t b) ->
+  NEMap k a ->
+  t (NEMap k b)
 traverseWithKey f (NEMap k v m0) = NEMap k <$> f k v <*> M.traverseWithKey f m0
 {-# INLINE traverseWithKey #-}
 
@@ -398,23 +410,23 @@ traverseWithKey f (NEMap k v m0) = NEMap k <$> f k v <*> M.traverseWithKey f m0
 -- and not just 'Applicative'.
 
 -- TODO: benchmark against maxView-based methods
-traverseWithKey1
-    :: Apply t
-    => (k -> a -> t b)
-    -> NEMap k a
-    -> t (NEMap k b)
+traverseWithKey1 ::
+  Apply t =>
+  (k -> a -> t b) ->
+  NEMap k a ->
+  t (NEMap k b)
 traverseWithKey1 f (NEMap k0 v m0) = case runMaybeApply m1 of
-    Left  m2 -> NEMap k0 <$> f k0 v <.> m2
-    Right m2 -> flip (NEMap k0) m2 <$> f k0 v
+  Left m2 -> NEMap k0 <$> f k0 v <.> m2
+  Right m2 -> flip (NEMap k0) m2 <$> f k0 v
   where
     m1 = M.traverseWithKey (\k -> MaybeApply . Left . f k) m0
-{-# INLINABLE traverseWithKey1 #-}
+{-# INLINEABLE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
 --
 -- > toList (fromList ((5,"a") :| [(3,"b")])) == ((3,"b") :| [(5,"a")])
 toList :: NEMap k a -> NonEmpty (k, a)
-toList (NEMap k v m) = (k,v) :| M.toList m
+toList (NEMap k v m) = (k, v) :| M.toList m
 {-# INLINE toList #-}
 
 -- | /O(log n)/. Smart constructor for an 'NEMap' from a 'Map'.  Returns
@@ -439,11 +451,13 @@ nonEmptyMap = (fmap . uncurry . uncurry) NEMap . M.minViewWithKey
 -- will be fed to the function @f@ instead.
 --
 -- @'nonEmptyMap' == 'withNonEmpty' 'Nothing' 'Just'@
-withNonEmpty
-    :: r                    -- ^ value to return if map is empty
-    -> (NEMap k a -> r)     -- ^ function to apply if map is not empty
-    -> Map k a
-    -> r
+withNonEmpty ::
+  -- | value to return if map is empty
+  r ->
+  -- | function to apply if map is not empty
+  (NEMap k a -> r) ->
+  Map k a ->
+  r
 withNonEmpty def f = maybe def f . nonEmptyMap
 {-# INLINE withNonEmpty #-}
 
@@ -459,9 +473,10 @@ withNonEmpty def f = maybe def f . nonEmptyMap
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'M.fromList'.
 fromList :: Ord k => NonEmpty (k, a) -> NEMap k a
-fromList ((k, v) :| xs) = withNonEmpty (singleton k v) (insertWith (const id) k v)
-                        . M.fromList
-                        $ xs
+fromList ((k, v) :| xs) =
+  withNonEmpty (singleton k v) (insertWith (const id) k v)
+    . M.fromList
+    $ xs
 {-# INLINE fromList #-}
 
 -- | /O(1)/. A map with a single element.
@@ -482,54 +497,47 @@ singleton k v = NEMap k v M.empty
 --
 -- > insertWith (++) 5 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "xxxa")])
 -- > insertWith (++) 7 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
-insertWith
-    :: Ord k
-    => (a -> a -> a)
-    -> k
-    -> a
-    -> NEMap k a
-    -> NEMap k a
+insertWith ::
+  Ord k =>
+  (a -> a -> a) ->
+  k ->
+  a ->
+  NEMap k a ->
+  NEMap k a
 insertWith f k v n@(NEMap k0 v0 m) = case compare k k0 of
-    LT -> NEMap k  v        . toMap            $ n
-    EQ -> NEMap k  (f v v0) m
-    GT -> NEMap k0 v0       $ M.insertWith f k v m
+  LT -> NEMap k v . toMap $ n
+  EQ -> NEMap k (f v v0) m
+  GT -> NEMap k0 v0 $ M.insertWith f k v m
 {-# INLINE insertWith #-}
-
 
 -- | Left-biased union
 instance Ord k => Semigroup (NEMap k a) where
-    (<>) = union
-    {-# INLINE (<>) #-}
-    sconcat = unions
-    {-# INLINE sconcat #-}
+  (<>) = union
+  {-# INLINE (<>) #-}
+  sconcat = unions
+  {-# INLINE sconcat #-}
 
 instance Functor (NEMap k) where
-    fmap = map
-    {-# INLINE fmap #-}
-    x <$ NEMap k _ m = NEMap k x (x <$ m)
-    {-# INLINE (<$) #-}
+  fmap = map
+  {-# INLINE fmap #-}
+  x <$ NEMap k _ m = NEMap k x (x <$ m)
+  {-# INLINE (<$) #-}
 
 -- | @since 0.3.4.4
 instance Invariant (NEMap k) where
-    invmap f _ = fmap f
-    {-# INLINE invmap #-}
+  invmap f _ = fmap f
+  {-# INLINE invmap #-}
 
 -- | Traverses elements in order of ascending keys
 --
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
-instance F.Foldable (NEMap k) where
 #if MIN_VERSION_base(4,11,0)
+instance F.Foldable (NEMap k) where
     fold      (NEMap _ v m) = v <> F.fold m
     {-# INLINE fold #-}
     foldMap f (NEMap _ v m) = f v <> F.foldMap f m
     {-# INLINE foldMap #-}
-#else
-    fold      (NEMap _ v m) = v `mappend` F.fold m
-    {-# INLINE fold #-}
-    foldMap f (NEMap _ v m) = f v `mappend` F.foldMap f m
-    {-# INLINE foldMap #-}
-#endif
     foldr   = foldr
     {-# INLINE foldr #-}
     foldr'  = foldr'
@@ -552,41 +560,76 @@ instance F.Foldable (NEMap k) where
     -- TODO: use build
     toList  = F.toList . elems
     {-# INLINE toList #-}
+#else
+instance F.Foldable (NEMap k) where
+    fold      (NEMap _ v m) = v `mappend` F.fold m
+    {-# INLINE fold #-}
+    foldMap f (NEMap _ v m) = f v `mappend` F.foldMap f m
+    {-# INLINE foldMap #-}
+    foldr   = foldr
+    {-# INLINE foldr #-}
+    foldr'  = foldr'
+    {-# INLINE foldr' #-}
+    foldr1  = foldr1
+    {-# INLINE foldr1 #-}
+    foldl   = foldl
+    {-# INLINE foldl #-}
+    foldl'  = foldl'
+    {-# INLINE foldl' #-}
+    foldl1  = foldl1
+    {-# INLINE foldl1 #-}
+    null _  = False
+    {-# INLINE null #-}
+    length  = size
+    {-# INLINE length #-}
+    elem x (NEMap _ v m) = F.elem x m
+                        || x == v
+    {-# INLINE elem #-}
+    -- TODO: use build
+    toList  = F.toList . elems
+    {-# INLINE toList #-}
+#endif
 
 -- | Traverses elements in order of ascending keys
 instance Traversable (NEMap k) where
-    traverse f (NEMap k v m) = NEMap k <$> f v <*> traverse f m
-    {-# INLINE traverse #-}
-    sequenceA (NEMap k v m)  = NEMap k <$> v <*> sequenceA m
-    {-# INLINE sequenceA #-}
+  traverse f (NEMap k v m) = NEMap k <$> f v <*> traverse f m
+  {-# INLINE traverse #-}
+  sequenceA (NEMap k v m) = NEMap k <$> v <*> sequenceA m
+  {-# INLINE sequenceA #-}
 
 -- | Traverses elements in order of ascending keys
-instance Foldable1 (NEMap k) where
 #if MIN_VERSION_base(4,11,0)
+instance Foldable1 (NEMap k) where
     fold1 (NEMap _ v m) = maybe v (v <>)
                         . F.foldMap Just
                         $ m
-#else
-    fold1 (NEMap _ v m) = option v (v <>)
-                        . F.foldMap (Option . Just)
-                        $ m
-#endif
     {-# INLINE fold1 #-}
     foldMap1 f = foldMapWithKey (const f)
     {-# INLINE foldMap1 #-}
     toNonEmpty = elems
     {-# INLINE toNonEmpty #-}
+#else
+instance Foldable1 (NEMap k) where
+    fold1 (NEMap _ v m) = option v (v <>)
+                        . F.foldMap (Option . Just)
+                        $ m
+    {-# INLINE fold1 #-}
+    foldMap1 f = foldMapWithKey (const f)
+    {-# INLINE foldMap1 #-}
+    toNonEmpty = elems
+    {-# INLINE toNonEmpty #-}
+#endif
 
 -- | Traverses elements in order of ascending keys
 instance Traversable1 (NEMap k) where
-    traverse1 f = traverseWithKey1 (const f)
-    {-# INLINE traverse1 #-}
-    sequence1 (NEMap k v m0) = case runMaybeApply m1 of
-        Left  m2 -> NEMap k <$> v <.> m2
-        Right m2 -> flip (NEMap k) m2 <$> v
-      where
-        m1 = traverse (MaybeApply . Left) m0
-    {-# INLINABLE sequence1 #-}
+  traverse1 f = traverseWithKey1 (const f)
+  {-# INLINE traverse1 #-}
+  sequence1 (NEMap k v m0) = case runMaybeApply m1 of
+    Left m2 -> NEMap k <$> v <.> m2
+    Right m2 -> flip (NEMap k) m2 <$> v
+    where
+      m1 = traverse (MaybeApply . Left) m0
+  {-# INLINEABLE sequence1 #-}
 
 -- | 'extract' gets the value at the minimal key, and 'duplicate' produces
 -- a map of maps comprised of all keys from the original map greater than
@@ -594,25 +637,24 @@ instance Traversable1 (NEMap k) where
 --
 -- @since 0.1.1.0
 instance Comonad (NEMap k) where
-    extract = nemV0
-    {-# INLINE extract #-}
-    duplicate n0@(NEMap k0 _ m0) = NEMap k0 n0 . snd
-                                 . M.mapAccumWithKey go m0
-                                 $ m0
-      where
-        go m k v = (m', NEMap k v m')
-          where
-            !m' = M.deleteMin m
-    {-# INLINE duplicate #-}
+  extract = nemV0
+  {-# INLINE extract #-}
+  duplicate n0@(NEMap k0 _ m0) =
+    NEMap k0 n0
+      . snd
+      . M.mapAccumWithKey go m0
+      $ m0
+    where
+      go m k v = (m', NEMap k v m')
+        where
+          !m' = M.deleteMin m
+  {-# INLINE duplicate #-}
 
 -- | /O(n)/. Test if the internal map structure is valid.
 valid :: Ord k => NEMap k a -> Bool
-valid (NEMap k _ m) = M.valid m
-                   && all ((k <) . fst . fst) (M.minViewWithKey m)
-
-
-
-
+valid (NEMap k _ m) =
+  M.valid m
+    && all ((k <) . fst . fst) (M.minViewWithKey m)
 
 -- | /O(log n)/. Insert new key and value into a map where keys are
 -- /strictly greater than/ the new key.  That is, the new key must be
@@ -624,9 +666,9 @@ valid (NEMap k _ m) = M.valid m
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMinMap :: k -> a -> Map k a -> Map k a
 insertMinMap kx x = \case
-    Tip            -> M.singleton kx x
-    Bin _ ky y l r -> M.balanceL ky y (insertMinMap kx x l) r
-{-# INLINABLE insertMinMap #-}
+  Tip -> M.singleton kx x
+  Bin _ ky y l r -> M.balanceL ky y (insertMinMap kx x l) r
+{-# INLINEABLE insertMinMap #-}
 
 -- | /O(log n)/. Insert new key and value into a map where keys are
 -- /strictly less than/ the new key.  That is, the new key must be
@@ -638,6 +680,6 @@ insertMinMap kx x = \case
 -- expensive) and also does not require an 'Ord' instance for the key type.
 insertMaxMap :: k -> a -> Map k a -> Map k a
 insertMaxMap kx x = \case
-    Tip            -> M.singleton kx x
-    Bin _ ky y l r -> M.balanceR ky y l (insertMaxMap kx x r)
-{-# INLINABLE insertMaxMap #-}
+  Tip -> M.singleton kx x
+  Bin _ ky y l r -> M.balanceR ky y l (insertMaxMap kx x r)
+{-# INLINEABLE insertMaxMap #-}

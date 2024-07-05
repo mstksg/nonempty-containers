@@ -1,7 +1,7 @@
-{-# LANGUAGE CPP                #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE ViewPatterns       #-}
-{-# OPTIONS_HADDOCK not-home    #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_HADDOCK not-home #-}
 
 -- |
 -- Module      : Data.IntSet.NonEmpty.Internal
@@ -16,35 +16,35 @@
 -- "Data.IntSet.NonEmpty".  These functions can potentially be used to break
 -- the abstraction of 'NEIntSet' and produce unsound sets, so be wary!
 module Data.IntSet.NonEmpty.Internal (
-    NEIntSet(..)
-  , Key
-  , nonEmptySet
-  , withNonEmpty
-  , toSet
-  , singleton
-  , fromList
-  , toList
-  , union
-  , unions
-  , valid
-  , insertMinSet
-  , insertMaxSet
-  , disjointSet
-  ) where
+  NEIntSet (..),
+  Key,
+  nonEmptySet,
+  withNonEmpty,
+  toSet,
+  singleton,
+  fromList,
+  toList,
+  union,
+  unions,
+  valid,
+  insertMinSet,
+  insertMaxSet,
+  disjointSet,
+) where
 
-import           Control.DeepSeq
-import           Control.Monad
-import           Data.Data
-import           Data.Function
-import           Data.IntSet.Internal    (IntSet(..), Key)
-import           Data.List.NonEmpty      (NonEmpty(..))
-import           Data.Semigroup
-import           Data.Semigroup.Foldable (Foldable1)
-import           Text.Read
-import qualified Data.Aeson              as A
-import qualified Data.Foldable           as F
-import qualified Data.IntSet             as S
+import Control.DeepSeq
+import Control.Monad
+import qualified Data.Aeson as A
+import Data.Data
+import qualified Data.Foldable as F
+import Data.Function
+import qualified Data.IntSet as S
+import Data.IntSet.Internal (IntSet (..), Key)
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.Semigroup
+import Data.Semigroup.Foldable (Foldable1)
 import qualified Data.Semigroup.Foldable as F1
+import Text.Read
 
 -- | A non-empty (by construction) set of integers.  At least one value
 -- exists in an @'NEIntSet' a@ at all times.
@@ -81,37 +81,41 @@ import qualified Data.Semigroup.Foldable as F1
 -- You can convert an 'NEIntSet' into a 'IntSet' with 'toSet' or
 -- 'Data.IntSet.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
 -- property from the type.
-data NEIntSet =
-    NEIntSet { neisV0     :: !Key   -- ^ invariant: must be smaller than smallest value in set
-             , neisIntSet :: !IntSet
-             }
+data NEIntSet
+  = NEIntSet
+  { neisV0 :: !Key
+  -- ^ invariant: must be smaller than smallest value in set
+  , neisIntSet :: !IntSet
+  }
   deriving (Typeable)
 
 instance Eq NEIntSet where
-    t1 == t2  = S.size (neisIntSet t1) == S.size (neisIntSet t2)
-             && toList t1 == toList t2
+  t1 == t2 =
+    S.size (neisIntSet t1) == S.size (neisIntSet t2)
+      && toList t1 == toList t2
 
 instance Ord NEIntSet where
-    compare = compare `on` toList
-    (<)     = (<) `on` toList
-    (>)     = (>) `on` toList
-    (<=)    = (<=) `on` toList
-    (>=)    = (>=) `on` toList
+  compare = compare `on` toList
+  (<) = (<) `on` toList
+  (>) = (>) `on` toList
+  (<=) = (<=) `on` toList
+  (>=) = (>=) `on` toList
 
 instance Show NEIntSet where
-    showsPrec p xs = showParen (p > 10) $
+  showsPrec p xs =
+    showParen (p > 10) $
       showString "fromList (" . shows (toList xs) . showString ")"
 
 instance Read NEIntSet where
-    readPrec = parens $ prec 10 $ do
-      Ident "fromList" <- lexP
-      xs <- parens . prec 10 $ readPrec
-      return (fromList xs)
+  readPrec = parens $ prec 10 $ do
+    Ident "fromList" <- lexP
+    xs <- parens . prec 10 $ readPrec
+    return (fromList xs)
 
-    readListPrec = readListPrecDefault
+  readListPrec = readListPrecDefault
 
 instance NFData NEIntSet where
-    rnf (NEIntSet x s) = rnf x `seq` rnf s
+  rnf (NEIntSet x s) = rnf x `seq` rnf s
 
 -- Data instance code from Data.IntSet.Internal
 --
@@ -119,11 +123,11 @@ instance NFData NEIntSet where
 --                (c) Joachim Breitner 2011
 instance Data NEIntSet where
   gfoldl f z is = z fromList `f` (toList is)
-  toConstr _     = fromListConstr
-  gunfold k z c  = case constrIndex c of
+  toConstr _ = fromListConstr
+  gunfold k z c = case constrIndex c of
     1 -> k (z fromList)
     _ -> error "gunfold"
-  dataTypeOf _   = intSetDataType
+  dataTypeOf _ = intSetDataType
 
 fromListConstr :: Constr
 fromListConstr = mkConstr intSetDataType "fromList" [] Prefix
@@ -131,17 +135,16 @@ fromListConstr = mkConstr intSetDataType "fromList" [] Prefix
 intSetDataType :: DataType
 intSetDataType = mkDataType "Data.IntSet.NonEmpty.Internal.NEIntSet" [fromListConstr]
 
-
 instance A.ToJSON NEIntSet where
-    toJSON     = A.toJSON . toSet
-    toEncoding = A.toEncoding . toSet
+  toJSON = A.toJSON . toSet
+  toEncoding = A.toEncoding . toSet
 
 instance A.FromJSON NEIntSet where
-    parseJSON = withNonEmpty (fail err) pure
-            <=< A.parseJSON
-      where
-        err = "NEIntSet: Non-empty set expected, but empty set found"
-
+  parseJSON =
+    withNonEmpty (fail err) pure
+      <=< A.parseJSON
+    where
+      err = "NEIntSet: Non-empty set expected, but empty set found"
 
 -- | /O(log n)/. Smart constructor for an 'NEIntSet' from a 'IntSet'.  Returns
 -- 'Nothing' if the 'IntSet' was originally actually empty, and @'Just' n@
@@ -165,11 +168,13 @@ nonEmptySet = (fmap . uncurry) NEIntSet . S.minView
 -- will be fed to the function @f@ instead.
 --
 -- @'nonEmptySet' == 'withNonEmpty' 'Nothing' 'Just'@
-withNonEmpty
-    :: r                   -- ^ value to return if set is empty
-    -> (NEIntSet -> r)     -- ^ function to apply if set is not empty
-    -> IntSet
-    -> r
+withNonEmpty ::
+  -- | value to return if set is empty
+  r ->
+  -- | function to apply if set is not empty
+  (NEIntSet -> r) ->
+  IntSet ->
+  r
 withNonEmpty def f = maybe def f . nonEmptySet
 {-# INLINE withNonEmpty #-}
 
@@ -200,9 +205,10 @@ singleton x = NEIntSet x S.empty
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'S.fromList'.
 fromList :: NonEmpty Key -> NEIntSet
-fromList (x :| s) = withNonEmpty (singleton x) (<> singleton x)
-                  . S.fromList
-                  $ s
+fromList (x :| s) =
+  withNonEmpty (singleton x) (<> singleton x)
+    . S.fromList
+    $ s
 {-# INLINE fromList #-}
 
 -- | /O(n)/. Convert the set to a non-empty list of elements.
@@ -212,40 +218,34 @@ toList (NEIntSet x s) = x :| S.toList s
 
 -- | /O(m*log(n\/m + 1)), m <= n/. The union of two sets, preferring the first set when
 -- equal elements are encountered.
-union
-    :: NEIntSet
-    -> NEIntSet
-    -> NEIntSet
+union ::
+  NEIntSet ->
+  NEIntSet ->
+  NEIntSet
 union n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
-    LT -> NEIntSet x1 . S.union s1 . toSet $ n2
-    EQ -> NEIntSet x1 . S.union s1         $ s2
-    GT -> NEIntSet x2 . S.union (toSet n1) $ s2
+  LT -> NEIntSet x1 . S.union s1 . toSet $ n2
+  EQ -> NEIntSet x1 . S.union s1 $ s2
+  GT -> NEIntSet x2 . S.union (toSet n1) $ s2
 {-# INLINE union #-}
 
 -- | The union of a non-empty list of sets
-unions
-    :: Foldable1 f
-    => f NEIntSet
-    -> NEIntSet
-unions (F1.toNonEmpty->(s :| ss)) = F.foldl' union s ss
+unions ::
+  Foldable1 f =>
+  f NEIntSet ->
+  NEIntSet
+unions (F1.toNonEmpty -> (s :| ss)) = F.foldl' union s ss
 {-# INLINE unions #-}
 
 -- | Left-biased union
 instance Semigroup NEIntSet where
-    (<>) = union
-    {-# INLINE (<>) #-}
-    sconcat = unions
-    {-# INLINE sconcat #-}
+  (<>) = union
+  {-# INLINE (<>) #-}
+  sconcat = unions
+  {-# INLINE sconcat #-}
 
 -- | /O(n)/. Test if the internal set structure is valid.
 valid :: NEIntSet -> Bool
 valid (NEIntSet x s) = all ((x <) . fst) (S.minView s)
-
-
-
-
-
-
 
 -- | /O(log n)/. Insert new value into a set where values are
 -- /strictly greater than/ the new values  That is, the new value must be
@@ -259,7 +259,7 @@ valid (NEIntSet x s) = all ((x <) . fst) (S.minView s)
 -- TODO: implementation
 insertMinSet :: Key -> IntSet -> IntSet
 insertMinSet = S.insert
-{-# INLINABLE insertMinSet #-}
+{-# INLINEABLE insertMinSet #-}
 
 -- | /O(log n)/. Insert new value into a set where values are /strictly
 -- less than/ the new value.  That is, the new value must be /strictly
@@ -273,9 +273,10 @@ insertMinSet = S.insert
 -- TODO: implementation
 insertMaxSet :: Key -> IntSet -> IntSet
 insertMaxSet = S.insert
-{-# INLINABLE insertMaxSet #-}
+{-# INLINEABLE insertMaxSet #-}
 
 -- ---------------------------------------------
+
 -- | CPP for new functions not in old containers
 -- ---------------------------------------------
 
@@ -287,4 +288,3 @@ disjointSet = S.disjoint
 disjointSet xs = S.null . S.intersection xs
 #endif
 {-# INLINE disjointSet #-}
-

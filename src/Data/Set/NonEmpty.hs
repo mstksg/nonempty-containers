@@ -1,8 +1,8 @@
-{-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE PatternSynonyms     #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections       #-}
-{-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Module      : Data.Set.NonEmpty
@@ -46,120 +46,122 @@
 -- > import qualified Data.Set.NonEmpty as NES
 module Data.Set.NonEmpty (
   -- * Non-Empty Set Type
-    NESet
+  NESet,
+
   -- ** Conversions between empty and non-empty sets
-  , pattern IsNonEmpty
-  , pattern IsEmpty
-  , nonEmptySet
-  , toSet
-  , withNonEmpty
-  , insertSet
-  , insertSetMin
-  , insertSetMax
-  , unsafeFromSet
+  pattern IsNonEmpty,
+  pattern IsEmpty,
+  nonEmptySet,
+  toSet,
+  withNonEmpty,
+  insertSet,
+  insertSetMin,
+  insertSetMax,
+  unsafeFromSet,
 
   -- * Construction
-  , singleton
-  , fromList
-  , fromAscList
-  , fromDescList
-  , fromDistinctAscList
-  , fromDistinctDescList
-  , powerSet
+  singleton,
+  fromList,
+  fromAscList,
+  fromDescList,
+  fromDistinctAscList,
+  fromDistinctDescList,
+  powerSet,
 
   -- * Insertion
-  , insert
+  insert,
 
   -- * Deletion
-  , delete
+  delete,
 
   -- * Query
-  , member
-  , notMember
-  , lookupLT
-  , lookupGT
-  , lookupLE
-  , lookupGE
-  , size
-  , isSubsetOf
-  , isProperSubsetOf
-  , disjoint
+  member,
+  notMember,
+  lookupLT,
+  lookupGT,
+  lookupLE,
+  lookupGE,
+  size,
+  isSubsetOf,
+  isProperSubsetOf,
+  disjoint,
 
   -- * Combine
-  , union
-  , unions
-  , difference
-  , (\\)
-  , intersection
-  , cartesianProduct
-  , disjointUnion
+  union,
+  unions,
+  difference,
+  (\\),
+  intersection,
+  cartesianProduct,
+  disjointUnion,
 
   -- * Filter
-  , filter
-  , takeWhileAntitone
-  , dropWhileAntitone
-  , spanAntitone
-  , partition
-  , split
-  , splitMember
-  , splitRoot
+  filter,
+  takeWhileAntitone,
+  dropWhileAntitone,
+  spanAntitone,
+  partition,
+  split,
+  splitMember,
+  splitRoot,
 
   -- * Indexed
-  , lookupIndex
-  , findIndex
-  , elemAt
-  , deleteAt
-  , take
-  , drop
-  , splitAt
+  lookupIndex,
+  findIndex,
+  elemAt,
+  deleteAt,
+  take,
+  drop,
+  splitAt,
 
   -- * Map
-  , map
-  , mapMonotonic
+  map,
+  mapMonotonic,
 
   -- * Folds
-  , foldr
-  , foldl
-  , F.foldr1
-  , F.foldl1
+  foldr,
+  foldl,
+  F.foldr1,
+  F.foldl1,
+
   -- ** Strict folds
-  , foldr'
-  , foldl'
-  , foldr1'
-  , foldl1'
+  foldr',
+  foldl',
+  foldr1',
+  foldl1',
 
   -- * Min\/Max
-  , findMin
-  , findMax
-  , deleteMin
-  , deleteMax
-  , deleteFindMin
-  , deleteFindMax
+  findMin,
+  findMax,
+  deleteMin,
+  deleteMax,
+  deleteFindMin,
+  deleteFindMax,
 
   -- * Conversion
 
   -- ** List
-  , elems
-  , toList
-  , toAscList
-  , toDescList
+  elems,
+  toList,
+  toAscList,
+  toDescList,
 
   -- * Debugging
-  , valid
-  ) where
+  valid,
+) where
 
-import           Control.Applicative
-import           Data.Bifunctor
-import           Data.List.NonEmpty         (NonEmpty(..))
-import           Data.Maybe
-import           Data.Set                   (Set)
-import           Data.Set.NonEmpty.Internal
-import           Data.These
-import           Prelude hiding             (Foldable(..), filter, map, take, drop, splitAt)
-import qualified Data.Foldable              as F
-import qualified Data.List.NonEmpty         as NE
-import qualified Data.Semigroup.Foldable    as F1
-import qualified Data.Set                   as S
+import Control.Applicative
+import Data.Bifunctor
+import qualified Data.Foldable as F
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import Data.Maybe
+import qualified Data.Semigroup.Foldable as F1
+import Data.Set (Set)
+import qualified Data.Set as S
+import Data.Set.NonEmpty.Internal
+import Data.These
+import Prelude hiding (Foldable (..), drop, filter, map, splitAt, take)
 
 -- | /O(1)/ match, /O(log n)/ usage of contents. The 'IsNonEmpty' and
 -- 'IsEmpty' patterns allow you to treat a 'Set' as if it were either
@@ -187,7 +189,7 @@ import qualified Data.Set                   as S
 -- This is a bidirectional pattern, so you can use 'IsNonEmpty' to convert
 -- a 'NESet' back into a 'Set', obscuring its non-emptiness (see 'toSet').
 pattern IsNonEmpty :: NESet a -> Set a
-pattern IsNonEmpty n <- (nonEmptySet->Just n)
+pattern IsNonEmpty n <- (nonEmptySet -> Just n)
   where
     IsNonEmpty n = toSet n
 
@@ -205,7 +207,7 @@ pattern IsNonEmpty n <- (nonEmptySet->Just n)
 --
 -- See 'IsNonEmpty' for more information.
 pattern IsEmpty :: Set a
-pattern IsEmpty <- (S.null->True)
+pattern IsEmpty <- (S.null -> True)
   where
     IsEmpty = S.empty
 
@@ -214,9 +216,9 @@ pattern IsEmpty <- (S.null->True)
 -- | /O(log n)/. Unsafe version of 'nonEmptySet'.  Coerces a 'Set' into an
 -- 'NESet', but is undefined (throws a runtime exception when evaluation is
 -- attempted) for an empty 'Set'.
-unsafeFromSet
-    :: Set a
-    -> NESet a
+unsafeFromSet ::
+  Set a ->
+  NESet a
 unsafeFromSet = withNonEmpty e id
   where
     e = errorWithoutStackTrace "NESet.unsafeFromSet: empty set"
@@ -276,9 +278,10 @@ fromAscList = fromDistinctAscList . combineEq
 -- | /O(n)/. Build a set from an ascending list of distinct elements in linear time.
 -- /The precondition (input list is strictly ascending) is not checked./
 fromDistinctAscList :: NonEmpty a -> NESet a
-fromDistinctAscList (x :| xs) = insertSetMin x
-                              . S.fromDistinctAscList
-                              $ xs
+fromDistinctAscList (x :| xs) =
+  insertSetMin x
+    . S.fromDistinctAscList
+    $ xs
 {-# INLINE fromDistinctAscList #-}
 
 -- | /O(n)/. Build a set from a descending list in linear time.
@@ -290,9 +293,10 @@ fromDescList = fromDistinctDescList . combineEq
 -- | /O(n)/. Build a set from a descending list of distinct elements in linear time.
 -- /The precondition (input list is strictly descending) is not checked./
 fromDistinctDescList :: NonEmpty a -> NESet a
-fromDistinctDescList (x :| xs) = insertSetMax x
-                               . S.fromDistinctDescList
-                               $ xs
+fromDistinctDescList (x :| xs) =
+  insertSetMax x
+    . S.fromDistinctDescList
+    $ xs
 {-# INLINE fromDistinctDescList #-}
 
 -- | Calculate the power set of a non-empty: the set of all its (non-empty)
@@ -318,58 +322,62 @@ fromDistinctDescList (x :| xs) = insertSetMax x
 --
 -- We know that the result is non-empty because the result will always at
 -- least contain the original set.
-powerSet
-    :: forall a. ()
-    => NESet a
-    -> NESet (NESet a)
+powerSet ::
+  forall a.
+  () =>
+  NESet a ->
+  NESet (NESet a)
 powerSet (NESet x s0) = case nonEmptySet p1 of
-    -- s0 was empty originally
-    Nothing -> singleton (singleton x)
-    -- s1 was not empty originally
-    Just p2 -> mapMonotonic (insertSetMin x) p0
-       `merge` p2
+  -- s0 was empty originally
+  Nothing -> singleton (singleton x)
+  -- s1 was not empty originally
+  Just p2 ->
+    mapMonotonic (insertSetMin x) p0
+      `merge` p2
   where
     -- powerset should never be empty
     p0 :: NESet (Set a)
     p0@(NESet _ p0s) = forSure $ powerSetSet s0
     p1 :: Set (NESet a)
-    p1 = S.mapMonotonic forSure p0s  -- only minimal element is empty, so the rest aren't
-    forSure = withNonEmpty (errorWithoutStackTrace "NESet.powerSet: internal error")
-                        id
-{-# INLINABLE powerSet #-}
+    p1 = S.mapMonotonic forSure p0s -- only minimal element is empty, so the rest aren't
+    forSure =
+      withNonEmpty
+        (errorWithoutStackTrace "NESet.powerSet: internal error")
+        id
+{-# INLINEABLE powerSet #-}
 
 -- | /O(log n)/. Insert an element in a set.
 -- If the set already contains an element equal to the given value,
 -- it is replaced with the new value.
 insert :: Ord a => a -> NESet a -> NESet a
 insert x n@(NESet x0 s) = case compare x x0 of
-    LT -> NESet x  $ toSet n
-    EQ -> NESet x  s
-    GT -> NESet x0 $ S.insert x s
+  LT -> NESet x $ toSet n
+  EQ -> NESet x s
+  GT -> NESet x0 $ S.insert x s
 {-# INLINE insert #-}
 
 -- | /O(log n)/. Delete an element from a set.
 delete :: Ord a => a -> NESet a -> Set a
 delete x n@(NESet x0 s) = case compare x x0 of
-    LT -> toSet n
-    EQ -> s
-    GT -> insertMinSet x0 . S.delete x $ s
+  LT -> toSet n
+  EQ -> s
+  GT -> insertMinSet x0 . S.delete x $ s
 {-# INLINE delete #-}
 
 -- | /O(log n)/. Is the element in the set?
 member :: Ord a => a -> NESet a -> Bool
 member x (NESet x0 s) = case compare x x0 of
-    LT -> False
-    EQ -> True
-    GT -> S.member x s
+  LT -> False
+  EQ -> True
+  GT -> S.member x s
 {-# INLINE member #-}
 
 -- | /O(log n)/. Is the element not in the set?
 notMember :: Ord a => a -> NESet a -> Bool
 notMember x (NESet x0 s) = case compare x x0 of
-    LT -> True
-    EQ -> False
-    GT -> S.notMember x s
+  LT -> True
+  EQ -> False
+  GT -> S.notMember x s
 {-# INLINE notMember #-}
 
 -- | /O(log n)/. Find largest element smaller than the given one.
@@ -378,9 +386,9 @@ notMember x (NESet x0 s) = case compare x x0 of
 -- > lookupLT 5 (fromList (3 :| [5])) == Just 3
 lookupLT :: Ord a => a -> NESet a -> Maybe a
 lookupLT x (NESet x0 s) = case compare x x0 of
-    LT -> Nothing
-    EQ -> Nothing
-    GT -> S.lookupLT x s <|> Just x0
+  LT -> Nothing
+  EQ -> Nothing
+  GT -> S.lookupLT x s <|> Just x0
 {-# INLINE lookupLT #-}
 
 -- | /O(log n)/. Find smallest element greater than the given one.
@@ -389,9 +397,9 @@ lookupLT x (NESet x0 s) = case compare x x0 of
 -- > lookupLT 5 (fromList (3 :| [5])) == Nothing
 lookupGT :: Ord a => a -> NESet a -> Maybe a
 lookupGT x (NESet x0 s) = case compare x x0 of
-    LT -> Just x0
-    EQ -> S.lookupMin s
-    GT -> S.lookupGT x s
+  LT -> Just x0
+  EQ -> S.lookupMin s
+  GT -> S.lookupGT x s
 {-# INLINE lookupGT #-}
 
 -- | /O(log n)/. Find largest element smaller or equal to the given one.
@@ -401,9 +409,9 @@ lookupGT x (NESet x0 s) = case compare x x0 of
 -- > lookupLT 5 (fromList (3 :| [5])) == Just 5
 lookupLE :: Ord a => a -> NESet a -> Maybe a
 lookupLE x (NESet x0 s) = case compare x x0 of
-    LT -> Nothing
-    EQ -> Just x0
-    GT -> S.lookupLE x s <|> Just x0
+  LT -> Nothing
+  EQ -> Just x0
+  GT -> S.lookupLE x s <|> Just x0
 {-# INLINE lookupLE #-}
 
 -- | /O(log n)/. Find smallest element greater or equal to the given one.
@@ -413,30 +421,32 @@ lookupLE x (NESet x0 s) = case compare x x0 of
 -- > lookupLT 6 (fromList (3 :| [5])) == Nothing
 lookupGE :: Ord a => a -> NESet a -> Maybe a
 lookupGE x (NESet x0 s) = case compare x x0 of
-    LT -> Just x0
-    EQ -> Just x0
-    GT -> S.lookupGE x s
+  LT -> Just x0
+  EQ -> Just x0
+  GT -> S.lookupGE x s
 {-# INLINE lookupGE #-}
 
 -- | /O(n+m)/. Is this a subset?
 -- @(s1 \`isSubsetOf\` s2)@ tells whether @s1@ is a subset of @s2@.
-isSubsetOf
-    :: Ord a
-    => NESet a
-    -> NESet a
-    -> Bool
-isSubsetOf (NESet x s0) (toSet->s1) = x `S.member` s1
-                                   && s0 `S.isSubsetOf` s1
+isSubsetOf ::
+  Ord a =>
+  NESet a ->
+  NESet a ->
+  Bool
+isSubsetOf (NESet x s0) (toSet -> s1) =
+  x `S.member` s1
+    && s0 `S.isSubsetOf` s1
 {-# INLINE isSubsetOf #-}
 
 -- | /O(n+m)/. Is this a proper subset? (ie. a subset but not equal).
-isProperSubsetOf
-    :: Ord a
-    => NESet a
-    -> NESet a
-    -> Bool
-isProperSubsetOf s0 s1 = S.size (nesSet s0) < S.size (nesSet s1)
-                      && s0 `isSubsetOf` s1
+isProperSubsetOf ::
+  Ord a =>
+  NESet a ->
+  NESet a ->
+  Bool
+isProperSubsetOf s0 s1 =
+  S.size (nesSet s0) < S.size (nesSet s1)
+    && s0 `isSubsetOf` s1
 {-# INLINE isProperSubsetOf #-}
 
 -- | /O(n+m)/. Check whether two sets are disjoint (i.e. their intersection
@@ -445,18 +455,18 @@ isProperSubsetOf s0 s1 = S.size (nesSet s0) < S.size (nesSet s1)
 -- > disjoint (fromList (2:|[4,6]))   (fromList (1:|[3]))     == True
 -- > disjoint (fromList (2:|[4,6,8])) (fromList (2:|[3,5,7])) == False
 -- > disjoint (fromList (1:|[2]))     (fromList (1:|[2,3,4])) == False
-disjoint
-    :: Ord a
-    => NESet a
-    -> NESet a
-    -> Bool
+disjoint ::
+  Ord a =>
+  NESet a ->
+  NESet a ->
+  Bool
 disjoint n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
-    -- x1 is not in n2
-    LT -> s1 `disjointSet` toSet n2
-    -- k1 and k2 are a part of the result
-    EQ -> False
-    -- k2 is not in n1
-    GT -> toSet n1 `disjointSet` s2
+  -- x1 is not in n2
+  LT -> s1 `disjointSet` toSet n2
+  -- k1 and k2 are a part of the result
+  EQ -> False
+  -- k2 is not in n1
+  GT -> toSet n1 `disjointSet` s2
 {-# INLINE disjoint #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two sets.
@@ -464,26 +474,26 @@ disjoint n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
 -- Returns a potentially empty set ('Set') because the first set might be
 -- a subset of the second set, and therefore have all of its elements
 -- removed.
-difference
-    :: Ord a
-    => NESet a
-    -> NESet a
-    -> Set a
+difference ::
+  Ord a =>
+  NESet a ->
+  NESet a ->
+  Set a
 difference n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
-    -- x1 is not in n2, so cannot be deleted
-    LT -> insertMinSet x1 $ s1 `S.difference` toSet n2
-    -- x2 deletes x1, and only x1
-    EQ -> s1 `S.difference` s2
-    -- x2 is not in n1, so cannot delete anything, so we can just difference n1 // s2.
-    GT -> toSet n1 `S.difference` s2
+  -- x1 is not in n2, so cannot be deleted
+  LT -> insertMinSet x1 $ s1 `S.difference` toSet n2
+  -- x2 deletes x1, and only x1
+  EQ -> s1 `S.difference` s2
+  -- x2 is not in n1, so cannot delete anything, so we can just difference n1 // s2.
+  GT -> toSet n1 `S.difference` s2
 {-# INLINE difference #-}
 
 -- | Same as 'difference'.
-(\\)
-    :: Ord a
-    => NESet a
-    -> NESet a
-    -> Set a
+(\\) ::
+  Ord a =>
+  NESet a ->
+  NESet a ->
+  Set a
 (\\) = difference
 {-# INLINE (\\) #-}
 
@@ -502,18 +512,18 @@ difference n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
 -- >               NES.singleton B `NES.intersection` NES.singleton A)
 --
 -- prints @(fromList (A:|[]),fromList (B:|[]))@.
-intersection
-    :: Ord a
-    => NESet a
-    -> NESet a
-    -> Set a
+intersection ::
+  Ord a =>
+  NESet a ->
+  NESet a ->
+  Set a
 intersection n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
-    -- x1 is not in n2
-    LT -> s1 `S.intersection` toSet n2
-    -- x1 and x2 are a part of the result
-    EQ -> insertMinSet x1 $ s1 `S.intersection` s2
-    -- x2 is not in n1
-    GT -> toSet n1 `S.intersection` s2
+  -- x1 is not in n2
+  LT -> s1 `S.intersection` toSet n2
+  -- x1 and x2 are a part of the result
+  EQ -> insertMinSet x1 $ s1 `S.intersection` s2
+  -- x2 is not in n1
+  GT -> toSet n1 `S.intersection` s2
 {-# INLINE intersection #-}
 
 -- | Calculate the Cartesian product of two sets.
@@ -528,13 +538,14 @@ intersection n1@(NESet x1 s1) n2@(NESet x2 s2) = case compare x1 x2 of
 -- cartesianProduct (fromList (1:|[2])) (fromList (\'a\':|[\'b\'])) =
 --   fromList ((1,\'a\') :| [(1,\'b\'), (2,\'a\'), (2,\'b\')])
 -- @
-cartesianProduct
-    :: NESet a
-    -> NESet b
-    -> NESet (a, b)
-cartesianProduct n1 n2 = getMergeNESet
-                       . F1.foldMap1 (\x -> MergeNESet $ mapMonotonic (x,) n2)
-                       $ n1
+cartesianProduct ::
+  NESet a ->
+  NESet b ->
+  NESet (a, b)
+cartesianProduct n1 n2 =
+  getMergeNESet
+    . F1.foldMap1 (\x -> MergeNESet $ mapMonotonic (x,) n2)
+    $ n1
 {-# INLINE cartesianProduct #-}
 
 -- | Calculate the disjoint union of two sets.
@@ -547,25 +558,27 @@ cartesianProduct n1 n2 = getMergeNESet
 -- disjointUnion (fromList (1:|[2])) (fromList ("hi":|["bye"])) =
 --   fromList (Left 1 :| [Left 2, Right "hi", Right "bye"])
 -- @
-disjointUnion
-    :: NESet a
-    -> NESet b
-    -> NESet (Either a b)
-disjointUnion (NESet x1 s1) n2 = NESet (Left x1)
-                                       (s1 `disjointUnionSet` toSet n2)
+disjointUnion ::
+  NESet a ->
+  NESet b ->
+  NESet (Either a b)
+disjointUnion (NESet x1 s1) n2 =
+  NESet
+    (Left x1)
+    (s1 `disjointUnionSet` toSet n2)
 {-# INLINE disjointUnion #-}
 
 -- | /O(n)/. Filter all elements that satisfy the predicate.
 --
 -- Returns a potentially empty set ('Set') because the predicate might
 -- filter out all items in the original non-empty set.
-filter
-    :: (a -> Bool)
-    -> NESet a
-    -> Set a
+filter ::
+  (a -> Bool) ->
+  NESet a ->
+  Set a
 filter f (NESet x s1)
-    | f x       = insertMinSet x . S.filter f $ s1
-    | otherwise = S.filter f s1
+  | f x = insertMinSet x . S.filter f $ s1
+  | otherwise = S.filter f s1
 {-# INLINE filter #-}
 
 -- | /O(log n)/. Take while a predicate on the elements holds.  The user is
@@ -579,13 +592,13 @@ filter f (NESet x s1)
 -- takeWhileAntitone p = Data.Set.fromDistinctAscList . Data.List.NonEmpty.takeWhile p . 'toList'
 -- takeWhileAntitone p = 'filter' p
 -- @
-takeWhileAntitone
-    :: (a -> Bool)
-    -> NESet a
-    -> Set a
+takeWhileAntitone ::
+  (a -> Bool) ->
+  NESet a ->
+  Set a
 takeWhileAntitone f (NESet x s)
-    | f x       = insertMinSet x . S.takeWhileAntitone f $ s
-    | otherwise = S.empty
+  | f x = insertMinSet x . S.takeWhileAntitone f $ s
+  | otherwise = S.empty
 {-# INLINE takeWhileAntitone #-}
 
 -- | /O(log n)/. Drop while a predicate on the elements holds.  The user is
@@ -599,13 +612,13 @@ takeWhileAntitone f (NESet x s)
 -- dropWhileAntitone p = Data.Set.fromDistinctAscList . Data.List.NonEmpty.dropWhile p . 'toList'
 -- dropWhileAntitone p = 'filter' (not . p)
 -- @
-dropWhileAntitone
-    :: (a -> Bool)
-    -> NESet a
-    -> Set a
+dropWhileAntitone ::
+  (a -> Bool) ->
+  NESet a ->
+  Set a
 dropWhileAntitone f n@(NESet x s)
-    | f x       = S.dropWhileAntitone f s
-    | otherwise = toSet n
+  | f x = S.dropWhileAntitone f s
+  | otherwise = toSet n
 {-# INLINE dropWhileAntitone #-}
 
 -- | /O(log n)/. Divide a set at the point where a predicate on the
@@ -630,20 +643,20 @@ dropWhileAntitone f n@(NESet x s)
 -- at some /unspecified/ point where the predicate switches from holding to not
 -- holding (where the predicate is seen to hold before the first element and to fail
 -- after the last element).
-spanAntitone
-    :: (a -> Bool)
-    -> NESet a
-    -> These (NESet a) (NESet a)
+spanAntitone ::
+  (a -> Bool) ->
+  NESet a ->
+  These (NESet a) (NESet a)
 spanAntitone f n@(NESet x s0)
-    | f x       = case (nonEmptySet s1, nonEmptySet s2) of
-        (Nothing, Nothing) -> This  n
-        (Just _ , Nothing) -> This  n
-        (Nothing, Just n2) -> These (singleton x)       n2
-        (Just _ , Just n2) -> These (insertSetMin x s1) n2
-    | otherwise = That n
+  | f x = case (nonEmptySet s1, nonEmptySet s2) of
+      (Nothing, Nothing) -> This n
+      (Just _, Nothing) -> This n
+      (Nothing, Just n2) -> These (singleton x) n2
+      (Just _, Just n2) -> These (insertSetMin x s1) n2
+  | otherwise = That n
   where
     (s1, s2) = S.spanAntitone f s0
-{-# INLINABLE spanAntitone #-}
+{-# INLINEABLE spanAntitone #-}
 
 -- | /O(n)/. Partition the map according to a predicate.
 --
@@ -660,26 +673,26 @@ spanAntitone f n@(NESet x s0)
 -- > partition (> 3) (fromList (5 :| [3])) == These (singleton 5) (singleton 3)
 -- > partition (< 7) (fromList (5 :| [3])) == This  (fromList (3 :| [5]))
 -- > partition (> 7) (fromList (5 :| [3])) == That  (fromList (3 :| [5]))
-partition
-    :: (a -> Bool)
-    -> NESet a
-    -> These (NESet a) (NESet a)
+partition ::
+  (a -> Bool) ->
+  NESet a ->
+  These (NESet a) (NESet a)
 partition f n@(NESet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
-    (Nothing, Nothing)
-      | f x       -> This  n
-      | otherwise -> That                      n
-    (Just n1, Nothing)
-      | f x       -> This  n
-      | otherwise -> These n1                  (singleton x)
-    (Nothing, Just n2)
-      | f x       -> These (singleton x)       n2
-      | otherwise -> That                      n
-    (Just n1, Just n2)
-      | f x       -> These (insertSetMin x s1) n2
-      | otherwise -> These n1                  (insertSetMin x s2)
+  (Nothing, Nothing)
+    | f x -> This n
+    | otherwise -> That n
+  (Just n1, Nothing)
+    | f x -> This n
+    | otherwise -> These n1 (singleton x)
+  (Nothing, Just n2)
+    | f x -> These (singleton x) n2
+    | otherwise -> That n
+  (Just n1, Just n2)
+    | f x -> These (insertSetMin x s1) n2
+    | otherwise -> These n1 (insertSetMin x s2)
   where
     (s1, s2) = S.partition f s0
-{-# INLINABLE partition #-}
+{-# INLINEABLE partition #-}
 
 -- | /O(log n)/. The expression (@'split' x set@) is potentially a 'These'
 -- containing up to two 'NESet's based on splitting the set into sets
@@ -704,22 +717,22 @@ partition f n@(NESet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
 -- > split 5 (fromList (5 :| [3])) == Just (This  (singleton 3)              )
 -- > split 6 (fromList (5 :| [3])) == Just (This  (fromList (3 :| [5]))      )
 -- > split 5 (singleton 5)         == Nothing
-split
-    :: Ord a
-    => a
-    -> NESet a
-    -> Maybe (These (NESet a) (NESet a))
+split ::
+  Ord a =>
+  a ->
+  NESet a ->
+  Maybe (These (NESet a) (NESet a))
 split x n@(NESet x0 s0) = case compare x x0 of
-    LT -> Just $ That n
-    EQ -> That <$> nonEmptySet s0
-    GT -> case (nonEmptySet s1, nonEmptySet s2) of
-      (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
-      (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
+  LT -> Just $ That n
+  EQ -> That <$> nonEmptySet s0
+  GT -> case (nonEmptySet s1, nonEmptySet s2) of
+    (Nothing, Nothing) -> Just $ This (singleton x0)
+    (Just _, Nothing) -> Just $ This (insertSetMin x0 s1)
+    (Nothing, Just n2) -> Just $ These (singleton x0) n2
+    (Just _, Just n2) -> Just $ These (insertSetMin x0 s1) n2
   where
     (s1, s2) = S.split x s0
-{-# INLINABLE split #-}
+{-# INLINEABLE split #-}
 
 -- | /O(log n)/. The expression (@'splitMember' x set@) splits a set just
 -- like 'split' but also returns @'member' x set@ (whether or not @x@ was
@@ -731,22 +744,22 @@ split x n@(NESet x0 s0) = case compare x x0 of
 -- > splitMember 5 (fromList (5 :| [3])) == (True , Just (This  (singleton 3))
 -- > splitMember 6 (fromList (5 :| [3])) == (False, Just (This  (fromList (3 :| [5])))
 -- > splitMember 5 (singleton 5)         == (True , Nothing)
-splitMember
-    :: Ord a
-    => a
-    -> NESet a
-    -> (Bool, Maybe (These (NESet a) (NESet a)))
+splitMember ::
+  Ord a =>
+  a ->
+  NESet a ->
+  (Bool, Maybe (These (NESet a) (NESet a)))
 splitMember x n@(NESet x0 s0) = case compare x x0 of
-    LT -> (False, Just $ That n)
-    EQ -> (True , That <$> nonEmptySet s0)
-    GT -> (mem  ,) $ case (nonEmptySet s1, nonEmptySet s2) of
-      (Nothing, Nothing) -> Just $ This  (singleton x0)
-      (Just _ , Nothing) -> Just $ This  (insertSetMin x0 s1)
-      (Nothing, Just n2) -> Just $ These (singleton x0)       n2
-      (Just _ , Just n2) -> Just $ These (insertSetMin x0 s1) n2
+  LT -> (False, Just $ That n)
+  EQ -> (True, That <$> nonEmptySet s0)
+  GT -> (mem,) $ case (nonEmptySet s1, nonEmptySet s2) of
+    (Nothing, Nothing) -> Just $ This (singleton x0)
+    (Just _, Nothing) -> Just $ This (insertSetMin x0 s1)
+    (Nothing, Just n2) -> Just $ These (singleton x0) n2
+    (Just _, Just n2) -> Just $ These (insertSetMin x0 s1) n2
   where
     (s1, mem, s2) = S.splitMember x s0
-{-# INLINABLE splitMember #-}
+{-# INLINEABLE splitMember #-}
 
 -- | /O(1)/.  Decompose a set into pieces based on the structure of the underlying
 -- tree.  This function is useful for consuming a set in parallel.
@@ -759,11 +772,12 @@ splitMember x n@(NESet x0 s0) = case compare x x0 of
 --  Note that the current implementation does not return more than four
 --  subsets, but you should not depend on this behaviour because it can
 --  change in the future without notice.
-splitRoot
-    :: NESet a
-    -> NonEmpty (NESet a)
-splitRoot (NESet x s) = singleton x
-                     :| mapMaybe nonEmptySet (S.splitRoot s)
+splitRoot ::
+  NESet a ->
+  NonEmpty (NESet a)
+splitRoot (NESet x s) =
+  singleton x
+    :| mapMaybe nonEmptySet (S.splitRoot s)
 {-# INLINE splitRoot #-}
 
 -- | /O(log n)/. Lookup the /index/ of an element, which is its zero-based
@@ -774,15 +788,15 @@ splitRoot (NESet x s) = singleton x
 -- > fromJust (lookupIndex 3 (fromList (5:|[3]))) == 0
 -- > fromJust (lookupIndex 5 (fromList (5:|[3]))) == 1
 -- > isJust   (lookupIndex 6 (fromList (5:|[3]))) == False
-lookupIndex
-    :: Ord a
-    => a
-    -> NESet a
-    -> Maybe Int
+lookupIndex ::
+  Ord a =>
+  a ->
+  NESet a ->
+  Maybe Int
 lookupIndex x (NESet x0 s) = case compare x x0 of
-    LT -> Nothing
-    EQ -> Just 0
-    GT -> (+ 1) <$> S.lookupIndex x s
+  LT -> Nothing
+  EQ -> Just 0
+  GT -> (+ 1) <$> S.lookupIndex x s
 {-# INLINE lookupIndex #-}
 
 -- | /O(log n)/. Return the /index/ of an element, which is its zero-based
@@ -794,11 +808,11 @@ lookupIndex x (NESet x0 s) = case compare x x0 of
 -- > findIndex 3 (fromList (5:|[3])) == 0
 -- > findIndex 5 (fromList (5:|[3])) == 1
 -- > findIndex 6 (fromList (5:|[3]))    Error: element is not in the set
-findIndex
-    :: Ord a
-    => a
-    -> NESet a
-    -> Int
+findIndex ::
+  Ord a =>
+  a ->
+  NESet a ->
+  Int
 findIndex k = fromMaybe e . lookupIndex k
   where
     e = error "NESet.findIndex: element is not in the set"
@@ -812,10 +826,10 @@ findIndex k = fromMaybe e . lookupIndex k
 -- > elemAt 0 (fromList (5:|[3])) == 3
 -- > elemAt 1 (fromList (5:|[3])) == 5
 -- > elemAt 2 (fromList (5:|[3]))    Error: index out of range
-elemAt
-    :: Int
-    -> NESet a
-    -> a
+elemAt ::
+  Int ->
+  NESet a ->
+  a
 elemAt 0 (NESet x _) = x
 elemAt i (NESet _ s) = S.elemAt (i - 1) s
 {-# INLINE elemAt #-}
@@ -832,13 +846,13 @@ elemAt i (NESet _ s) = S.elemAt (i - 1) s
 -- > deleteAt 1    (fromList (5:|[3])) == singleton 3
 -- > deleteAt 2    (fromList (5:|[3]))    Error: index out of range
 -- > deleteAt (-1) (fromList (5:|[3]))    Error: index out of range
-deleteAt
-    :: Int
-    -> NESet a
-    -> Set a
+deleteAt ::
+  Int ->
+  NESet a ->
+  Set a
 deleteAt 0 (NESet _ s) = s
 deleteAt i (NESet x s) = insertMinSet x . S.deleteAt (i - 1) $ s
-{-# INLINABLE deleteAt #-}
+{-# INLINEABLE deleteAt #-}
 
 -- | Take a given number of elements in order, beginning
 -- with the smallest ones.
@@ -849,13 +863,13 @@ deleteAt i (NESet x s) = insertMinSet x . S.deleteAt (i - 1) $ s
 -- @
 -- take n = Data.Set.fromDistinctAscList . Data.List.NonEmpty.take n . 'toAscList'
 -- @
-take
-    :: Int
-    -> NESet a
-    -> Set a
+take ::
+  Int ->
+  NESet a ->
+  Set a
 take 0 (NESet _ _) = S.empty
 take i (NESet x s) = insertMinSet x . S.take (i - 1) $ s
-{-# INLINABLE take #-}
+{-# INLINEABLE take #-}
 
 -- | Drop a given number of elements in order, beginning
 -- with the smallest ones.
@@ -867,13 +881,13 @@ take i (NESet x s) = insertMinSet x . S.take (i - 1) $ s
 -- @
 -- drop n = Data.Set.fromDistinctAscList . Data.List.NonEmpty.drop n . 'toAscList'
 -- @
-drop
-    :: Int
-    -> NESet a
-    -> Set a
-drop 0 n           = toSet n
+drop ::
+  Int ->
+  NESet a ->
+  Set a
+drop 0 n = toSet n
 drop n (NESet _ s) = S.drop (n - 1) s
-{-# INLINABLE drop #-}
+{-# INLINEABLE drop #-}
 
 -- | /O(log n)/. Split a set at a particular index @i@.
 --
@@ -883,33 +897,35 @@ drop n (NESet _ s) = S.drop (n - 1) s
 --     original set.
 -- *   @'These' n1 n2@ gives @n1@ (taking @i@ items from the original set)
 --     and @n2@ (dropping @i@ items from the original set))
-splitAt
-    :: Int
-    -> NESet a
-    -> These (NESet a) (NESet a)
-splitAt 0 n              = That n
+splitAt ::
+  Int ->
+  NESet a ->
+  These (NESet a) (NESet a)
+splitAt 0 n = That n
 splitAt i n@(NESet x s0) = case (nonEmptySet s1, nonEmptySet s2) of
-    (Nothing, Nothing) -> This  (singleton x)
-    (Just _ , Nothing) -> This  n
-    (Nothing, Just n2) -> These (singleton x)       n2
-    (Just _ , Just n2) -> These (insertSetMin x s1) n2
+  (Nothing, Nothing) -> This (singleton x)
+  (Just _, Nothing) -> This n
+  (Nothing, Just n2) -> These (singleton x) n2
+  (Just _, Just n2) -> These (insertSetMin x s1) n2
   where
     (s1, s2) = S.splitAt (i - 1) s0
-{-# INLINABLE splitAt #-}
+{-# INLINEABLE splitAt #-}
 
 -- | /O(n*log n)/.
 -- @'map' f s@ is the set obtained by applying @f@ to each element of @s@.
 --
 -- It's worth noting that the size of the result may be smaller if,
 -- for some @(x,y)@, @x \/= y && f x == f y@
-map :: Ord b
-    => (a -> b)
-    -> NESet a
-    -> NESet b
-map f (NESet x0 s) = fromList
-                   . (f x0 :|)
-                   . S.foldr (\x xs -> f x : xs) []
-                   $ s
+map ::
+  Ord b =>
+  (a -> b) ->
+  NESet a ->
+  NESet b
+map f (NESet x0 s) =
+  fromList
+    . (f x0 :|)
+    . S.foldr (\x xs -> f x : xs) []
+    $ s
 {-# INLINE map #-}
 
 -- | /O(n)/.
@@ -919,10 +935,10 @@ map f (NESet x0 s) = fromList
 -- > and [x < y ==> f x < f y | x <- ls, y <- ls]
 -- >                     ==> mapMonotonic f s == map f s
 -- >     where ls = Data.Foldable.toList s
-mapMonotonic
-    :: (a -> b)
-    -> NESet a
-    -> NESet b
+mapMonotonic ::
+  (a -> b) ->
+  NESet a ->
+  NESet b
 mapMonotonic f (NESet x s) = NESet (f x) (S.mapMonotonic f s)
 {-# INLINE mapMonotonic #-}
 
@@ -931,8 +947,8 @@ mapMonotonic f (NESet x s) = NESet (f x) (S.mapMonotonic f s)
 -- function is strict in the starting value.
 foldr1' :: (a -> a -> a) -> NESet a -> a
 foldr1' f (NESet x s) = case S.maxView s of
-    Nothing      -> x
-    Just (y, s') -> let !z = S.foldr' f y s' in x `f` z
+  Nothing -> x
+  Just (y, s') -> let !z = S.foldr' f y s' in x `f` z
 {-# INLINE foldr1' #-}
 
 -- | /O(n)/. A strict version of 'foldl1'. Each application of the operator
@@ -976,8 +992,8 @@ deleteMin (NESet _ s) = s
 -- > deleteMax (singleton 5) == Data.Set.empty
 deleteMax :: NESet a -> Set a
 deleteMax (NESet x s) = case S.maxView s of
-    Nothing      -> S.empty
-    Just (_, s') -> insertMinSet x s'
+  Nothing -> S.empty
+  Just (_, s') -> insertMinSet x s'
 {-# INLINE deleteMax #-}
 
 -- | /O(1)/. Delete and find the minimal element.  It is constant-time, so
@@ -1002,9 +1018,10 @@ deleteFindMin (NESet x s) = (x, s)
 --
 -- > deleteFindMax (fromList (5 :| [3, 10])) == (10, Data.Set.fromList [3, 5])
 deleteFindMax :: NESet a -> (a, Set a)
-deleteFindMax (NESet x s) = maybe (x, S.empty) (second (insertMinSet x))
-                          . S.maxView
-                          $ s
+deleteFindMax (NESet x s) =
+  maybe (x, S.empty) (second (insertMinSet x))
+    . S.maxView
+    $ s
 {-# INLINE deleteFindMax #-}
 
 -- | /O(n)/. An alias of 'toAscList'. The elements of a set in ascending
@@ -1036,6 +1053,6 @@ combineEq :: Eq a => NonEmpty a -> NonEmpty a
 combineEq (x :| xs) = go x xs
   where
     go z [] = z :| []
-    go z (y:ys)
-      | z == y    = go z ys
+    go z (y : ys)
+      | z == y = go z ys
       | otherwise = z NE.<| go y ys

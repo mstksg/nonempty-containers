@@ -1,8 +1,8 @@
-{-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE ViewPatterns       #-}
-{-# OPTIONS_HADDOCK not-home    #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_HADDOCK not-home #-}
 
 -- |
 -- Module      : Data.IntMap.NonEmpty.Internal
@@ -19,65 +19,70 @@
 -- wary!
 module Data.IntMap.NonEmpty.Internal (
   -- * Non-Empty IntMap type
-    NEIntMap(..)
-  , Key
-  , singleton
-  , nonEmptyMap
-  , withNonEmpty
-  , fromList
-  , toList
-  , map
-  , insertWith
-  , union
-  , unions
-  , elems
-  , size
-  , toMap
-  -- * Folds
-  , foldr
-  , foldr'
-  , foldr1
-  , foldl
-  , foldl'
-  , foldl1
-  -- * Traversals
-  , traverseWithKey
-  , traverseWithKey1
-  , foldMapWithKey
-  , traverseMapWithKey
-  -- * Unsafe IntMap Functions
-  , insertMinMap
-  , insertMaxMap
-  -- * Debug
-  , valid
-  -- * CPP compatibility
-  , lookupMinMap
-  , lookupMaxMap
-  ) where
+  NEIntMap (..),
+  Key,
+  singleton,
+  nonEmptyMap,
+  withNonEmpty,
+  fromList,
+  toList,
+  map,
+  insertWith,
+  union,
+  unions,
+  elems,
+  size,
+  toMap,
 
-import           Control.Applicative
-import           Control.Comonad
-import           Control.DeepSeq
-import           Control.Monad
-import           Data.Coerce
-import           Data.Data
-import           Data.Function
-import           Data.Functor.Alt
-import           Data.Functor.Classes
-import           Data.Functor.Invariant
-import           Data.IntMap.Internal       (IntMap(..), Key)
-import           Data.List.NonEmpty         (NonEmpty(..))
-import           Data.Maybe
-import           Data.Semigroup
-import           Data.Semigroup.Foldable    (Foldable1(fold1))
-import           Data.Semigroup.Traversable (Traversable1(..))
-import           Prelude hiding             (Foldable(..), map)
-import           Text.Read
-import qualified Data.Aeson                 as A
-import qualified Data.Foldable              as F
-import qualified Data.IntMap                as M
-import qualified Data.List                  as L
-import qualified Data.Semigroup.Foldable    as F1
+  -- * Folds
+  foldr,
+  foldr',
+  foldr1,
+  foldl,
+  foldl',
+  foldl1,
+
+  -- * Traversals
+  traverseWithKey,
+  traverseWithKey1,
+  foldMapWithKey,
+  traverseMapWithKey,
+
+  -- * Unsafe IntMap Functions
+  insertMinMap,
+  insertMaxMap,
+
+  -- * Debug
+  valid,
+
+  -- * CPP compatibility
+  lookupMinMap,
+  lookupMaxMap,
+) where
+
+import Control.Applicative
+import Control.Comonad
+import Control.DeepSeq
+import Control.Monad
+import qualified Data.Aeson as A
+import Data.Coerce
+import Data.Data
+import qualified Data.Foldable as F
+import Data.Function
+import Data.Functor.Alt
+import Data.Functor.Classes
+import Data.Functor.Invariant
+import qualified Data.IntMap as M
+import Data.IntMap.Internal (IntMap (..), Key)
+import qualified Data.List as L
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.Maybe
+import Data.Semigroup
+import Data.Semigroup.Foldable (Foldable1 (fold1))
+import qualified Data.Semigroup.Foldable as F1
+import Data.Semigroup.Traversable (Traversable1 (..))
+import Text.Read
+import Prelude hiding (Foldable (..), map)
 
 -- | A non-empty (by construction) map from integer keys to values @a@.  At
 -- least one key-value pair exists in an @'NEIntMap' v@ at all times.
@@ -115,59 +120,65 @@ import qualified Data.Semigroup.Foldable    as F1
 -- You can convert an 'NEIntMap' into a 'IntMap' with 'toMap' or
 -- 'Data.IntMap.NonEmpty.IsNonEmpty', essentially "obscuring" the non-empty
 -- property from the type.
-data NEIntMap a =
-    NEIntMap { neimK0     :: !Key    -- ^ invariant: must be smaller than smallest key in map
-             , neimV0     :: a
-             , neimIntMap :: !(IntMap a)
-             }
+data NEIntMap a
+  = NEIntMap
+  { neimK0 :: !Key
+  -- ^ invariant: must be smaller than smallest key in map
+  , neimV0 :: a
+  , neimIntMap :: !(IntMap a)
+  }
   deriving (Typeable)
 
 instance Eq a => Eq (NEIntMap a) where
-    t1 == t2 = M.size (neimIntMap t1) == M.size (neimIntMap t2)
-            && toList t1 == toList t2
+  t1 == t2 =
+    M.size (neimIntMap t1) == M.size (neimIntMap t2)
+      && toList t1 == toList t2
 
 instance Ord a => Ord (NEIntMap a) where
-    compare = compare `on` toList
-    (<)     = (<) `on` toList
-    (>)     = (>) `on` toList
-    (<=)    = (<=) `on` toList
-    (>=)    = (>=) `on` toList
+  compare = compare `on` toList
+  (<) = (<) `on` toList
+  (>) = (>) `on` toList
+  (<=) = (<=) `on` toList
+  (>=) = (>=) `on` toList
 
 instance Eq1 NEIntMap where
-    liftEq eq m1 m2 = M.size (neimIntMap m1) == M.size (neimIntMap m2)
-                   && liftEq (liftEq eq) (toList m1) (toList m2)
+  liftEq eq m1 m2 =
+    M.size (neimIntMap m1) == M.size (neimIntMap m2)
+      && liftEq (liftEq eq) (toList m1) (toList m2)
 
 instance Ord1 NEIntMap where
-    liftCompare cmp m n =
-        liftCompare (liftCompare cmp) (toList m) (toList n)
+  liftCompare cmp m n =
+    liftCompare (liftCompare cmp) (toList m) (toList n)
 
 instance Show1 NEIntMap where
-    liftShowsPrec sp sl d m =
-        showsUnaryWith (liftShowsPrec sp' sl') "fromList" d (toList m)
-      where
-        sp' = liftShowsPrec sp sl
-        sl' = liftShowList sp sl
+  liftShowsPrec sp sl d m =
+    showsUnaryWith (liftShowsPrec sp' sl') "fromList" d (toList m)
+    where
+      sp' = liftShowsPrec sp sl
+      sl' = liftShowList sp sl
 
 instance Read1 NEIntMap where
-    liftReadsPrec rp rl = readsData $
-        readsUnaryWith (liftReadsPrec rp' rl') "fromList" fromList
-      where
-        rp' = liftReadsPrec rp rl
-        rl' = liftReadList rp rl
+  liftReadsPrec rp rl =
+    readsData $
+      readsUnaryWith (liftReadsPrec rp' rl') "fromList" fromList
+    where
+      rp' = liftReadsPrec rp rl
+      rl' = liftReadList rp rl
 
 instance Read e => Read (NEIntMap e) where
-    readPrec = parens $ prec 10 $ do
-      Ident "fromList" <- lexP
-      xs <- parens . prec 10 $ readPrec
-      return (fromList xs)
-    readListPrec = readListPrecDefault
+  readPrec = parens $ prec 10 $ do
+    Ident "fromList" <- lexP
+    xs <- parens . prec 10 $ readPrec
+    return (fromList xs)
+  readListPrec = readListPrecDefault
 
 instance Show a => Show (NEIntMap a) where
-    showsPrec d m  = showParen (d > 10) $
+  showsPrec d m =
+    showParen (d > 10) $
       showString "fromList (" . shows (toList m) . showString ")"
 
 instance NFData a => NFData (NEIntMap a) where
-    rnf (NEIntMap k v a) = rnf k `seq` rnf v `seq` rnf a
+  rnf (NEIntMap k v a) = rnf k `seq` rnf v `seq` rnf a
 
 -- Data instance code from Data.IntMap.Internal
 --
@@ -176,12 +187,12 @@ instance NFData a => NFData (NEIntMap a) where
 --                (c) wren romano 2016
 instance Data a => Data (NEIntMap a) where
   gfoldl f z im = z fromList `f` toList im
-  toConstr _     = fromListConstr
-  gunfold k z c  = case constrIndex c of
+  toConstr _ = fromListConstr
+  gunfold k z c = case constrIndex c of
     1 -> k (z fromList)
     _ -> error "gunfold"
-  dataTypeOf _   = intMapDataType
-  dataCast1 f    = gcast1 f
+  dataTypeOf _ = intMapDataType
+  dataCast1 = gcast1
 
 fromListConstr :: Constr
 fromListConstr = mkConstr intMapDataType "fromList" [] Prefix
@@ -190,18 +201,19 @@ intMapDataType :: DataType
 intMapDataType = mkDataType "Data.IntMap.NonEmpty.Internal.NEIntMap" [fromListConstr]
 
 instance A.ToJSON a => A.ToJSON (NEIntMap a) where
-    toJSON     = A.toJSON . toMap
-    toEncoding = A.toEncoding . toMap
+  toJSON = A.toJSON . toMap
+  toEncoding = A.toEncoding . toMap
 
 instance A.FromJSON a => A.FromJSON (NEIntMap a) where
-    parseJSON = withNonEmpty (fail err) pure
-            <=< A.parseJSON
-      where
-        err = "NEIntMap: Non-empty map expected, but empty map found"
+  parseJSON =
+    withNonEmpty (fail err) pure
+      <=< A.parseJSON
+    where
+      err = "NEIntMap: Non-empty map expected, but empty map found"
 
 -- | @since 0.3.4.4
 instance Alt NEIntMap where
-    (<!>) = union
+  (<!>) = union
 
 -- | /O(n)/. Fold the values in the map using the given right-associative
 -- binary operator, such that @'foldr' f z == 'Prelude.foldr' f z . 'elems'@.
@@ -229,9 +241,10 @@ foldr' f z (NEIntMap _ v m) = v `f` y
 -- Note that, unlike 'Data.Foldable.foldr1' for 'IntMap', this function is
 -- total if the input function is total.
 foldr1 :: (a -> a -> a) -> NEIntMap a -> a
-foldr1 f (NEIntMap _ v m) = maybe v (f v . uncurry (M.foldr f))
-                       . M.maxView
-                       $ m
+foldr1 f (NEIntMap _ v m) =
+  maybe v (f v . uncurry (M.foldr f))
+    . M.maxView
+    $ m
 {-# INLINE foldr1 #-}
 
 -- | /O(n)/. Fold the values in the map using the given left-associative
@@ -276,11 +289,11 @@ foldl1 f (NEIntMap _ v m) = M.foldl f v m
 -- some monoids.
 
 -- TODO: benchmark against maxView method
-foldMapWithKey
-    :: Semigroup m
-    => (Key -> a -> m)
-    -> NEIntMap a
-    -> m
+foldMapWithKey ::
+  Semigroup m =>
+  (Key -> a -> m) ->
+  NEIntMap a ->
+  m
 foldMapWithKey f = F1.foldMap1 (uncurry f) . toList
 {-# INLINE foldMapWithKey #-}
 
@@ -290,12 +303,13 @@ foldMapWithKey f = F1.foldMap1 (uncurry f) . toList
 map :: (a -> b) -> NEIntMap a -> NEIntMap b
 map f (NEIntMap k0 v m) = NEIntMap k0 (f v) (M.map f m)
 {-# NOINLINE [1] map #-}
+
 {-# RULES
-"map/map" forall f g xs . map f (map g xs) = map (f . g) xs
- #-}
+"map/map" forall f g xs. map f (map g xs) = map (f . g) xs
+  #-}
 {-# RULES
 "map/coerce" map coerce = coerce
- #-}
+  #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/.
 -- The expression (@'union' t1 t2@) takes the left-biased union of @t1@ and
@@ -303,14 +317,14 @@ map f (NEIntMap k0 v m) = NEIntMap k0 (f v) (M.map f m)
 -- (@'union' == 'Data.IntMap.NonEmpty.unionWith' 'const'@).
 --
 -- > union (fromList ((5, "a") :| [(3, "b")])) (fromList ((5, "A") :| [(7, "C")])) == fromList ((3, "b") :| [(5, "a"), (7, "C")])
-union
-    :: NEIntMap a
-    -> NEIntMap a
-    -> NEIntMap a
+union ::
+  NEIntMap a ->
+  NEIntMap a ->
+  NEIntMap a
 union n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
-    LT -> NEIntMap k1 v1 . M.union m1 . toMap $ n2
-    EQ -> NEIntMap k1 v1 . M.union m1         $ m2
-    GT -> NEIntMap k2 v2 . M.union (toMap n1) $ m2
+  LT -> NEIntMap k1 v1 . M.union m1 . toMap $ n2
+  EQ -> NEIntMap k1 v1 . M.union m1 $ m2
+  GT -> NEIntMap k2 v2 . M.union (toMap n1) $ m2
 {-# INLINE union #-}
 
 -- | The left-biased union of a non-empty list of maps.
@@ -319,11 +333,11 @@ union n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare k1 k2 of
 -- >     == fromList [(3, "b"), (5, "a"), (7, "C")]
 -- > unions (fromList ((5, "A3") :| [(3, "B3")]) :| [fromList ((5, "A") :| [(7, "C")]), fromList ((5, "a") :| [(3, "b")])])
 -- >     == fromList ((3, "B3") :| [(5, "A3"), (7, "C")])
-unions
-    :: Foldable1 f
-    => f (NEIntMap a)
-    -> NEIntMap a
-unions (F1.toNonEmpty->(m :| ms)) = F.foldl' union m ms
+unions ::
+  Foldable1 f =>
+  f (NEIntMap a) ->
+  NEIntMap a
+unions (F1.toNonEmpty -> (m :| ms)) = F.foldl' union m ms
 {-# INLINE unions #-}
 
 -- | /O(n)/.
@@ -374,14 +388,15 @@ toMap (NEIntMap k v m) = insertMinMap k v m
 -- @
 -- 'traverseWithKey' f = 'unwrapApplicative' . 'traverseWithKey1' (\\k -> WrapApplicative . f k)
 -- @
-traverseWithKey
-    :: Applicative t
-    => (Key -> a -> t b)
-    -> NEIntMap a
-    -> t (NEIntMap b)
+traverseWithKey ::
+  Applicative t =>
+  (Key -> a -> t b) ->
+  NEIntMap a ->
+  t (NEIntMap b)
 traverseWithKey f (NEIntMap k v m0) =
-        NEIntMap k <$> f k v
-                   <*> traverseMapWithKey f m0
+  NEIntMap k
+    <$> f k v
+    <*> traverseMapWithKey f m0
 {-# INLINE traverseWithKey #-}
 
 -- | /O(n)/.
@@ -397,23 +412,23 @@ traverseWithKey f (NEIntMap k v m0) =
 -- and not just 'Applicative'.
 
 -- TODO: benchmark against maxView-based methods
-traverseWithKey1
-    :: Apply t
-    => (Key -> a -> t b)
-    -> NEIntMap a
-    -> t (NEIntMap b)
+traverseWithKey1 ::
+  Apply t =>
+  (Key -> a -> t b) ->
+  NEIntMap a ->
+  t (NEIntMap b)
 traverseWithKey1 f (NEIntMap k0 v m0) = case runMaybeApply m1 of
-    Left  m2 -> NEIntMap k0 <$> f k0 v <.> m2
-    Right m2 -> flip (NEIntMap k0) m2 <$> f k0 v
+  Left m2 -> NEIntMap k0 <$> f k0 v <.> m2
+  Right m2 -> flip (NEIntMap k0) m2 <$> f k0 v
   where
     m1 = traverseMapWithKey (\k -> MaybeApply . Left . f k) m0
-{-# INLINABLE traverseWithKey1 #-}
+{-# INLINEABLE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
 --
 -- > toList (fromList ((5,"a") :| [(3,"b")])) == ((3,"b") :| [(5,"a")])
 toList :: NEIntMap a -> NonEmpty (Key, a)
-toList (NEIntMap k v m) = (k,v) :| M.toList m
+toList (NEIntMap k v m) = (k, v) :| M.toList m
 {-# INLINE toList #-}
 
 -- | /O(log n)/. Smart constructor for an 'NEIntMap' from a 'IntMap'.  Returns
@@ -438,11 +453,13 @@ nonEmptyMap = (fmap . uncurry . uncurry) NEIntMap . M.minViewWithKey
 -- will be fed to the function @f@ instead.
 --
 -- @'nonEmptyMap' == 'withNonEmpty' 'Nothing' 'Just'@
-withNonEmpty
-    :: r                    -- ^ value to return if map is empty
-    -> (NEIntMap a -> r)     -- ^ function to apply if map is not empty
-    -> IntMap a
-    -> r
+withNonEmpty ::
+  -- | value to return if map is empty
+  r ->
+  -- | function to apply if map is not empty
+  (NEIntMap a -> r) ->
+  IntMap a ->
+  r
 withNonEmpty def f = maybe def f . nonEmptyMap
 {-# INLINE withNonEmpty #-}
 
@@ -458,9 +475,10 @@ withNonEmpty def f = maybe def f . nonEmptyMap
 -- 'fromDistinctAscList' if items are ordered, just like the actual
 -- 'M.fromList'.
 fromList :: NonEmpty (Key, a) -> NEIntMap a
-fromList ((k, v) :| xs) = withNonEmpty (singleton k v) (insertWith (const id) k v)
-                        . M.fromList
-                        $ xs
+fromList ((k, v) :| xs) =
+  withNonEmpty (singleton k v) (insertWith (const id) k v)
+    . M.fromList
+    $ xs
 {-# INLINE fromList #-}
 
 -- | /O(1)/. A map with a single element.
@@ -481,36 +499,35 @@ singleton k v = NEIntMap k v M.empty
 --
 -- > insertWith (++) 5 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "xxxa")])
 -- > insertWith (++) 7 "xxx" (fromList ((5,"a") :| [(3,"b")])) == fromList ((3, "b") :| [(5, "a"), (7, "xxx")])
-insertWith
-    :: (a -> a -> a)
-    -> Key
-    -> a
-    -> NEIntMap a
-    -> NEIntMap a
+insertWith ::
+  (a -> a -> a) ->
+  Key ->
+  a ->
+  NEIntMap a ->
+  NEIntMap a
 insertWith f k v n@(NEIntMap k0 v0 m) = case compare k k0 of
-    LT -> NEIntMap k  v        . toMap            $ n
-    EQ -> NEIntMap k  (f v v0) m
-    GT -> NEIntMap k0 v0       $ M.insertWith f k v m
+  LT -> NEIntMap k v . toMap $ n
+  EQ -> NEIntMap k (f v v0) m
+  GT -> NEIntMap k0 v0 $ M.insertWith f k v m
 {-# INLINE insertWith #-}
-
 
 -- | Left-biased union
 instance Semigroup (NEIntMap a) where
-    (<>) = union
-    {-# INLINE (<>) #-}
-    sconcat = unions
-    {-# INLINE sconcat #-}
+  (<>) = union
+  {-# INLINE (<>) #-}
+  sconcat = unions
+  {-# INLINE sconcat #-}
 
 instance Functor NEIntMap where
-    fmap = map
-    {-# INLINE fmap #-}
-    x <$ NEIntMap k _ m = NEIntMap k x (x <$ m)
-    {-# INLINE (<$) #-}
+  fmap = map
+  {-# INLINE fmap #-}
+  x <$ NEIntMap k _ m = NEIntMap k x (x <$ m)
+  {-# INLINE (<$) #-}
 
 -- | @since 0.3.4.4
 instance Invariant NEIntMap where
-    invmap f _ = fmap f
-    {-# INLINE invmap #-}
+  invmap f _ = fmap f
+  {-# INLINE invmap #-}
 
 -- | Traverses elements in order of ascending keys.
 --
@@ -520,18 +537,12 @@ instance Invariant NEIntMap where
 --
 -- 'Data.Foldable.foldr1', 'Data.Foldable.foldl1', 'Data.Foldable.minimum',
 -- 'Data.Foldable.maximum' are all total.
-instance F.Foldable NEIntMap where
 #if MIN_VERSION_base(4,11,0)
+instance F.Foldable NEIntMap where
     fold      (NEIntMap _ v m) = v <> F.fold (M.elems m)
     {-# INLINE fold #-}
     foldMap f (NEIntMap _ v m) = f v <> F.foldMap f (M.elems m)
     {-# INLINE foldMap #-}
-#else
-    fold      (NEIntMap _ v m) = v `mappend` F.fold (M.elems m)
-    {-# INLINE fold #-}
-    foldMap f (NEIntMap _ v m) = f v `mappend` F.foldMap f (M.elems m)
-    {-# INLINE foldMap #-}
-#endif
     foldr   = foldr
     {-# INLINE foldr #-}
     foldr'  = foldr'
@@ -554,6 +565,35 @@ instance F.Foldable NEIntMap where
     -- TODO: use build
     toList  = F.toList . elems
     {-# INLINE toList #-}
+#else
+instance F.Foldable NEIntMap where
+    fold      (NEIntMap _ v m) = v `mappend` F.fold (M.elems m)
+    {-# INLINE fold #-}
+    foldMap f (NEIntMap _ v m) = f v `mappend` F.foldMap f (M.elems m)
+    {-# INLINE foldMap #-}
+    foldr   = foldr
+    {-# INLINE foldr #-}
+    foldr'  = foldr'
+    {-# INLINE foldr' #-}
+    foldr1  = foldr1
+    {-# INLINE foldr1 #-}
+    foldl   = foldl
+    {-# INLINE foldl #-}
+    foldl'  = foldl'
+    {-# INLINE foldl' #-}
+    foldl1  = foldl1
+    {-# INLINE foldl1 #-}
+    null _  = False
+    {-# INLINE null #-}
+    length  = size
+    {-# INLINE length #-}
+    elem x (NEIntMap _ v m) = F.elem x m
+                           || x == v
+    {-# INLINE elem #-}
+    -- TODO: use build
+    toList  = F.toList . elems
+    {-# INLINE toList #-}
+#endif
 
 -- | Traverses elements in order of ascending keys
 --
@@ -561,8 +601,8 @@ instance F.Foldable NEIntMap where
 -- elements in order of ascending keys, while 'IntMap' traverses positive
 -- keys first, then negative keys.
 instance Traversable NEIntMap where
-    traverse f = traverseWithKey (const f)
-    {-# INLINE traverse #-}
+  traverse f = traverseWithKey (const f)
+  {-# INLINE traverse #-}
 
 -- | Traverses elements in order of ascending keys
 --
@@ -570,23 +610,29 @@ instance Traversable NEIntMap where
 -- 'F.foldMap' for the 'IntMap' instance of 'Foldable'.  They traverse
 -- elements in order of ascending keys, while 'IntMap' traverses positive
 -- keys first, then negative keys.
-instance Foldable1 NEIntMap where
 #if MIN_VERSION_base(4,11,0)
+instance Foldable1 NEIntMap where
     fold1 (NEIntMap _ v m) = maybe v (v <>)
                            . F.foldMap Just
                            . M.elems
                            $ m
-#else
-    fold1 (NEIntMap _ v m) = option v (v <>)
-                           . F.foldMap (Option . Just)
-                           . M.elems
-                           $ m
-#endif
     {-# INLINE fold1 #-}
     foldMap1 f = foldMapWithKey (const f)
     {-# INLINE foldMap1 #-}
     toNonEmpty = elems
     {-# INLINE toNonEmpty #-}
+#else
+instance Foldable1 NEIntMap where
+    fold1 (NEIntMap _ v m) = option v (v <>)
+                           . F.foldMap (Option . Just)
+                           . M.elems
+                           $ m
+    {-# INLINE fold1 #-}
+    foldMap1 f = foldMapWithKey (const f)
+    {-# INLINE foldMap1 #-}
+    toNonEmpty = elems
+    {-# INLINE toNonEmpty #-}
+#endif
 
 -- | Traverses elements in order of ascending keys
 --
@@ -595,8 +641,8 @@ instance Foldable1 NEIntMap where
 -- elements in order of ascending keys, while 'IntMap' traverses positive
 -- keys first, then negative keys.
 instance Traversable1 NEIntMap where
-    traverse1 f = traverseWithKey1 (const f)
-    {-# INLINE traverse1 #-}
+  traverse1 f = traverseWithKey1 (const f)
+  {-# INLINE traverse1 #-}
 
 -- | 'extract' gets the value at the minimal key, and 'duplicate' produces
 -- a map of maps comprised of all keys from the original map greater than
@@ -604,29 +650,27 @@ instance Traversable1 NEIntMap where
 --
 -- @since 0.1.1.0
 instance Comonad NEIntMap where
-    extract = neimV0
-    {-# INLINE extract #-}
-    -- We'd like to use 'M.mapAccumWithKey', but it traverses things in the
-    -- wrong order.
-    duplicate n0@(NEIntMap k0 _ m0) = NEIntMap k0 n0
-                                    . M.fromDistinctAscList
-                                    . snd
-                                    . L.mapAccumL go m0
-                                    . M.toList
-                                    $ m0
-      where
-        go m (k, v) = (m', (k, NEIntMap k v m'))
-          where
-            !m' = M.deleteMin m
-    {-# INLINE duplicate #-}
+  extract = neimV0
+  {-# INLINE extract #-}
+
+  -- We'd like to use 'M.mapAccumWithKey', but it traverses things in the
+  -- wrong order.
+  duplicate n0@(NEIntMap k0 _ m0) =
+    NEIntMap k0 n0
+      . M.fromDistinctAscList
+      . snd
+      . L.mapAccumL go m0
+      . M.toList
+      $ m0
+    where
+      go m (k, v) = (m', (k, NEIntMap k v m'))
+        where
+          !m' = M.deleteMin m
+  {-# INLINE duplicate #-}
 
 -- | /O(n)/. Test if the internal map structure is valid.
 valid :: NEIntMap a -> Bool
 valid (NEIntMap k _ m) = all ((k <) . fst . fst) (M.minViewWithKey m)
-
-
-
-
 
 -- | /O(log n)/. Insert new key and value into a map where keys are
 -- /strictly greater than/ the new key.  That is, the new key must be
@@ -640,7 +684,7 @@ valid (NEIntMap k _ m) = all ((k <) . fst . fst) (M.minViewWithKey m)
 -- TODO: implementation
 insertMinMap :: Key -> a -> IntMap a -> IntMap a
 insertMinMap = M.insert
-{-# INLINABLE insertMinMap #-}
+{-# INLINEABLE insertMinMap #-}
 
 -- | /O(log n)/. Insert new key and value into a map where keys are
 -- /strictly less than/ the new key.  That is, the new key must be
@@ -654,7 +698,7 @@ insertMinMap = M.insert
 -- TODO: implementation
 insertMaxMap :: Key -> a -> IntMap a -> IntMap a
 insertMaxMap = M.insert
-{-# INLINABLE insertMaxMap #-}
+{-# INLINEABLE insertMaxMap #-}
 
 -- | /O(n)/. A fixed version of 'Data.IntMap.traverseWithKey' that
 -- traverses items in ascending order of keys.
@@ -667,6 +711,7 @@ traverseMapWithKey f = go
 {-# INLINE traverseMapWithKey #-}
 
 -- ---------------------------------------------
+
 -- | CPP for new functions not in old containers
 -- ---------------------------------------------
 
@@ -687,4 +732,3 @@ lookupMaxMap = M.lookupMax
 lookupMaxMap = fmap fst . M.maxViewWithKey
 #endif
 {-# INLINE lookupMaxMap #-}
-
