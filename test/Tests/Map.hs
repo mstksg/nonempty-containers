@@ -24,7 +24,7 @@ import Test.Tasty
 import Tests.Util
 
 mapTests :: TestTree
-mapTests = groupTree $$(discover)
+mapTests = groupTree $$discover
 
 prop_valid :: Property
 prop_valid =
@@ -537,6 +537,7 @@ prop_sequence1 =
     (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
     (sequenceA . fmap (`More` Done id))
     (sequence1 . fmap (`More` Done id))
+{-# ANN prop_sequence1 "HLint: ignore Use traverse" #-}
 
 prop_sequenceA :: Property
 prop_sequenceA =
@@ -544,6 +545,7 @@ prop_sequenceA =
     (GTNEMap :-> TTBazaar GTVal TTNEMap TTVal)
     (sequenceA . fmap (`More` Done id))
     (sequenceA . fmap (`More` Done id))
+{-# ANN prop_sequenceA "HLint: ignore Use traverse" #-}
 
 prop_mapAccumWithKey :: Property
 prop_mapAccumWithKey =

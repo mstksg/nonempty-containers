@@ -15,7 +15,7 @@ import Test.Tasty
 import Tests.Util
 
 setTests :: TestTree
-setTests = groupTree $$(discover)
+setTests = groupTree $$discover
 
 prop_valid :: Property
 prop_valid =

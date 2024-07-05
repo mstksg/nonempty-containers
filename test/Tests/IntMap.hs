@@ -24,7 +24,7 @@ import Test.Tasty
 import Tests.Util
 
 intMapTests :: TestTree
-intMapTests = groupTree $$(discover)
+intMapTests = groupTree $$discover
 
 prop_valid :: Property
 prop_valid =
@@ -77,7 +77,7 @@ prop_toMapIso1 = property $ do
   m0 <- forAll intMapGen
   tripping
     m0
-    (NEM.nonEmptyMap)
+    NEM.nonEmptyMap
     (Identity . maybe M.empty NEM.toMap)
 
 prop_toMapIso2 :: Property

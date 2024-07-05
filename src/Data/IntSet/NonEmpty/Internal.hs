@@ -122,7 +122,7 @@ instance NFData NEIntSet where
 -- Copyright   :  (c) Daan Leijen 2002
 --                (c) Joachim Breitner 2011
 instance Data NEIntSet where
-  gfoldl f z is = z fromList `f` (toList is)
+  gfoldl f z is = z fromList `f` toList is
   toConstr _ = fromListConstr
   gunfold k z c = case constrIndex c of
     1 -> k (z fromList)

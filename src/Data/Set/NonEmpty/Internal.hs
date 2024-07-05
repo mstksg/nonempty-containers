@@ -2,6 +2,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
 
@@ -157,7 +158,7 @@ instance (Data a, Ord a) => Data (NESet a) where
     1 -> k (z fromList)
     _ -> error "gunfold"
   dataTypeOf _ = setDataType
-  dataCast1 f = gcast1 f
+  dataCast1 = gcast1
 
 fromListConstr :: Constr
 fromListConstr = mkConstr setDataType "fromList" [] Prefix
@@ -553,7 +554,7 @@ cartesianProductSet :: Set a -> Set b -> Set (a, b)
 cartesianProductSet = S.cartesianProduct
 #else
 cartesianProductSet as bs =
-  getMergeSet $ foldMap (\a -> MergeSet $ S.mapMonotonic ((,) a) bs) as
+  getMergeSet $ foldMap (\a -> MergeSet $ S.mapMonotonic (a, ) bs) as
 
 newtype MergeSet a = MergeSet { getMergeSet :: Set a }
 

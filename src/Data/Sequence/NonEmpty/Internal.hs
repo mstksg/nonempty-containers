@@ -72,6 +72,8 @@ import qualified Data.Sequence as Seq
 import Text.Read
 import Prelude hiding (length, map, replicate, unzip, zip, zipWith)
 
+{-# ANN module "HLint: ignore Avoid NonEmpty.unzip" #-}
+
 -- | A general-purpose non-empty (by construction) finite sequence type.
 --
 -- Non-emptiness means that:

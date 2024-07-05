@@ -98,6 +98,8 @@ import Text.Read
 import           Data.Semigroup             (Semigroup(..))
 #endif
 
+{-# ANN module ("HLint: ignore Avoid NonEmpty.unzip" :: String) #-}
+
 groupTree :: Group -> TestTree
 groupTree Group{..} =
   testGroup

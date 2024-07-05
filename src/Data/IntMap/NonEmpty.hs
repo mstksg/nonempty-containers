@@ -1,7 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
@@ -778,7 +777,7 @@ alterF f k n@(NEIntMap k0 v m) = case compare k k0 of
 {-# RULES
 "alterF/Const" forall k (f :: Maybe a -> Const b (Maybe a)).
   alterF f k =
-    \m -> Const . getConst . f $ lookup k m
+    Const . getConst . f . lookup k
   #-}
 
 -- if f ~ Identity, it's an 'alter'
@@ -797,7 +796,7 @@ alter' ::
   NEIntMap a
 alter' f k n@(NEIntMap k0 v m) = case compare k k0 of
   LT -> NEIntMap k (f Nothing) . toMap $ n
-  EQ -> NEIntMap k0 (f (Just v)) $ m
+  EQ -> NEIntMap k0 (f (Just v)) m
   GT -> NEIntMap k0 v . M.alter (Just . f) k $ m
 {-# INLINE alter' #-}
 
@@ -839,7 +838,7 @@ alterF' f k n@(NEIntMap k0 v m) = case compare k k0 of
 {-# RULES
 "alterF'/Const" forall k (f :: Maybe a -> Const b a).
   alterF' f k =
-    \m -> Const . getConst . f $ lookup k m
+    Const . getConst . f . lookup k
   #-}
 
 -- if f ~ Identity, it's an insertWith
