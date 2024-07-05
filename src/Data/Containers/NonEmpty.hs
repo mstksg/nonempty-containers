@@ -1,7 +1,11 @@
+{-# LANGUAGE DefaultSignatures      #-}
+{-# LANGUAGE DeriveTraversable      #-}
+{-# LANGUAGE EmptyCase              #-}
 {-# LANGUAGE LambdaCase             #-}
 {-# LANGUAGE PatternSynonyms        #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE UndecidableInstances   #-}
 {-# LANGUAGE ViewPatterns           #-}
 
 -- |
@@ -26,8 +30,15 @@ module Data.Containers.NonEmpty (
   , pattern IsNonEmpty, pattern IsEmpty
   , overNonEmpty
   , onNonEmpty
+
+  , Truth(..)
+  , Falsity(..)
+  , Point(..)
   ) where
 
+import           Control.Monad          (guard)
+import           Data.Align             (align)
+import           Data.Functor.Identity  (Identity(..))
 import           Data.IntMap            (IntMap)
 import           Data.IntMap.NonEmpty   (NEIntMap)
 import           Data.IntSet            (IntSet)
@@ -36,12 +47,16 @@ import           Data.List.NonEmpty     (NonEmpty(..))
 import           Data.Map               (Map)
 import           Data.Map.NonEmpty      (NEMap)
 import           Data.Maybe
+import           Data.Monoid            (All(..), Any(..))
 import           Data.Sequence          (Seq(..))
 import           Data.Sequence.NonEmpty (NESeq(..))
 import           Data.Set               (Set)
 import           Data.Set.NonEmpty      (NESet)
+import           Data.These
+import           Data.These.Combinators
 import           Data.Vector            (Vector)
 import           Data.Vector.NonEmpty   (NonEmptyVector)
+import           Data.Void
 import qualified Data.IntMap            as IM
 import qualified Data.IntMap.NonEmpty   as NEIM
 import qualified Data.IntSet            as IS
@@ -70,8 +85,12 @@ import qualified Data.Vector.NonEmpty   as NEV
 -- *    @unsafeToNonEmpty x == fromJust (nonEmpty x)@
 -- *    Usually, @not (isEmpty x) ==> isJust (nonEmpty x)@, but this isn't
 --      necessary.
+--
+-- If @s@ is a @Monoid@, we should additionally have:
+--
+-- *    empty = mempty
 class HasNonEmpty s where
-    {-# MINIMAL (nonEmpty | withNonEmpty), fromNonEmpty, empty #-}
+    {-# MINIMAL (nonEmpty | withNonEmpty), fromNonEmpty #-}
 
     -- | @'NE' s@ is the "non-empty" version of @s@.
     type NE s = t | t -> s
@@ -97,6 +116,8 @@ class HasNonEmpty s where
 
     -- | An empty @s@.
     empty            :: s
+    default empty :: Monoid s => s
+    empty = mempty
 
     -- | Check if an @s@ is empty.
     isEmpty :: s -> Bool
@@ -127,6 +148,75 @@ overNonEmpty f = withNonEmpty empty (fromNonEmpty . f)
 onNonEmpty :: HasNonEmpty s => (NE s -> r) -> s -> Maybe r
 onNonEmpty f = withNonEmpty Nothing (Just . f)
 
+-- @since 0.3.5.0
+instance HasNonEmpty () where
+    type NE () = Void
+    nonEmpty ~()     = Nothing
+    fromNonEmpty     = \case {}
+    withNonEmpty def _f ~() = def
+    isEmpty ~()      = True
+    unsafeToNonEmpty ~() = error "unsafeToNonEmpty: () is empty"
+
+-- | 'Bool' without 'False'
+data Truth = MkTruth
+  deriving (Show, Read, Eq, Ord)
+
+-- @since 0.3.5.0
+instance HasNonEmpty Any where
+    type NE Any = Truth
+    nonEmpty         = (<$) MkTruth . guard . getAny
+    fromNonEmpty     = \ ~MkTruth -> mempty
+    withNonEmpty def f = \case
+      Any False -> def
+      Any True  -> f MkTruth
+    isEmpty          = not . getAny
+    unsafeToNonEmpty = \case
+      Any False -> error "unsafeToNonEmpty: wasn't True"
+      Any True  -> MkTruth
+
+-- | 'Bool' without 'True'
+data Falsity = MkFalsity
+  deriving (Show, Read, Eq, Ord)
+
+-- @since 0.3.5.0
+instance HasNonEmpty All where
+    type NE All = Falsity
+    nonEmpty         = (<$) MkFalsity . guard . not . getAll
+    fromNonEmpty     = \ ~MkFalsity -> mempty
+    withNonEmpty def f = \case
+      All True -> def
+      All False  -> f MkFalsity
+    isEmpty          = getAll
+    unsafeToNonEmpty = \case
+      All True -> error "unsafeToNonEmpty: wasn't False"
+      All False  -> MkFalsity
+
+-- | 'Maybe' without 'Nothing'
+newtype Point a = MkPoint { unPoint :: a }
+  deriving ( Show, Read, Eq, Ord
+           , Functor, Foldable, Traversable
+           )
+
+-- @since 0.3.5.0
+instance HasNonEmpty a => HasNonEmpty (Identity a) where
+    type NE (Identity a) = Identity (NE a)
+    nonEmpty         = traverse nonEmpty
+    fromNonEmpty     = fmap fromNonEmpty
+    withNonEmpty def f = withNonEmpty def (f . Identity) . runIdentity
+    empty            = Identity empty
+    isEmpty          = isEmpty . runIdentity
+    unsafeToNonEmpty = fmap unsafeToNonEmpty
+
+-- @since 0.3.5.0
+instance HasNonEmpty (Maybe a) where
+    type NE (Maybe a) = Point a
+    nonEmpty         = fmap MkPoint
+    fromNonEmpty     = Just . unPoint
+    withNonEmpty def f = maybe def (f . MkPoint)
+    empty            = Nothing
+    isEmpty          = isNothing
+    unsafeToNonEmpty = MkPoint . fromJust
+
 instance HasNonEmpty [a] where
     type NE [a] = NonEmpty a
     nonEmpty         = NE.nonEmpty
@@ -137,6 +227,15 @@ instance HasNonEmpty [a] where
     empty            = []
     isEmpty          = null
     unsafeToNonEmpty = NE.fromList
+
+-- @since 0.3.5.0
+instance (HasNonEmpty a, HasNonEmpty b) => HasNonEmpty (a, b) where
+    type NE (a, b) = These (NE a) (NE b)
+    nonEmpty  (a, b) = align (nonEmpty a) (nonEmpty b)
+    fromNonEmpty ne  = ( maybe empty fromNonEmpty $ justThis ne
+                       , maybe empty fromNonEmpty $ justThat ne
+                       )
+    empty            = (empty, empty)
 
 instance HasNonEmpty (Map k a) where
     type NE (Map k a) = NEMap k a

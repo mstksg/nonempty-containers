@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+*   `HasNonEmpty` instances for `()`, `All`, `Any`, and pairs where both sides'
+	types have non empty.
+
 Version 0.3.4.x
 ---------------
 
