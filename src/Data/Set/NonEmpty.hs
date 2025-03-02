@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
@@ -1054,5 +1055,9 @@ combineEq (x :| xs) = go x xs
   where
     go z [] = z :| []
     go z (y : ys)
+#if MIN_VERSION_containers(0,8,0)
+      | z == y = go y ys
+#else
       | z == y = go z ys
+#endif
       | otherwise = z NE.<| go y ys
