@@ -716,11 +716,7 @@ insertMaxMap = M.insert
 -- | /O(n)/. A fixed version of 'Data.IntMap.traverseWithKey' that
 -- traverses items in ascending order of keys.
 traverseMapWithKey :: Applicative t => (Key -> a -> t b) -> IntMap a -> t (IntMap b)
-traverseMapWithKey f = go
-  where
-    go Nil = pure Nil
-    go (Tip k v) = Tip k <$> f k v
-    go (Bin p m l r) = liftA2 (flip (Bin p m)) (go r) (go l)
+traverseMapWithKey = M.traverseWithKey
 {-# INLINE traverseMapWithKey #-}
 
 -- ---------------------------------------------
