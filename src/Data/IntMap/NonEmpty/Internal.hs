@@ -46,7 +46,6 @@ module Data.IntMap.NonEmpty.Internal (
   traverseWithKey,
   traverseWithKey1,
   foldMapWithKey,
-  traverseMapWithKey,
 
   -- * Unsafe IntMap Functions
   insertMinMap,
@@ -409,7 +408,7 @@ traverseWithKey ::
 traverseWithKey f (NEIntMap k v m0) =
   NEIntMap k
     <$> f k v
-    <*> traverseMapWithKey f m0
+    <*> M.traverseWithKey f m0
 {-# INLINE traverseWithKey #-}
 
 -- | /O(n)/.
@@ -434,7 +433,7 @@ traverseWithKey1 f (NEIntMap k0 v m0) = case runMaybeApply m1 of
   Left m2 -> NEIntMap k0 <$> f k0 v <.> m2
   Right m2 -> flip (NEIntMap k0) m2 <$> f k0 v
   where
-    m1 = traverseMapWithKey (\k -> MaybeApply . Left . f k) m0
+    m1 = M.traverseWithKey (\k -> MaybeApply . Left . f k) m0
 {-# INLINEABLE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
@@ -712,12 +711,6 @@ insertMinMap = M.insert
 insertMaxMap :: Key -> a -> IntMap a -> IntMap a
 insertMaxMap = M.insert
 {-# INLINEABLE insertMaxMap #-}
-
--- | /O(n)/. A fixed version of 'Data.IntMap.traverseWithKey' that
--- traverses items in ascending order of keys.
-traverseMapWithKey :: Applicative t => (Key -> a -> t b) -> IntMap a -> t (IntMap b)
-traverseMapWithKey = M.traverseWithKey
-{-# INLINE traverseMapWithKey #-}
 
 -- ---------------------------------------------
 
