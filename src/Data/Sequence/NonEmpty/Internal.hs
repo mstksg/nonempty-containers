@@ -580,45 +580,20 @@ instance NFData a => NFData (NESeq a) where
 
 -- | Compatibility layer for 'Data.Sequence.sortOn'.
 sortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
-#if MIN_VERSION_containers(0,5,11)
 sortOnSeq = Seq.sortOn
-#else
-sortOnSeq f = Seq.sortBy (\x y -> f x `compare` f y)
-#endif
 {-# INLINE sortOnSeq #-}
 
 -- | Compatibility layer for 'Data.Sequence.unstableSortOn'.
 unstableSortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
-#if MIN_VERSION_containers(0,5,11)
 unstableSortOnSeq = Seq.unstableSortOn
-#else
-unstableSortOnSeq f = Seq.unstableSortBy (\x y -> f x `compare` f y)
-#endif
 {-# INLINE unstableSortOnSeq #-}
 
 -- | Compatibility layer for 'Data.Sequence.unzip'.
 unzipSeq :: Seq (a, b) -> (Seq a, Seq b)
-#if MIN_VERSION_containers(0,5,11)
 unzipSeq = Seq.unzip
 {-# INLINE unzipSeq #-}
-#else
-unzipSeq = \case
-    (x, y) :<| xys -> bimap (x :<|) (y :<|) . unzipSeq $ xys
-    Empty          -> (Empty, Empty)
-{-# INLINABLE unzipSeq #-}
-#endif
 
 -- | Compatibility layer for 'Data.Sequence.unzipWith'.
 unzipWithSeq :: (a -> (b, c)) -> Seq a -> (Seq b, Seq c)
-#if MIN_VERSION_containers(0,5,11)
 unzipWithSeq = Seq.unzipWith
 {-# INLINE unzipWithSeq #-}
-#else
-unzipWithSeq f = go
-  where
-    go = \case
-      x :<| xs -> let ~(y, z) = f x
-                  in  bimap (y :<|) (z :<|) . go $ xs
-      Empty    -> (Empty, Empty)
-{-# INLINABLE unzipWithSeq #-}
-#endif

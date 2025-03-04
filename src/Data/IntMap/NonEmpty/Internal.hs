@@ -719,18 +719,10 @@ insertMaxMap = M.insert
 
 -- | Compatibility layer for 'Data.IntMap.Lazy.lookupMinMap'.
 lookupMinMap :: IntMap a -> Maybe (Key, a)
-#if MIN_VERSION_containers(0,5,11)
 lookupMinMap = M.lookupMin
-#else
-lookupMinMap = fmap fst . M.minViewWithKey
-#endif
 {-# INLINE lookupMinMap #-}
 
 -- | Compatibility layer for 'Data.IntMap.Lazy.lookupMaxMap'.
 lookupMaxMap :: IntMap a -> Maybe (Key, a)
-#if MIN_VERSION_containers(0,5,11)
 lookupMaxMap = M.lookupMax
-#else
-lookupMaxMap = fmap fst . M.maxViewWithKey
-#endif
 {-# INLINE lookupMaxMap #-}

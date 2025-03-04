@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
@@ -282,9 +281,5 @@ insertMaxSet = S.insert
 
 -- | Comptability layer for 'Data.IntSet.disjoint'.
 disjointSet :: IntSet -> IntSet -> Bool
-#if MIN_VERSION_containers(0,5,11)
 disjointSet = S.disjoint
-#else
-disjointSet xs = S.null . S.intersection xs
-#endif
 {-# INLINE disjointSet #-}
