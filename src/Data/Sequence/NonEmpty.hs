@@ -673,7 +673,7 @@ sortBy c (x :<|| xs) =
 sortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
 sortOn f (x :<|| xs) =
   withNonEmpty (singleton x) (insertOn f x)
-    . sortOnSeq f
+    . Seq.sortOn f
     $ xs
 {-# INLINE sortOn #-}
 
@@ -721,7 +721,7 @@ unstableSortBy c = unsafeFromSeq . Seq.unstableSortBy c . toSeq
 -- TODO: figure out how to make it match 'Data.Sequence.unstableSortBy'
 -- without unsafe wrapping/unwrapping
 unstableSortOn :: Ord b => (a -> b) -> NESeq a -> NESeq a
-unstableSortOn f = unsafeFromSeq . unstableSortOnSeq f . toSeq
+unstableSortOn f = unsafeFromSeq . Seq.unstableSortOn f . toSeq
 -- unstableSortOn f (x :<|| xs) = withNonEmpty (singleton x) (insertOn f x)
 --                              . Seq.unstableSortOn f
 --                              $ xs
@@ -1051,7 +1051,7 @@ zipWith4 f (x :<|| xs) (y :<|| ys) (z :<|| zs) (r :<|| rs) = f x y z r :<|| Seq.
 -- calculating the sequence of pairs and using 'fmap' to extract each
 -- component sequence.
 unzipWith :: (a -> (b, c)) -> NESeq a -> (NESeq b, NESeq c)
-unzipWith f (x :<|| xs) = bimap (y :<||) (z :<||) . unzipWithSeq f $ xs
+unzipWith f (x :<|| xs) = bimap (y :<||) (z :<||) . Seq.unzipWith f $ xs
   where
     ~(y, z) = f x
 {-# NOINLINE [1] unzipWith #-}

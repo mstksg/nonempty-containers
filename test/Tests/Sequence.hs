@@ -18,7 +18,6 @@ import Data.Sequence (Seq (..))
 import qualified Data.Sequence as Seq
 import Data.Sequence.NonEmpty (NESeq (..))
 import qualified Data.Sequence.NonEmpty as NESeq
-import qualified Data.Sequence.NonEmpty.Internal as NESeq
 import Data.Tuple
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -369,7 +368,7 @@ prop_sortOn :: Property
 prop_sortOn =
   ttProp
     (gf1 valGen :?> GTNESeq :-> TTNESeq)
-    NESeq.sortOnSeq
+    Seq.sortOn
     NESeq.sortOn
 
 prop_unstableSort :: Property
@@ -390,7 +389,7 @@ prop_unstableSortOn :: Property
 prop_unstableSortOn =
   ttProp
     (gf1 valGen :?> GTNESeq :-> TTNESeq)
-    NESeq.unstableSortOnSeq
+    Seq.unstableSortOn
     NESeq.unstableSortOn
 
 prop_lookup :: Property
@@ -621,7 +620,7 @@ prop_unzip :: Property
 prop_unzip =
   ttProp
     (GTNESeq :-> GTNESeq :-> TTNESeq :*: TTNESeq)
-    (\xs -> NESeq.unzipSeq . Seq.zip xs)
+    (\xs -> Seq.unzip . Seq.zip xs)
     (\xs -> NESeq.unzip . NESeq.zip xs)
 
 prop_unzipWith :: Property
@@ -632,7 +631,7 @@ prop_unzipWith =
         :-> TTNESeq
         :*: TTNESeq
     )
-    NESeq.unzipWithSeq
+    Seq.unzipWith
     NESeq.unzipWith
 
 prop_liftA2 :: Property

@@ -464,11 +464,11 @@ disjoint ::
   Bool
 disjoint n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
   -- x1 is not in n2
-  LT -> s1 `disjointSet` toSet n2
+  LT -> s1 `S.disjoint` toSet n2
   -- k1 and k2 are a part of the result
   EQ -> False
   -- k2 is not in n1
-  GT -> toSet n1 `disjointSet` s2
+  GT -> toSet n1 `S.disjoint` s2
 {-# INLINE disjoint #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two sets.

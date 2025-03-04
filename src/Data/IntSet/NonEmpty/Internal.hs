@@ -28,7 +28,6 @@ module Data.IntSet.NonEmpty.Internal (
   valid,
   insertMinSet,
   insertMaxSet,
-  disjointSet,
 ) where
 
 import Control.DeepSeq
@@ -273,13 +272,3 @@ insertMinSet = S.insert
 insertMaxSet :: Key -> IntSet -> IntSet
 insertMaxSet = S.insert
 {-# INLINEABLE insertMaxSet #-}
-
--- ---------------------------------------------
-
--- | CPP for new functions not in old containers
--- ---------------------------------------------
-
--- | Comptability layer for 'Data.IntSet.disjoint'.
-disjointSet :: IntSet -> IntSet -> Bool
-disjointSet = S.disjoint
-{-# INLINE disjointSet #-}

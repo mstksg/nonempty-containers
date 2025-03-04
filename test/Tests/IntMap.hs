@@ -12,7 +12,6 @@ import Data.Functor.Alt
 import Data.Functor.Identity
 import qualified Data.IntMap as M
 import qualified Data.IntMap.NonEmpty as NEM
-import qualified Data.IntMap.NonEmpty.Internal as NEM
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Semigroup.Foldable
@@ -59,7 +58,7 @@ prop_valid_insertMapMin :: Property
 prop_valid_insertMapMin = property $ do
   n <- forAll $ do
     m <- intMapGen
-    let k = maybe 0 (subtract 1 . fst) $ NEM.lookupMinMap m
+    let k = maybe 0 (subtract 1 . fst) $ M.lookupMin m
     v <- valGen
     pure $ NEM.insertMapMin k v m
   assert $ NEM.valid n
@@ -68,7 +67,7 @@ prop_valid_insertMapMax :: Property
 prop_valid_insertMapMax = property $ do
   n <- forAll $ do
     m <- intMapGen
-    let k = maybe 0 ((+ 1) . fst) $ NEM.lookupMaxMap m
+    let k = maybe 0 ((+ 1) . fst) $ M.lookupMax m
     v <- valGen
     pure $ NEM.insertMapMax k v m
   assert $ NEM.valid n

@@ -38,10 +38,6 @@ module Data.Set.NonEmpty.Internal (
   valid,
   insertMinSet,
   insertMaxSet,
-  disjointSet,
-  powerSetSet,
-  disjointUnionSet,
-  cartesianProductSet,
 ) where
 
 import Control.DeepSeq
@@ -499,31 +495,6 @@ insertMaxSet x = \case
   Tip -> S.singleton x
   Bin _ y l r -> balanceR y l (insertMaxSet x r)
 {-# INLINEABLE insertMaxSet #-}
-
--- ---------------------------------------------
-
--- | CPP for new functions not in old containers
--- ---------------------------------------------
-
--- | Comptability layer for 'Data.Set.disjoint'.
-disjointSet :: Ord a => Set a -> Set a -> Bool
-disjointSet = S.disjoint
-{-# INLINE disjointSet #-}
-
--- | Comptability layer for 'Data.Set.powerSet'.
-powerSetSet :: Set a -> Set (Set a)
-powerSetSet = S.powerSet
-{-# INLINE powerSetSet #-}
-
--- | Comptability layer for 'Data.Set.disjointUnion'.
-disjointUnionSet :: Set a -> Set b -> Set (Either a b)
-disjointUnionSet = S.disjointUnion
-{-# INLINE disjointUnionSet #-}
-
--- | Comptability layer for 'Data.Set.cartesianProduct'.
-cartesianProductSet :: Set a -> Set b -> Set (a, b)
-cartesianProductSet = S.cartesianProduct
-{-# INLINE cartesianProductSet #-}
 
 -- ------------------------------------------
 

@@ -53,10 +53,6 @@ module Data.IntMap.NonEmpty.Internal (
 
   -- * Debug
   valid,
-
-  -- * CPP compatibility
-  lookupMinMap,
-  lookupMaxMap,
 ) where
 
 import Control.Applicative
@@ -711,18 +707,3 @@ insertMinMap = M.insert
 insertMaxMap :: Key -> a -> IntMap a -> IntMap a
 insertMaxMap = M.insert
 {-# INLINEABLE insertMaxMap #-}
-
--- ---------------------------------------------
-
--- | CPP for new functions not in old containers
--- ---------------------------------------------
-
--- | Compatibility layer for 'Data.IntMap.Lazy.lookupMinMap'.
-lookupMinMap :: IntMap a -> Maybe (Key, a)
-lookupMinMap = M.lookupMin
-{-# INLINE lookupMinMap #-}
-
--- | Compatibility layer for 'Data.IntMap.Lazy.lookupMaxMap'.
-lookupMaxMap :: IntMap a -> Maybe (Key, a)
-lookupMaxMap = M.lookupMax
-{-# INLINE lookupMaxMap #-}

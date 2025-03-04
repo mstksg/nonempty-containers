@@ -42,10 +42,6 @@ module Data.Sequence.NonEmpty.Internal (
   zip,
   zipWith,
   unzip,
-  sortOnSeq,
-  unstableSortOnSeq,
-  unzipSeq,
-  unzipWithSeq,
 ) where
 
 import Control.Comonad
@@ -402,7 +398,7 @@ zipWith f (x :<|| xs) (y :<|| ys) = f x y :<|| Seq.zipWith f xs ys
 --
 -- See the note about efficiency at 'Data.Sequence.NonEmpty.unzipWith'.
 unzip :: NESeq (a, b) -> (NESeq a, NESeq b)
-unzip ((x, y) :<|| xys) = bimap (x :<||) (y :<||) . unzipSeq $ xys
+unzip ((x, y) :<|| xys) = bimap (x :<||) (y :<||) . Seq.unzip $ xys
 {-# INLINE unzip #-}
 
 instance Semigroup (NESeq a) where
@@ -572,28 +568,3 @@ mfixSeq f = fromFunction (length (f err)) (\k -> fix (\xk -> f xk `index` k))
 
 instance NFData a => NFData (NESeq a) where
   rnf (x :<|| xs) = rnf x `seq` rnf xs
-
--- ---------------------------------------------
-
--- | CPP for new functions not in old containers
--- ---------------------------------------------
-
--- | Compatibility layer for 'Data.Sequence.sortOn'.
-sortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
-sortOnSeq = Seq.sortOn
-{-# INLINE sortOnSeq #-}
-
--- | Compatibility layer for 'Data.Sequence.unstableSortOn'.
-unstableSortOnSeq :: Ord b => (a -> b) -> Seq a -> Seq a
-unstableSortOnSeq = Seq.unstableSortOn
-{-# INLINE unstableSortOnSeq #-}
-
--- | Compatibility layer for 'Data.Sequence.unzip'.
-unzipSeq :: Seq (a, b) -> (Seq a, Seq b)
-unzipSeq = Seq.unzip
-{-# INLINE unzipSeq #-}
-
--- | Compatibility layer for 'Data.Sequence.unzipWith'.
-unzipWithSeq :: (a -> (b, c)) -> Seq a -> (Seq b, Seq c)
-unzipWithSeq = Seq.unzipWith
-{-# INLINE unzipWithSeq #-}
