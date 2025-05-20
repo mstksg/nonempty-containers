@@ -480,40 +480,54 @@ prop_mapWithKey_rules_map =
     (\f g xs -> NEM.mapWithKey f (NEM.map g xs))
 
 prop_traverseWithKey1 :: Property
-prop_traverseWithKey1 = ttProp (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (\f -> M.traverseWithKey    (\k -> (`More` Done (f . (k,)))))
+prop_traverseWithKey1 =
+  ttProp
+    (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+    (\f -> M.traverseWithKey (\k -> (`More` Done (f . (k,)))))
     (\f -> NEM.traverseWithKey1 (\k -> (`More` Done (f . (k,)))))
 
 prop_traverseWithKey :: Property
-prop_traverseWithKey = ttProp (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (\f -> M.traverseWithKey   (\k -> (`More` Done (f . (k,)))))
+prop_traverseWithKey =
+  ttProp
+    (gf1 valGen :?> GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+    (\f -> M.traverseWithKey (\k -> (`More` Done (f . (k,)))))
     (\f -> NEM.traverseWithKey (\k -> (`More` Done (f . (k,)))))
 
 prop_sequence1 :: Property
-prop_sequence1 = ttProp (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (sequenceA . fmap (`More` Done id))
-    (sequence1 . fmap (`More` Done id))
+prop_sequence1 =
+  ttProp
+    (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+    (traverse (`More` Done id))
+    (traverse1 (`More` Done id))
 
 prop_sequenceA :: Property
-prop_sequenceA = ttProp (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
-    (sequenceA . fmap (`More` Done id))
-    (sequenceA . fmap (`More` Done id))
+prop_sequenceA =
+  ttProp
+    (GTNEIntMap :-> TTBazaar GTVal TTNEIntMap TTVal)
+    (traverse (`More` Done id))
+    (traverse (`More` Done id))
 
 prop_mapAccumWithKey :: Property
-prop_mapAccumWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
-                             :?> GTOther valGen
-                             :-> GTNEIntMap
-                             :-> TTOther :*: TTNEIntMap
-                               )
+prop_mapAccumWithKey =
+  ttProp
+    ( gf3 ((,) <$> valGen <*> valGen)
+        :?> GTOther valGen
+        :-> GTNEIntMap
+        :-> TTOther
+        :*: TTNEIntMap
+    )
     M.mapAccumWithKey
     NEM.mapAccumWithKey
 
 prop_mapAccumRWithKey :: Property
-prop_mapAccumRWithKey = ttProp  ( gf3 ((,) <$> valGen <*> valGen)
-                              :?> GTOther valGen
-                              :-> GTNEIntMap
-                              :-> TTOther :*: TTNEIntMap
-                                )
+prop_mapAccumRWithKey =
+  ttProp
+    ( gf3 ((,) <$> valGen <*> valGen)
+        :?> GTOther valGen
+        :-> GTNEIntMap
+        :-> TTOther
+        :*: TTNEIntMap
+    )
     M.mapAccumRWithKey
     NEM.mapAccumRWithKey
 

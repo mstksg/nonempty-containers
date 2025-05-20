@@ -1050,6 +1050,7 @@ toDescList (NESet x s) = S.foldl' (flip (NE.<|)) (x :| []) s
 --
 -- Copyright   :  (c) Daan Leijen 2002
 
+{- ORMOLU_DISABLE -}
 combineEq :: Eq a => NonEmpty a -> NonEmpty a
 combineEq (x :| xs) = go x xs
   where
@@ -1061,3 +1062,4 @@ combineEq (x :| xs) = go x xs
       | z == y = go z ys
 #endif
       | otherwise = z NE.<| go y ys
+{- ORMOLU_ENABLE -}

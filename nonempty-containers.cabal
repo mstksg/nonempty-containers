@@ -52,7 +52,7 @@ library
   ghc-options:      -Wall -Wcompat -Wredundant-constraints
   build-depends:
       aeson
-    , base             >=4.9   && <5
+    , base             >=4.9     && <5
     , comonad
     , containers       >=0.6.3.1 && <0.9
     , deepseq
@@ -82,7 +82,7 @@ test-suite nonempty-containers-test
     -with-rtsopts=-N
 
   build-depends:
-      base                 >=4.9   && <5
+      base                 >=4.9     && <5
     , comonad
     , containers           >=0.6.3.1 && <0.9
     , hedgehog             >=1.0
