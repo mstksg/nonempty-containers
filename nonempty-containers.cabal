@@ -54,7 +54,7 @@ library
       aeson
     , base             >=4.9   && <5
     , comonad
-    , containers       >=0.5.9
+    , containers       >=0.6.3.1 && <0.9
     , deepseq
     , invariant
     , nonempty-vector
@@ -84,7 +84,7 @@ test-suite nonempty-containers-test
   build-depends:
       base                 >=4.9   && <5
     , comonad
-    , containers           >=0.5.9
+    , containers           >=0.6.3.1 && <0.9
     , hedgehog             >=1.0
     , hedgehog-fn          >=1.0
     , invariant

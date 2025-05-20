@@ -5,7 +5,6 @@ module Tests.IntSet (intSetTests) where
 import Data.Functor.Identity
 import qualified Data.IntSet as S
 import qualified Data.IntSet.NonEmpty as NES
-import qualified Data.IntSet.NonEmpty.Internal as NES
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Semigroup.Foldable
@@ -210,7 +209,7 @@ prop_disjoint :: Property
 prop_disjoint =
   ttProp
     (GTNEIntSet :-> GTNEIntSet :-> TTOther)
-    NES.disjointSet
+    S.disjoint
     NES.disjoint
 
 prop_union :: Property

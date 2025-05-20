@@ -968,7 +968,7 @@ lookupLT k (NEIntMap k0 v m) = case compare k k0 of
 lookupGT :: Key -> NEIntMap a -> Maybe (Key, a)
 lookupGT k (NEIntMap k0 v m) = case compare k k0 of
   LT -> Just (k0, v)
-  EQ -> lookupMinMap m
+  EQ -> M.lookupMin m
   GT -> M.lookupGT k m
 {-# INLINE lookupGT #-}
 
@@ -1802,7 +1802,7 @@ findMin (NEIntMap k v _) = (k, v)
 --
 -- > findMax (fromList ((5,"a") :| [(3,"b")])) == (5,"a")
 findMax :: NEIntMap a -> (Key, a)
-findMax (NEIntMap k v m) = fromMaybe (k, v) . lookupMaxMap $ m
+findMax (NEIntMap k v m) = fromMaybe (k, v) . M.lookupMax $ m
 {-# INLINE findMax #-}
 
 -- | /O(1)/. Delete the minimal key. Returns a potentially empty map

@@ -38,10 +38,6 @@ module Data.Set.NonEmpty.Internal (
   valid,
   insertMinSet,
   insertMaxSet,
-  disjointSet,
-  powerSetSet,
-  disjointUnionSet,
-  cartesianProductSet,
 ) where
 
 import Control.DeepSeq
@@ -60,10 +56,6 @@ import Data.Set.Internal (Set (..))
 import qualified Data.Set.Internal as S
 import Text.Read
 import Prelude hiding (Foldable (..))
-
-#if !MIN_VERSION_containers(0,5,11)
-import           Utils.Containers.Internal.StrictPair
-#endif
 
 -- | A non-empty (by construction) set of values @a@.  At least one value
 -- exists in an @'NESet' a@ at all times.
@@ -503,82 +495,6 @@ insertMaxSet x = \case
   Tip -> S.singleton x
   Bin _ y l r -> balanceR y l (insertMaxSet x r)
 {-# INLINEABLE insertMaxSet #-}
-
--- ---------------------------------------------
-
--- | CPP for new functions not in old containers
--- ---------------------------------------------
-
--- | Comptability layer for 'Data.Set.disjoint'.
-disjointSet :: Ord a => Set a -> Set a -> Bool
-#if MIN_VERSION_containers(0,5,11)
-disjointSet = S.disjoint
-#else
-disjointSet xs = S.null . S.intersection xs
-#endif
-{-# INLINE disjointSet #-}
-
--- | Comptability layer for 'Data.Set.powerSet'.
-powerSetSet :: Set a -> Set (Set a)
-#if MIN_VERSION_containers(0,5,11)
-powerSetSet = S.powerSet
-{-# INLINE powerSetSet #-}
-#else
-powerSetSet xs0 = insertMinSet S.empty (S.foldr' step' Tip xs0) where
-  step' x pxs = insertMinSet (S.singleton x) (insertMinSet x `S.mapMonotonic` pxs) `glue` pxs
-{-# INLINABLE powerSetSet #-}
-
-minViewSure :: a -> Set a -> Set a -> StrictPair a (Set a)
-minViewSure = go
-  where
-    go x Tip r = x :*: r
-    go x (Bin _ xl ll lr) r =
-      case go xl ll lr of
-        xm :*: l' -> xm :*: balanceR x l' r
-
-maxViewSure :: a -> Set a -> Set a -> StrictPair a (Set a)
-maxViewSure = go
-  where
-    go x l Tip = x :*: l
-    go x l (Bin _ xr rl rr) =
-      case go xr rl rr of
-        xm :*: r' -> xm :*: balanceL x l r'
-
-glue :: Set a -> Set a -> Set a
-glue Tip r = r
-glue l Tip = l
-glue l@(Bin sl xl ll lr) r@(Bin sr xr rl rr)
-  | sl > sr = let !(m :*: l') = maxViewSure xl ll lr in balanceR m l' r
-  | otherwise = let !(m :*: r') = minViewSure xr rl rr in balanceL m l r'
-#endif
-
--- | Comptability layer for 'Data.Set.disjointUnion'.
-disjointUnionSet :: Set a -> Set b -> Set (Either a b)
-#if MIN_VERSION_containers(0,5,11)
-disjointUnionSet = S.disjointUnion
-#else
-disjointUnionSet as bs = S.merge (S.mapMonotonic Left as) (S.mapMonotonic Right bs)
-#endif
-{-# INLINE disjointUnionSet #-}
-
--- | Comptability layer for 'Data.Set.cartesianProduct'.
-cartesianProductSet :: Set a -> Set b -> Set (a, b)
-#if MIN_VERSION_containers(0,5,11)
-cartesianProductSet = S.cartesianProduct
-#else
-cartesianProductSet as bs =
-  getMergeSet $ foldMap (\a -> MergeSet $ S.mapMonotonic (a, ) bs) as
-
-newtype MergeSet a = MergeSet { getMergeSet :: Set a }
-
-instance Semigroup (MergeSet a) where
-    MergeSet xs <> MergeSet ys = MergeSet (S.merge xs ys)
-
-instance Monoid (MergeSet a) where
-    mempty = MergeSet S.empty
-    mappend = (<>)
-#endif
-{-# INLINE cartesianProductSet #-}
 
 -- ------------------------------------------
 

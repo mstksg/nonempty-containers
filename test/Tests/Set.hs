@@ -142,7 +142,7 @@ prop_powerSet :: Property
 prop_powerSet =
   ttProp
     (GTNESet :-> TTNEList TTNESet)
-    (S.toList . S.drop 1 . NES.powerSetSet)
+    (S.toList . S.drop 1 . S.powerSet)
     (NES.toList . NES.powerSet)
 
 prop_insert :: Property
@@ -226,7 +226,7 @@ prop_disjoint :: Property
 prop_disjoint =
   ttProp
     (GTNESet :-> GTNESet :-> TTOther)
-    NES.disjointSet
+    S.disjoint
     NES.disjoint
 
 prop_union :: Property
@@ -261,14 +261,14 @@ prop_cartesianProduct :: Property
 prop_cartesianProduct =
   ttProp
     (GTNESet :-> GTNESet :-> TTNEList (TTKey :*: TTKey))
-    (\xs -> S.toList . NES.cartesianProductSet xs)
+    (\xs -> S.toList . S.cartesianProduct xs)
     (\xs -> NES.toList . NES.cartesianProduct xs)
 
 prop_disjointUnion :: Property
 prop_disjointUnion =
   ttProp
     (GTNESet :-> GTNESet :-> TTNEList (TTEither TTKey TTKey))
-    (\xs -> S.toList . NES.disjointUnionSet xs)
+    (\xs -> S.toList . S.disjointUnion xs)
     (\xs -> NES.toList . NES.disjointUnion xs)
 
 prop_filter :: Property

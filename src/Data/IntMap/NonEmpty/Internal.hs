@@ -46,7 +46,6 @@ module Data.IntMap.NonEmpty.Internal (
   traverseWithKey,
   traverseWithKey1,
   foldMapWithKey,
-  traverseMapWithKey,
 
   -- * Unsafe IntMap Functions
   insertMinMap,
@@ -54,10 +53,6 @@ module Data.IntMap.NonEmpty.Internal (
 
   -- * Debug
   valid,
-
-  -- * CPP compatibility
-  lookupMinMap,
-  lookupMaxMap,
 ) where
 
 import Control.Applicative
@@ -409,7 +404,7 @@ traverseWithKey ::
 traverseWithKey f (NEIntMap k v m0) =
   NEIntMap k
     <$> f k v
-    <*> traverseMapWithKey f m0
+    <*> M.traverseWithKey f m0
 {-# INLINE traverseWithKey #-}
 
 -- | /O(n)/.
@@ -434,7 +429,7 @@ traverseWithKey1 f (NEIntMap k0 v m0) = case runMaybeApply m1 of
   Left m2 -> NEIntMap k0 <$> f k0 v <.> m2
   Right m2 -> flip (NEIntMap k0) m2 <$> f k0 v
   where
-    m1 = traverseMapWithKey (\k -> MaybeApply . Left . f k) m0
+    m1 = M.traverseWithKey (\k -> MaybeApply . Left . f k) m0
 {-# INLINEABLE traverseWithKey1 #-}
 
 -- | /O(n)/. Convert the map to a non-empty list of key\/value pairs.
@@ -712,36 +707,3 @@ insertMinMap = M.insert
 insertMaxMap :: Key -> a -> IntMap a -> IntMap a
 insertMaxMap = M.insert
 {-# INLINEABLE insertMaxMap #-}
-
--- | /O(n)/. A fixed version of 'Data.IntMap.traverseWithKey' that
--- traverses items in ascending order of keys.
-traverseMapWithKey :: Applicative t => (Key -> a -> t b) -> IntMap a -> t (IntMap b)
-traverseMapWithKey f = go
-  where
-    go Nil = pure Nil
-    go (Tip k v) = Tip k <$> f k v
-    go (Bin p m l r) = liftA2 (flip (Bin p m)) (go r) (go l)
-{-# INLINE traverseMapWithKey #-}
-
--- ---------------------------------------------
-
--- | CPP for new functions not in old containers
--- ---------------------------------------------
-
--- | Compatibility layer for 'Data.IntMap.Lazy.lookupMinMap'.
-lookupMinMap :: IntMap a -> Maybe (Key, a)
-#if MIN_VERSION_containers(0,5,11)
-lookupMinMap = M.lookupMin
-#else
-lookupMinMap = fmap fst . M.minViewWithKey
-#endif
-{-# INLINE lookupMinMap #-}
-
--- | Compatibility layer for 'Data.IntMap.Lazy.lookupMaxMap'.
-lookupMaxMap :: IntMap a -> Maybe (Key, a)
-#if MIN_VERSION_containers(0,5,11)
-lookupMaxMap = M.lookupMax
-#else
-lookupMaxMap = fmap fst . M.maxViewWithKey
-#endif
-{-# INLINE lookupMaxMap #-}
