@@ -1,10 +1,12 @@
 Changelog
 =========
 
-Version 0.3.5.x
+Version 0.3.5.0
 ---------------
 
 *May 20, 2025*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.5.0>
 
 *   Support *containers* 0.8 and drop support for *containers* < 0.6.3.1
     (@jonathanknowles)
@@ -32,7 +34,7 @@ Version 0.3.3.0
 
 *   Add `overNonEmpty` and `onNonEmpty` in *Data.Containers.NonEmpty*.
 
-Version 0.3.1.0
+Version 0.3.2.0
 ---------------
 
 *October 21, 2019*
