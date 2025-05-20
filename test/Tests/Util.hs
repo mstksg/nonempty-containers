@@ -531,7 +531,7 @@ readShow1 ::
   Property
 readShow1 g = property $ do
   m0 <- forAll g
-  tripping m0 (($ "") . showsPrec1 0) (fmap fst . listToMaybe . readsPrec1 0)
+  tripping m0 (flip (showsPrec1 0) "") (fmap fst . listToMaybe . readsPrec1 0)
 
 showShow1 ::
   (Show1 f, Show a, Show (f a)) =>

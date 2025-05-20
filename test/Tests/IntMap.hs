@@ -908,28 +908,28 @@ prop_fold1 :: Property
 prop_fold1 =
   ttProp
     (GTNEIntMap :-> TTVal)
-    (fold . toList)
+    fold
     fold1
 
 prop_fold :: Property
 prop_fold =
   ttProp
     (GTNEIntMap :-> TTVal)
-    (fold . toList)
+    fold
     fold
 
 prop_foldMap1 :: Property
 prop_foldMap1 =
   ttProp
     (gf1 valGen :?> GTNEIntMap :-> TTOther)
-    (\f -> foldMap ((: []) . f) . toList)
+    (\f -> foldMap ((: []) . f))
     (\f -> foldMap1 ((: []) . f))
 
 prop_foldMap :: Property
 prop_foldMap =
   ttProp
     (gf1 valGen :?> GTNEIntMap :-> TTOther)
-    (\f -> foldMap ((: []) . f) . toList)
+    (\f -> foldMap ((: []) . f))
     (\f -> foldMap ((: []) . f))
 
 prop_alt :: Property

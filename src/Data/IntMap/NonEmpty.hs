@@ -708,8 +708,8 @@ alter ::
   NEIntMap a ->
   IntMap a
 alter f k n@(NEIntMap k0 v m) = case compare k k0 of
-  LT -> ($ toMap n) . maybe id (insertMinMap k) $ f Nothing
-  EQ -> ($ m) . maybe id (insertMinMap k0) $ f (Just v)
+  LT -> maybe id (insertMinMap k) (f Nothing) (toMap n)
+  EQ -> maybe id (insertMinMap k0) (f (Just v)) m
   GT -> insertMinMap k0 v . M.alter f k $ m
 {-# INLINE alter #-}
 
@@ -768,8 +768,8 @@ alterF ::
   NEIntMap a ->
   f (IntMap a)
 alterF f k n@(NEIntMap k0 v m) = case compare k k0 of
-  LT -> ($ toMap n) . maybe id (insertMinMap k) <$> f Nothing
-  EQ -> ($ m) . maybe id (insertMinMap k0) <$> f (Just v)
+  LT -> flip (maybe id (insertMinMap k)) (toMap n) <$> f Nothing
+  EQ -> flip (maybe id (insertMinMap k0)) m <$> f (Just v)
   GT -> insertMinMap k0 v <$> M.alterF f k m
 {-# INLINEABLE [2] alterF #-}
 
@@ -1111,7 +1111,7 @@ differenceWithKey f n1@(NEIntMap k1 v1 m1) n2@(NEIntMap k2 v2 m2) = case compare
   -- k1 is not in n2, so cannot be deleted
   LT -> insertMinMap k1 v1 $ M.differenceWithKey f m1 (toMap n2)
   -- k2 deletes k1, and only k1
-  EQ -> ($ M.differenceWithKey f m1 m2) . maybe id (insertMinMap k1) $ f k1 v1 v2
+  EQ -> maybe id (insertMinMap k1) (f k1 v1 v2) (M.differenceWithKey f m1 m2)
   -- k2 is not in n1, so cannot delete anything, so we can just difference n1 // m2.
   GT -> M.differenceWithKey f (toMap n1) m2
 {-# INLINE differenceWithKey #-}
@@ -1573,10 +1573,7 @@ mapMaybeWithKey ::
   (Key -> a -> Maybe b) ->
   NEIntMap a ->
   IntMap b
-mapMaybeWithKey f (NEIntMap k v m) =
-  ($ M.mapMaybeWithKey f m)
-    . maybe id (insertMinMap k)
-    $ f k v
+mapMaybeWithKey f (NEIntMap k v m) = maybe id (insertMinMap k) (f k v) (M.mapMaybeWithKey f m)
 {-# INLINE mapMaybeWithKey #-}
 
 -- | /O(n)/. Map values and separate the 'Left' and 'Right' results.
@@ -1855,7 +1852,7 @@ adjustMin f = adjustMinWithKey (const f)
 -- > updateMinWithKey (\ k a -> Just ((show k) ++ ":" ++ a)) (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.fromList [(3,"3:b"), (5,"a")]
 -- > updateMinWithKey (\ _ _ -> Nothing)                     (fromList ((5,"a") :| [(3,"b")])) == Data.IntMap.singleton 5 "a"
 updateMinWithKey :: (Key -> a -> Maybe a) -> NEIntMap a -> IntMap a
-updateMinWithKey f (NEIntMap k v m) = ($ m) . maybe id (insertMinMap k) $ f k v
+updateMinWithKey f (NEIntMap k v m) = maybe id (insertMinMap k) (f k v) m
 {-# INLINE updateMinWithKey #-}
 
 -- | /O(1)/. A version of 'adjustMaxWithKey' that disallows deletion,
