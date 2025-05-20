@@ -5,7 +5,7 @@ cabal-version:      1.12
 -- see: https://github.com/sol/hpack
 
 name:               nonempty-containers
-version:            0.3.4.5
+version:            0.3.5.0
 synopsis:           Non-empty variants of containers data types, with full API
 description:
   Efficient and optimized non-empty versions of types from /containers/.
@@ -24,7 +24,7 @@ copyright:          (c) Justin Le 2018
 license:            BSD3
 license-file:       LICENSE
 build-type:         Simple
-tested-with:        GHC >=8.4
+tested-with:        GHC >=8.10
 extra-source-files:
   CHANGELOG.md
   README.md

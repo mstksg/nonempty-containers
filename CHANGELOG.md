@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.3.5.x
+---------------
+
+*May 20, 2025*
+
+*   Support *containers* 0.8 and drop support for *containers* < 0.6.3.1
+    (@jonathanknowles)
+
 Version 0.3.4.x
 ---------------
 
