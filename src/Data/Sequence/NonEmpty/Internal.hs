@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
 
@@ -65,6 +66,7 @@ import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import Data.Sequence (Seq (..))
 import qualified Data.Sequence as Seq
+import qualified GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (length, map, replicate, unzip, zip, zipWith)
 
@@ -169,6 +171,15 @@ instance Eq a => Eq (NESeq a) where
 
 instance Ord a => Ord (NESeq a) where
   compare xs ys = compare (F.toList xs) (F.toList ys)
+
+-- | @since 0.3.6.0
+instance Exts.IsList (NESeq a) where
+  type Item (NESeq a) = a
+
+  fromList (a:as) = fromList (a :| as)
+  fromList [] = errorWithoutStackTrace "Data.Sequence.NonEmpty.fromList: empty list"
+
+  toList = F.toList
 
 instance Show1 NESeq where
   liftShowsPrec sp sl d m =

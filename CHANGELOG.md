@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 0.3.6.0
+---------------
+*   Add `IsList` instances for `-XOverloadedLists`.
+
 Version 0.3.5.0
 ---------------
 

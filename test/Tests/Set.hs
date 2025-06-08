@@ -1,13 +1,16 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Tests.Set (setTests) where
 
 import Data.Foldable
 import Data.Functor.Identity
+import Data.Text (Text)
 import Data.Semigroup.Foldable
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import qualified Data.Set.NonEmpty.Internal as NES
+import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -137,6 +140,18 @@ prop_fromList =
     (GTNEList Nothing GTKey :-> TTNESet)
     S.fromList
     NES.fromList
+
+prop_toFromOverloadedList :: Property
+prop_toFromOverloadedList =
+  property $ do
+    s <- forAll neSetGen
+    s === Exts.fromList (Exts.toList s)
+
+prop_fromToOverloadedList :: Property
+prop_fromToOverloadedList =
+  property $ do
+    l <- forAll neListUniqGen
+    l === Exts.toList (Exts.fromList @(NES.NESet Text) l)
 
 prop_powerSet :: Property
 prop_powerSet =
