@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TupleSections #-}
 
 module Tests.Sequence (sequenceTests) where
@@ -18,7 +19,9 @@ import Data.Sequence (Seq (..))
 import qualified Data.Sequence as Seq
 import Data.Sequence.NonEmpty (NESeq (..))
 import qualified Data.Sequence.NonEmpty as NESeq
+import Data.Text (Text)
 import Data.Tuple
+import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import Test.Tasty
@@ -121,6 +124,18 @@ prop_fromList =
     (GTNEList Nothing GTVal :-> TTNESeq)
     Seq.fromList
     NESeq.fromList
+
+prop_toFromOverloadedList :: Property
+prop_toFromOverloadedList =
+  property $ do
+    s <- forAll neSeqGen
+    s === Exts.fromList (Exts.toList s)
+
+prop_fromToOverloadedList :: Property
+prop_fromToOverloadedList =
+  property $ do
+    l <- forAll neListGen
+    l === Exts.toList (Exts.fromList @(NESeq.NESeq Text) l)
 
 prop_fromFunction :: Property
 prop_fromFunction =

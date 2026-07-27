@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Tests.IntSet (intSetTests) where
 
@@ -8,6 +9,8 @@ import qualified Data.IntSet.NonEmpty as NES
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Semigroup.Foldable
+import Data.Text (Text)
+import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -127,6 +130,18 @@ prop_fromList =
     (GTNEList Nothing GTIntKey :-> TTNEIntSet)
     S.fromList
     NES.fromList
+
+prop_toFromOverloadedList :: Property
+prop_toFromOverloadedList =
+  property $ do
+    s <- forAll neIntSetGen
+    s === Exts.fromList (Exts.toList s)
+
+prop_fromToOverloadedList :: Property
+prop_fromToOverloadedList =
+  property $ do
+    l <- forAll neIntListUniqGen
+    l === Exts.toList (Exts.fromList @(NES.NEIntSet) l)
 
 prop_insert :: Property
 prop_insert =

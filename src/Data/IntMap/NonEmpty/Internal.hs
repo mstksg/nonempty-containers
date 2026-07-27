@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
 
@@ -76,6 +77,7 @@ import Data.Semigroup
 import Data.Semigroup.Foldable (Foldable1 (fold1))
 import qualified Data.Semigroup.Foldable as F1
 import Data.Semigroup.Traversable (Traversable1 (..))
+import qualified GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (Foldable (..), map)
 
@@ -135,6 +137,15 @@ instance Ord a => Ord (NEIntMap a) where
   (>) = (>) `on` toList
   (<=) = (<=) `on` toList
   (>=) = (>=) `on` toList
+
+-- | @since 0.3.6.0
+instance Exts.IsList (NEIntMap a) where
+  type Item (NEIntMap a) = (Key, a)
+
+  fromList (a:as) = fromList (a :| as)
+  fromList [] = errorWithoutStackTrace "Data.IntMap.NonEmpty.fromList: empty list"
+
+  toList = F.toList . toList
 
 instance Eq1 NEIntMap where
   liftEq eq m1 m2 =

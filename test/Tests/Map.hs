@@ -17,6 +17,7 @@ import qualified Data.Map.NonEmpty.Internal as NEM
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import Data.Text (Text)
+import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -209,6 +210,18 @@ prop_fromListWithKey =
     (gf3 valGen :?> GTNEList Nothing (GTKey :&: GTVal) :-> TTNEMap)
     M.fromListWithKey
     NEM.fromListWithKey
+
+prop_toFromOverloadedList :: Property
+prop_toFromOverloadedList =
+  property $ do
+    s <- forAll neMapGen
+    s === Exts.fromList (Exts.toList s)
+
+prop_fromToOverloadedList :: Property
+prop_fromToOverloadedList =
+  property $ do
+    l <- forAll neKeyListUniqGen
+    l === Exts.toList (Exts.fromList @(NEM.NEMap KeyType Text) l)
 
 prop_insert :: Property
 prop_insert =

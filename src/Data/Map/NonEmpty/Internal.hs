@@ -2,6 +2,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
 
@@ -75,6 +76,7 @@ import Data.Semigroup
 import Data.Semigroup.Foldable (Foldable1 (fold1))
 import qualified Data.Semigroup.Foldable as F1
 import Data.Semigroup.Traversable (Traversable1 (..))
+import qualified GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (Foldable (..), map)
 
@@ -180,6 +182,16 @@ instance (Show k, Show a) => Show (NEMap k a) where
 
 instance (NFData k, NFData a) => NFData (NEMap k a) where
   rnf (NEMap k v a) = rnf k `seq` rnf v `seq` rnf a
+
+-- | @since 0.3.6.0
+instance (Ord k) => Exts.IsList (NEMap k a) where
+  type Item (NEMap k a) = (k, a)
+
+  fromList (a:as) = fromList (a :| as)
+  fromList [] = errorWithoutStackTrace "Data.Map.NonEmpty.fromList: empty list"
+
+  toList = F.toList . toList
+
 
 -- Data instance code from Data.Map.Internal
 --

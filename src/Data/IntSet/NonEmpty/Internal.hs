@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
 
@@ -42,6 +43,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Semigroup
 import Data.Semigroup.Foldable (Foldable1)
 import qualified Data.Semigroup.Foldable as F1
+import qualified GHC.Exts as Exts
 import Text.Read
 
 -- | A non-empty (by construction) set of integers.  At least one value
@@ -114,6 +116,15 @@ instance Read NEIntSet where
 
 instance NFData NEIntSet where
   rnf (NEIntSet x s) = rnf x `seq` rnf s
+
+-- | @since 0.3.6.0
+instance Exts.IsList NEIntSet where
+  type Item NEIntSet = Key
+
+  fromList (a:as) = fromList (a :| as)
+  fromList [] = errorWithoutStackTrace "Data.IntSet.NonEmpty.fromList: empty list"
+
+  toList = F.toList . toList
 
 -- Data instance code from Data.IntSet.Internal
 --

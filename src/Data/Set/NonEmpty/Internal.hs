@@ -2,6 +2,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
 
@@ -53,6 +54,7 @@ import qualified Data.Semigroup.Foldable as F1
 import qualified Data.Set as S
 import Data.Set.Internal (Set (..))
 import qualified Data.Set.Internal as S
+import qualified GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (Foldable (..))
 
@@ -123,6 +125,15 @@ instance (Read a, Ord a) => Read (NESet a) where
     return (fromList xs)
 
   readListPrec = readListPrecDefault
+
+-- | @since 0.3.6.0
+instance (Ord a) => Exts.IsList (NESet a) where
+  type Item (NESet a) = a
+
+  fromList (a:as) = fromList (a :| as)
+  fromList [] = errorWithoutStackTrace "Data.Set.NonEmpty.fromList: empty list"
+
+  toList = F.toList
 
 instance Eq1 NESet where
   liftEq eq m n =
