@@ -4,6 +4,10 @@ Changelog
 Version 0.3.6.0
 ---------------
 
+*July 26, 2026*
+
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.3.6.0>
+
 *   Add `IsList` instances for `-XOverloadedLists` (@tbidne).
 *   Add `deleteMaybe` for `NEMap`, `NEIntMap`, `NESet`, and `NEIntSet`.
 *   Add indexed traversal instances for `NEMap`, `NEIntMap`, and `NESeq`.
