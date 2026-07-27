@@ -10,7 +10,9 @@ import Control.Comonad
 import Control.Monad
 import Data.Bifunctor
 import qualified Data.Foldable as F
+import qualified Data.Foldable.WithIndex as IFoldable
 import Data.Functor.Identity
+import qualified Data.Functor.WithIndex as IFunctor
 import qualified Data.List.NonEmpty as NE
 import Data.Ord
 import qualified Data.Semigroup.Foldable as F1
@@ -20,7 +22,9 @@ import qualified Data.Sequence as Seq
 import Data.Sequence.NonEmpty (NESeq (..))
 import qualified Data.Sequence.NonEmpty as NESeq
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Tuple
+import qualified Data.Traversable.WithIndex as TWI
 import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -96,6 +100,27 @@ prop_snocNE =
     (GTNESeq :-> GTVal :-> TTNESeq)
     (Seq.|>)
     (NESeq.|>)
+
+prop_functorWithIndex :: Property
+prop_functorWithIndex =
+  property $ do
+    s <- forAll neSeqGen
+    let f i v = v <> T.pack (show i)
+    IFunctor.imap f s === NESeq.mapWithIndex f s
+
+prop_foldableWithIndex :: Property
+prop_foldableWithIndex =
+  property $ do
+    s <- forAll neSeqGen
+    IFoldable.ifoldMap (\i v -> [(i, v)]) s === zip [0 ..] (F.toList s)
+
+prop_traversableWithIndex :: Property
+prop_traversableWithIndex =
+  property $ do
+    s <- forAll neSeqGen
+    let f i v = v <> T.pack (show i)
+    TWI.itraverse (\i v -> Identity (f i v)) s === Identity (NESeq.mapWithIndex f s)
+    TWI.itraverse (\i v -> Const [(i, v)]) s === Const (zip [0 ..] (F.toList s))
 
 prop_append :: Property
 prop_append =

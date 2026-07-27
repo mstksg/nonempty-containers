@@ -1131,7 +1131,7 @@ delete k n@(NEMap k0 v m) = case compare k k0 of
 -- converting the known-minimum representation back through 'Map' when the
 -- deleted key is not the minimum.
 --
--- @since 0.3.7.0
+-- @since 0.3.6.0
 deleteMaybe :: Ord k => k -> NEMap k a -> Maybe (NEMap k a)
 deleteMaybe k n@(NEMap k0 v m) = case compare k k0 of
   LT -> Just n

@@ -1,7 +1,9 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
@@ -63,10 +65,12 @@ import qualified Data.Aeson as A
 import Data.Coerce
 import Data.Data
 import qualified Data.Foldable as F
+import Data.Foldable.WithIndex (FoldableWithIndex (..))
 import Data.Function
 import Data.Functor.Alt
 import Data.Functor.Classes
 import Data.Functor.Invariant
+import Data.Functor.WithIndex (FunctorWithIndex (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Map as M
 import Data.Map.Internal (Map (..))
@@ -76,6 +80,7 @@ import Data.Semigroup
 import Data.Semigroup.Foldable (Foldable1 (fold1))
 import qualified Data.Semigroup.Foldable as F1
 import Data.Semigroup.Traversable (Traversable1 (..))
+import Data.Traversable.WithIndex (TraversableWithIndex (..))
 import qualified GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (Foldable (..), map)
@@ -182,6 +187,18 @@ instance (Show k, Show a) => Show (NEMap k a) where
 
 instance (NFData k, NFData a) => NFData (NEMap k a) where
   rnf (NEMap k v a) = rnf k `seq` rnf v `seq` rnf a
+
+-- | @since 0.3.6.0
+instance FunctorWithIndex k (NEMap k) where
+  imap f (NEMap k v m) = NEMap k (f k v) (M.mapWithKey f m)
+
+-- | @since 0.3.6.0
+instance FoldableWithIndex k (NEMap k) where
+  ifoldMap = foldMapWithKey
+
+-- | @since 0.3.6.0
+instance TraversableWithIndex k (NEMap k) where
+  itraverse f (NEMap k v m) = NEMap k <$> f k v <*> M.traverseWithKey f m
 
 -- | @since 0.3.6.0
 instance (Ord k) => Exts.IsList (NEMap k a) where

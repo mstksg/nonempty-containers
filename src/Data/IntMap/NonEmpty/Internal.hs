@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_HADDOCK not-home #-}
@@ -64,10 +65,12 @@ import qualified Data.Aeson as A
 import Data.Coerce
 import Data.Data
 import qualified Data.Foldable as F
+import Data.Foldable.WithIndex (FoldableWithIndex (..))
 import Data.Function
 import Data.Functor.Alt
 import Data.Functor.Classes
 import Data.Functor.Invariant
+import Data.Functor.WithIndex (FunctorWithIndex (..))
 import qualified Data.IntMap as M
 import Data.IntMap.Internal (IntMap (..), Key)
 import qualified Data.List as L
@@ -77,6 +80,7 @@ import Data.Semigroup
 import Data.Semigroup.Foldable (Foldable1 (fold1))
 import qualified Data.Semigroup.Foldable as F1
 import Data.Semigroup.Traversable (Traversable1 (..))
+import Data.Traversable.WithIndex (TraversableWithIndex (..))
 import qualified GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (Foldable (..), map)
@@ -137,6 +141,21 @@ instance Ord a => Ord (NEIntMap a) where
   (>) = (>) `on` toList
   (<=) = (<=) `on` toList
   (>=) = (>=) `on` toList
+
+-- | @since 0.3.6.0
+instance FunctorWithIndex Int NEIntMap where
+  imap f (NEIntMap k v m) = NEIntMap k (f k v) (M.mapWithKey f m)
+
+-- | @since 0.3.6.0
+instance FoldableWithIndex Int NEIntMap where
+  ifoldMap = foldMapWithKey
+
+-- | @since 0.3.6.0
+instance TraversableWithIndex Int NEIntMap where
+  itraverse f (NEIntMap k v m) =
+    NEIntMap k
+      <$> f k v
+      <*> M.traverseWithKey f m
 
 -- | @since 0.3.6.0
 instance Exts.IsList (NEIntMap a) where

@@ -7,8 +7,10 @@ import Control.Applicative
 import Control.Comonad
 import Data.Coerce
 import Data.Foldable
+import qualified Data.Foldable.WithIndex as IFoldable
 import Data.Functor.Alt
 import Data.Functor.Identity
+import qualified Data.Functor.WithIndex as IFunctor
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
@@ -17,6 +19,8 @@ import qualified Data.Map.NonEmpty.Internal as NEM
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Traversable.WithIndex as TWI
 import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -115,6 +119,27 @@ prop_splitRoot = property $ do
     ascending (x :| xs) = case NE.nonEmpty xs of
       Nothing -> True
       Just ys@(y :| _) -> x < y && ascending ys
+
+prop_functorWithIndex :: Property
+prop_functorWithIndex =
+  property $ do
+    m <- forAll neMapGen
+    let f k v = v <> T.pack (show (getKX k))
+    IFunctor.imap f m === NEM.mapWithKey f m
+
+prop_foldableWithIndex :: Property
+prop_foldableWithIndex =
+  property $ do
+    m <- forAll neMapGen
+    IFoldable.ifoldMap (\k v -> [(k, v)]) m === toList (NEM.toList m)
+
+prop_traversableWithIndex :: Property
+prop_traversableWithIndex =
+  property $ do
+    m <- forAll neMapGen
+    let f k v = v <> T.pack (show (getKX k))
+    TWI.itraverse (\k v -> Identity (f k v)) m === Identity (NEM.mapWithKey f m)
+    TWI.itraverse (\k v -> Const [(k, v)]) m === Const (toList (NEM.toList m))
 
 prop_extract_duplicate :: Property
 prop_extract_duplicate = property $ do

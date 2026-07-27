@@ -1,15 +1,13 @@
 Changelog
 =========
 
-Unreleased
-----------
-
-*   Add `deleteMaybe` for `NEMap`, `NEIntMap`, `NESet`, and `NEIntSet`.
-*   Fix `NESeq.adjust'` to use the strict `Seq.adjust'` in the tail.
-
 Version 0.3.6.0
 ---------------
+
 *   Add `IsList` instances for `-XOverloadedLists`.
+*   Add `deleteMaybe` for `NEMap`, `NEIntMap`, `NESet`, and `NEIntSet`.
+*   Add indexed traversal instances for `NEMap`, `NEIntMap`, and `NESeq`.
+*   Fix `NESeq.adjust'` to use the strict `Seq.adjust'` in the tail.
 
 Version 0.3.5.0
 ---------------

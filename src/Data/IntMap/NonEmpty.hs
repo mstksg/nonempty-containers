@@ -591,7 +591,7 @@ delete k n@(NEIntMap k0 v m) = case compare k k0 of
 -- converting the known-minimum representation back through 'IntMap' when the
 -- deleted key is not the minimum.
 --
--- @since 0.3.7.0
+-- @since 0.3.6.0
 deleteMaybe :: Key -> NEIntMap a -> Maybe (NEIntMap a)
 deleteMaybe k n@(NEIntMap k0 v m) = case compare k k0 of
   LT -> Just n

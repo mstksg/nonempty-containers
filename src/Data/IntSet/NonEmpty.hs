@@ -296,7 +296,7 @@ delete x n@(NEIntSet x0 s) = case compare x x0 of
 -- converting the known-minimum representation back through 'IntSet' when the
 -- deleted element is not the minimum.
 --
--- @since 0.3.7.0
+-- @since 0.3.6.0
 deleteMaybe :: Key -> NEIntSet -> Maybe NEIntSet
 deleteMaybe x n@(NEIntSet x0 s) = case compare x x0 of
   LT -> Just n

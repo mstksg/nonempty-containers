@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -55,17 +56,20 @@ import Data.Bifunctor
 import Data.Coerce
 import Data.Data
 import qualified Data.Foldable as F
+import Data.Foldable.WithIndex (FoldableWithIndex (..))
 import Data.Functor.Alt
 import Data.Functor.Bind
 import Data.Functor.Classes
 import Data.Functor.Extend
 import Data.Functor.Invariant
+import Data.Functor.WithIndex (FunctorWithIndex (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Semigroup
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import Data.Sequence (Seq (..))
 import qualified Data.Sequence as Seq
+import Data.Traversable.WithIndex (TraversableWithIndex (..))
 import qualified GHC.Exts as Exts
 import Text.Read
 import Prelude hiding (length, map, replicate, unzip, zip, zipWith)
@@ -171,6 +175,21 @@ instance Eq a => Eq (NESeq a) where
 
 instance Ord a => Ord (NESeq a) where
   compare xs ys = compare (F.toList xs) (F.toList ys)
+
+-- | @since 0.3.6.0
+instance FunctorWithIndex Int NESeq where
+  imap f (x :<|| xs) = f 0 x :<|| Seq.mapWithIndex (f . (+ 1)) xs
+
+-- | @since 0.3.6.0
+instance FoldableWithIndex Int NESeq where
+  ifoldMap = foldMapWithIndex
+
+-- | @since 0.3.6.0
+instance TraversableWithIndex Int NESeq where
+  itraverse f (x :<|| xs) =
+    (:<||)
+      <$> f 0 x
+      <*> Seq.traverseWithIndex (f . (+ 1)) xs
 
 -- | @since 0.3.6.0
 instance Exts.IsList (NESeq a) where

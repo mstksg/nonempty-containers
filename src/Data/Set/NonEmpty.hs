@@ -373,7 +373,7 @@ delete x n@(NESet x0 s) = case compare x x0 of
 -- converting the known-minimum representation back through 'Set' when the
 -- deleted element is not the minimum.
 --
--- @since 0.3.7.0
+-- @since 0.3.6.0
 deleteMaybe :: Ord a => a -> NESet a -> Maybe (NESet a)
 deleteMaybe x n@(NESet x0 s) = case compare x x0 of
   LT -> Just n
