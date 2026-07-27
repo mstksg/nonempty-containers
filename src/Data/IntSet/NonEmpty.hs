@@ -502,7 +502,7 @@ unionSetLeft s n = withNonEmpty n (`union` n) s
 --
 -- @since 0.3.6.0
 unionSetRight :: NEIntSet -> IntSet -> NEIntSet
-unionSetRight n s = withNonEmpty n (union n) s
+unionSetRight n = withNonEmpty n (union n)
 {-# INLINE unionSetRight #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two sets.

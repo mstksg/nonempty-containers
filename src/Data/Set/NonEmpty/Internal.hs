@@ -127,10 +127,10 @@ instance (Read a, Ord a) => Read (NESet a) where
   readListPrec = readListPrecDefault
 
 -- | @since 0.3.6.0
-instance (Ord a) => Exts.IsList (NESet a) where
+instance Ord a => Exts.IsList (NESet a) where
   type Item (NESet a) = a
 
-  fromList (a:as) = fromList (a :| as)
+  fromList (a : as) = fromList (a :| as)
   fromList [] = errorWithoutStackTrace "Data.Set.NonEmpty.fromList: empty list"
 
   toList = F.toList

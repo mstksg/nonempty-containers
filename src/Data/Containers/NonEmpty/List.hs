@@ -23,9 +23,9 @@ import Data.IntSet.NonEmpty.Internal (NEIntSet)
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.Map.NonEmpty as NEM
 import Data.Map.NonEmpty.Internal (NEMap)
+import qualified Data.Semigroup.Foldable as F1
 import qualified Data.Sequence.NonEmpty as NESeq
 import Data.Sequence.NonEmpty.Internal (NESeq)
-import qualified Data.Semigroup.Foldable as F1
 import qualified Data.Set.NonEmpty as NES
 import Data.Set.NonEmpty.Internal (NESet)
 import GHC.Exts (IsList (Item))

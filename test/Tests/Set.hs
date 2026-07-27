@@ -5,11 +5,11 @@ module Tests.Set (setTests) where
 
 import Data.Foldable
 import Data.Functor.Identity
-import Data.Text (Text)
 import Data.Semigroup.Foldable
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import qualified Data.Set.NonEmpty.Internal as NES
+import Data.Text (Text)
 import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen

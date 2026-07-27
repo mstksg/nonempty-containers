@@ -615,13 +615,13 @@ seqGen = Gen.seq mapSize valGen
 neSeqGen :: (MonadGen m, GenBase m ~ Identity) => m (NESeq Text)
 neSeqGen = Gen.just $ NESeq.nonEmptySeq <$> seqGen
 
-neListGen :: (MonadGen m) => m [Text]
+neListGen :: MonadGen m => m [Text]
 neListGen = Gen.list mapSize valGen
 
-neListUniqGen :: (MonadGen m) => m [Text]
+neListUniqGen :: MonadGen m => m [Text]
 neListUniqGen = S.toList . S.fromList <$> neListGen
 
-neIntListUniqGen :: (MonadGen m) => m [Int]
+neIntListUniqGen :: MonadGen m => m [Int]
 neIntListUniqGen = IS.toList <$> intSetGen
 
 neIntTextListUniqGen :: (MonadGen m, GenBase m ~ Identity) => m [(Int, Text)]

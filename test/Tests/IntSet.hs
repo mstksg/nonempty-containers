@@ -141,7 +141,7 @@ prop_fromToOverloadedList :: Property
 prop_fromToOverloadedList =
   property $ do
     l <- forAll neIntListUniqGen
-    l === Exts.toList (Exts.fromList @(NES.NEIntSet) l)
+    l === Exts.toList (Exts.fromList @NES.NEIntSet l)
 
 prop_insert :: Property
 prop_insert =

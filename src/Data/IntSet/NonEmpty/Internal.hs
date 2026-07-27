@@ -121,7 +121,7 @@ instance NFData NEIntSet where
 instance Exts.IsList NEIntSet where
   type Item NEIntSet = Key
 
-  fromList (a:as) = fromList (a :| as)
+  fromList (a : as) = fromList (a :| as)
   fromList [] = errorWithoutStackTrace "Data.IntSet.NonEmpty.fromList: empty list"
 
   toList = F.toList . toList

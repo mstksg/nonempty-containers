@@ -161,7 +161,7 @@ instance TraversableWithIndex Int NEIntMap where
 instance Exts.IsList (NEIntMap a) where
   type Item (NEIntMap a) = (Key, a)
 
-  fromList (a:as) = fromList (a :| as)
+  fromList (a : as) = fromList (a :| as)
   fromList [] = errorWithoutStackTrace "Data.IntMap.NonEmpty.fromList: empty list"
 
   toList = F.toList . toList

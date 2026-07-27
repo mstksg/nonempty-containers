@@ -1047,7 +1047,7 @@ unionMapLeft m n = withNonEmpty n (`union` n) m
 --
 -- @since 0.3.6.0
 unionMapRight :: NEIntMap a -> IntMap a -> NEIntMap a
-unionMapRight n m = withNonEmpty n (union n) m
+unionMapRight n = withNonEmpty n (union n)
 {-# INLINE unionMapRight #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Union of a possibly-empty 'IntMap' and a
@@ -1063,7 +1063,7 @@ unionMapWithLeft f m n = withNonEmpty n (\m' -> unionWith f m' n) m
 --
 -- @since 0.3.6.0
 unionMapWithRight :: (a -> a -> a) -> NEIntMap a -> IntMap a -> NEIntMap a
-unionMapWithRight f n m = withNonEmpty n (unionWith f n) m
+unionMapWithRight f n = withNonEmpty n (unionWith f n)
 {-# INLINE unionMapWithRight #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/.
@@ -1103,7 +1103,7 @@ unionMapWithKeyRight ::
   NEIntMap a ->
   IntMap a ->
   NEIntMap a
-unionMapWithKeyRight f n m = withNonEmpty n (unionWithKey f n) m
+unionMapWithKeyRight f n = withNonEmpty n (unionWithKey f n)
 {-# INLINE unionMapWithKeyRight #-}
 
 -- | The union of a non-empty list of maps, with a combining operation:

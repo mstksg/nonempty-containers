@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Tests.Sequence (sequenceTests) where
 
@@ -23,8 +23,8 @@ import Data.Sequence.NonEmpty (NESeq (..))
 import qualified Data.Sequence.NonEmpty as NESeq
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Tuple
 import qualified Data.Traversable.WithIndex as TWI
+import Data.Tuple
 import qualified GHC.Exts as Exts
 import Hedgehog
 import qualified Hedgehog.Gen as Gen

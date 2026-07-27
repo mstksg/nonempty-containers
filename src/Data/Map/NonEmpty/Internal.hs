@@ -201,14 +201,13 @@ instance TraversableWithIndex k (NEMap k) where
   itraverse f (NEMap k v m) = NEMap k <$> f k v <*> M.traverseWithKey f m
 
 -- | @since 0.3.6.0
-instance (Ord k) => Exts.IsList (NEMap k a) where
+instance Ord k => Exts.IsList (NEMap k a) where
   type Item (NEMap k a) = (k, a)
 
-  fromList (a:as) = fromList (a :| as)
+  fromList (a : as) = fromList (a :| as)
   fromList [] = errorWithoutStackTrace "Data.Map.NonEmpty.fromList: empty list"
 
   toList = F.toList . toList
-
 
 -- Data instance code from Data.Map.Internal
 --

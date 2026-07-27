@@ -53,12 +53,12 @@ library
   ghc-options:      -Wall -Wcompat -Wredundant-constraints
   build-depends:
       aeson
-    , base             >=4.9     && <5
+    , base                 >=4.9     && <5
     , comonad
-    , containers       >=0.6.3.1 && <0.9
+    , containers           >=0.6.3.1 && <0.9
     , deepseq
+    , indexed-traversable  >=0.1     && <0.2
     , invariant
-    , indexed-traversable >=0.1     && <0.2
     , nonempty-vector
     , semigroupoids
     , these
@@ -90,8 +90,8 @@ test-suite nonempty-containers-test
     , containers           >=0.6.3.1 && <0.9
     , hedgehog             >=1.0
     , hedgehog-fn          >=1.0
-    , invariant
     , indexed-traversable  >=0.1
+    , invariant
     , nonempty-containers
     , nonempty-vector
     , semigroupoids

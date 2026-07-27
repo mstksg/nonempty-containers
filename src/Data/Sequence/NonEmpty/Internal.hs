@@ -195,7 +195,7 @@ instance TraversableWithIndex Int NESeq where
 instance Exts.IsList (NESeq a) where
   type Item (NESeq a) = a
 
-  fromList (a:as) = fromList (a :| as)
+  fromList (a : as) = fromList (a :| as)
   fromList [] = errorWithoutStackTrace "Data.Sequence.NonEmpty.fromList: empty list"
 
   toList = F.toList
