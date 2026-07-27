@@ -101,6 +101,7 @@ module Data.Map.NonEmpty (
 
   -- * Deletion\/Update
   delete,
+  deleteMaybe,
   adjust,
   adjustWithKey,
   update,
@@ -1122,6 +1123,21 @@ delete k n@(NEMap k0 v m) = case compare k k0 of
   EQ -> m
   GT -> insertMinMap k0 v . M.delete k $ m
 {-# INLINE delete #-}
+
+-- | /O(log n)/. Delete a key and its value from the non-empty map, returning
+-- 'Nothing' if the result would be empty.
+--
+-- This is more efficient than @'nonEmptyMap' . 'delete' k@ because it avoids
+-- converting the known-minimum representation back through 'Map' when the
+-- deleted key is not the minimum.
+--
+-- @since 0.3.7.0
+deleteMaybe :: Ord k => k -> NEMap k a -> Maybe (NEMap k a)
+deleteMaybe k n@(NEMap k0 v m) = case compare k k0 of
+  LT -> Just n
+  EQ -> nonEmptyMap m
+  GT -> Just . NEMap k0 v . M.delete k $ m
+{-# INLINE deleteMaybe #-}
 
 -- | /O(log n)/. Update a value at a specific key with the result of the
 -- provided function. When the key is not a member of the map, the original

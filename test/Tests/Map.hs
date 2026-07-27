@@ -244,6 +244,13 @@ prop_delete =
     M.delete
     NEM.delete
 
+prop_deleteMaybe :: Property
+prop_deleteMaybe =
+  property $ do
+    k <- forAll keyGen
+    m <- forAll neMapGen
+    NEM.deleteMaybe k m === NEM.nonEmptyMap (M.delete k (NEM.toMap m))
+
 prop_adjustWithKey :: Property
 prop_adjustWithKey =
   ttProp

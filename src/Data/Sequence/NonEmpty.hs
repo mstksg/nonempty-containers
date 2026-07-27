@@ -785,7 +785,7 @@ adjust f i (x :<|| xs) = x :<|| Seq.adjust f (i - 1) xs
 -- @
 adjust' :: (a -> a) -> Int -> NESeq a -> NESeq a
 adjust' f 0 (x :<|| xs) = let !y = f x in y :<|| xs
-adjust' f i (x :<|| xs) = x :<|| Seq.adjust f (i - 1) xs
+adjust' f i (x :<|| xs) = x :<|| Seq.adjust' f (i - 1) xs
 {-# INLINE adjust' #-}
 
 -- | \( O(\log(\min(i,n-i))) \). Replace the element at the specified position.

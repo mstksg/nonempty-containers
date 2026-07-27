@@ -73,6 +73,7 @@ module Data.IntSet.NonEmpty (
 
   -- * Deletion
   delete,
+  deleteMaybe,
 
   -- * Query
   member,
@@ -287,6 +288,21 @@ delete x n@(NEIntSet x0 s) = case compare x x0 of
   EQ -> s
   GT -> insertMinSet x0 . S.delete x $ s
 {-# INLINE delete #-}
+
+-- | /O(log n)/. Delete an element from a set, returning 'Nothing' if the
+-- result would be empty.
+--
+-- This is more efficient than @'nonEmptySet' . 'delete' x@ because it avoids
+-- converting the known-minimum representation back through 'IntSet' when the
+-- deleted element is not the minimum.
+--
+-- @since 0.3.7.0
+deleteMaybe :: Key -> NEIntSet -> Maybe NEIntSet
+deleteMaybe x n@(NEIntSet x0 s) = case compare x x0 of
+  LT -> Just n
+  EQ -> nonEmptySet s
+  GT -> Just . NEIntSet x0 . S.delete x $ s
+{-# INLINE deleteMaybe #-}
 
 -- | /O(log n)/. Is the element in the set?
 member :: Key -> NEIntSet -> Bool

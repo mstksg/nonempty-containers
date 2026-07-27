@@ -157,6 +157,13 @@ prop_delete =
     S.delete
     NES.delete
 
+prop_deleteMaybe :: Property
+prop_deleteMaybe =
+  property $ do
+    x <- forAll intKeyGen
+    s <- forAll neIntSetGen
+    NES.deleteMaybe x s === NES.nonEmptySet (S.delete x (NES.toSet s))
+
 prop_member :: Property
 prop_member =
   ttProp
