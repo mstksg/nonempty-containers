@@ -4,6 +4,7 @@ import Test.Tasty
 import Tests.IntMap
 import Tests.IntSet
 import Tests.Map
+import Tests.NonEmptyList
 import Tests.Sequence
 import Tests.Set
 
@@ -23,5 +24,6 @@ main =
       , setTests
       , intMapTests
       , intSetTests
+      , nonEmptyListTests
       , sequenceTests
       ]

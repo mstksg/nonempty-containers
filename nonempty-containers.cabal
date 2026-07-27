@@ -36,6 +36,7 @@ source-repository head
 library
   exposed-modules:
     Data.Containers.NonEmpty
+    Data.Containers.NonEmpty.List
     Data.IntMap.NonEmpty
     Data.IntMap.NonEmpty.Internal
     Data.IntSet.NonEmpty
@@ -73,6 +74,7 @@ test-suite nonempty-containers-test
     Tests.IntMap
     Tests.IntSet
     Tests.Map
+    Tests.NonEmptyList
     Tests.Sequence
     Tests.Set
     Tests.Util
