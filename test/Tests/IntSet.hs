@@ -241,6 +241,20 @@ prop_union =
     S.union
     NES.union
 
+prop_unionSetLeft :: Property
+prop_unionSetLeft =
+  ttProp
+    (GTIntSet :-> GTNEIntSet :-> TTNEIntSet)
+    S.union
+    NES.unionSetLeft
+
+prop_unionSetRight :: Property
+prop_unionSetRight =
+  ttProp
+    (GTNEIntSet :-> GTIntSet :-> TTNEIntSet)
+    S.union
+    NES.unionSetRight
+
 prop_unions :: Property
 prop_unions =
   ttProp

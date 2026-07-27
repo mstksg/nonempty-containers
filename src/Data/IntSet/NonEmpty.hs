@@ -89,6 +89,8 @@ module Data.IntSet.NonEmpty (
 
   -- * Combine
   union,
+  unionSetLeft,
+  unionSetRight,
   unions,
   difference,
   (\\),
@@ -486,6 +488,22 @@ disjoint n1@(NEIntSet x1 s1) n2@(NEIntSet x2 s2) = case compare x1 x2 of
   -- k2 is not in n1
   GT -> toSet n1 `S.disjoint` s2
 {-# INLINE disjoint #-}
+
+-- | /O(m*log(n\/m + 1)), m <= n/. Union of a possibly-empty 'IntSet' and a
+-- non-empty set.
+--
+-- @since 0.3.6.0
+unionSetLeft :: IntSet -> NEIntSet -> NEIntSet
+unionSetLeft s n = withNonEmpty n (`union` n) s
+{-# INLINE unionSetLeft #-}
+
+-- | /O(m*log(n\/m + 1)), m <= n/. Union of a non-empty set and a
+-- possibly-empty 'IntSet'.
+--
+-- @since 0.3.6.0
+unionSetRight :: NEIntSet -> IntSet -> NEIntSet
+unionSetRight n s = withNonEmpty n (union n) s
+{-# INLINE unionSetRight #-}
 
 -- | /O(m*log(n\/m + 1)), m <= n/. Difference of two sets.
 --

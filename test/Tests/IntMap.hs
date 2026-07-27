@@ -419,6 +419,20 @@ prop_union =
     M.union
     NEM.union
 
+prop_unionMapLeft :: Property
+prop_unionMapLeft =
+  ttProp
+    (GTIntMap :-> GTNEIntMap :-> TTNEIntMap)
+    M.union
+    NEM.unionMapLeft
+
+prop_unionMapRight :: Property
+prop_unionMapRight =
+  ttProp
+    (GTNEIntMap :-> GTIntMap :-> TTNEIntMap)
+    M.union
+    NEM.unionMapRight
+
 prop_unionWith :: Property
 prop_unionWith =
   ttProp
@@ -426,12 +440,40 @@ prop_unionWith =
     M.unionWith
     NEM.unionWith
 
+prop_unionMapWithLeft :: Property
+prop_unionMapWithLeft =
+  ttProp
+    (gf2 valGen :?> GTIntMap :-> GTNEIntMap :-> TTNEIntMap)
+    M.unionWith
+    NEM.unionMapWithLeft
+
+prop_unionMapWithRight :: Property
+prop_unionMapWithRight =
+  ttProp
+    (gf2 valGen :?> GTNEIntMap :-> GTIntMap :-> TTNEIntMap)
+    M.unionWith
+    NEM.unionMapWithRight
+
 prop_unionWithKey :: Property
 prop_unionWithKey =
   ttProp
     (gf3 valGen :?> GTNEIntMap :-> GTNEIntMap :-> TTNEIntMap)
     M.unionWithKey
     NEM.unionWithKey
+
+prop_unionMapWithKeyLeft :: Property
+prop_unionMapWithKeyLeft =
+  ttProp
+    (gf3 valGen :?> GTIntMap :-> GTNEIntMap :-> TTNEIntMap)
+    M.unionWithKey
+    NEM.unionMapWithKeyLeft
+
+prop_unionMapWithKeyRight :: Property
+prop_unionMapWithKeyRight =
+  ttProp
+    (gf3 valGen :?> GTNEIntMap :-> GTIntMap :-> TTNEIntMap)
+    M.unionWithKey
+    NEM.unionMapWithKeyRight
 
 prop_unions :: Property
 prop_unions =

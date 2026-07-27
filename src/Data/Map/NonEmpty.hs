@@ -134,8 +134,14 @@ module Data.Map.NonEmpty (
 
   -- ** Union
   union,
+  unionMapLeft,
+  unionMapRight,
   unionWith,
+  unionMapWithLeft,
+  unionMapWithRight,
   unionWithKey,
+  unionMapWithKeyLeft,
+  unionMapWithKeyRight,
   unions,
   unionsWith,
 
@@ -516,6 +522,38 @@ unionWith f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
   GT -> NEMap k2 v2 . M.unionWith f (toMap n1) $ m2
 {-# INLINE unionWith #-}
 
+-- | /O(m*log(n\/m + 1)), m <= n/. Left-biased union of a possibly-empty
+-- 'Map' and a non-empty map.
+--
+-- @since 0.3.6.0
+unionMapLeft :: Ord k => Map k a -> NEMap k a -> NEMap k a
+unionMapLeft m n = withNonEmpty n (`union` n) m
+{-# INLINE unionMapLeft #-}
+
+-- | /O(m*log(n\/m + 1)), m <= n/. Left-biased union of a non-empty map and a
+-- possibly-empty 'Map'.
+--
+-- @since 0.3.6.0
+unionMapRight :: Ord k => NEMap k a -> Map k a -> NEMap k a
+unionMapRight n m = withNonEmpty n (union n) m
+{-# INLINE unionMapRight #-}
+
+-- | /O(m*log(n\/m + 1)), m <= n/. Union of a possibly-empty 'Map' and a
+-- non-empty map with a combining function.
+--
+-- @since 0.3.6.0
+unionMapWithLeft :: Ord k => (a -> a -> a) -> Map k a -> NEMap k a -> NEMap k a
+unionMapWithLeft f m n = withNonEmpty n (\m' -> unionWith f m' n) m
+{-# INLINE unionMapWithLeft #-}
+
+-- | /O(m*log(n\/m + 1)), m <= n/. Union of a non-empty map and a
+-- possibly-empty 'Map' with a combining function.
+--
+-- @since 0.3.6.0
+unionMapWithRight :: Ord k => (a -> a -> a) -> NEMap k a -> Map k a -> NEMap k a
+unionMapWithRight f n m = withNonEmpty n (unionWith f n) m
+{-# INLINE unionMapWithRight #-}
+
 -- | /O(m*log(n\/m + 1)), m <= n/.
 -- Union with a combining function, given the matching key.
 --
@@ -532,6 +570,32 @@ unionWithKey f n1@(NEMap k1 v1 m1) n2@(NEMap k2 v2 m2) = case compare k1 k2 of
   EQ -> NEMap k1 (f k1 v1 v2) . M.unionWithKey f m1 $ m2
   GT -> NEMap k2 v2 . M.unionWithKey f (toMap n1) $ m2
 {-# INLINE unionWithKey #-}
+
+-- | /O(m*log(n\/m + 1)), m <= n/. Union of a possibly-empty 'Map' and a
+-- non-empty map with a combining function, given the matching key.
+--
+-- @since 0.3.6.0
+unionMapWithKeyLeft ::
+  Ord k =>
+  (k -> a -> a -> a) ->
+  Map k a ->
+  NEMap k a ->
+  NEMap k a
+unionMapWithKeyLeft f m n = withNonEmpty n (\m' -> unionWithKey f m' n) m
+{-# INLINE unionMapWithKeyLeft #-}
+
+-- | /O(m*log(n\/m + 1)), m <= n/. Union of a non-empty map and a
+-- possibly-empty 'Map' with a combining function, given the matching key.
+--
+-- @since 0.3.6.0
+unionMapWithKeyRight ::
+  Ord k =>
+  (k -> a -> a -> a) ->
+  NEMap k a ->
+  Map k a ->
+  NEMap k a
+unionMapWithKeyRight f n m = withNonEmpty n (unionWithKey f n) m
+{-# INLINE unionMapWithKeyRight #-}
 
 -- | The union of a non-empty list of maps, with a combining operation:
 --   (@'unionsWith' f == 'Data.Foldable.foldl1' ('unionWith' f)@).
