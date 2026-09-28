@@ -5,9 +5,7 @@ module Tests.Map.Strict (mapStrictTests) where
 
 import Control.Applicative
 import Control.Comonad
-import Control.Exception (ErrorCall, evaluate, try)
 import Data.Coerce
-import Data.Either (isLeft)
 import Data.Foldable
 import qualified Data.Foldable.WithIndex as IFoldable
 import Data.Functor.Alt
@@ -40,18 +38,195 @@ prop_valid =
   property $
     assert . NEM.valid =<< forAll neMapGen
 
+-- | Pick an existing key out of a generated map, so the branch that
+-- actually applies the user function is guaranteed to run.
+existingKeyOf :: MonadGen m => NEMS.NEMap KeyType a -> m KeyType
+existingKeyOf = Gen.element . NE.toList . NEMS.keys
+
 prop_lazy_singleton_does_not_force_value :: Property
 prop_lazy_singleton_does_not_force_value = property $ do
-  _ <- evalIO $ evaluate (NEML.singleton dummyKey (error "forced lazy NEMap value" :: Int))
-  success
+  k <- forAll keyGen
+  assertNotForced (NEML.singleton k (error "forced lazy NEMap value" :: Text))
 
 prop_strict_singleton_forces_value :: Property
 prop_strict_singleton_forces_value = property $ do
-  r <-
-    evalIO $
-      try @ErrorCall $
-        evaluate (NEMS.singleton dummyKey (error "forced strict NEMap value" :: Int))
-  assert (isLeft r)
+  k <- forAll keyGen
+  assertForced (NEMS.singleton k (error "forced strict NEMap value" :: Text))
+
+prop_lazy_insertWith_does_not_force_value :: Property
+prop_lazy_insertWith_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertNotForced $
+    NEML.insertWith (\_ _ -> error "forced lazy NEMap value") k T.empty m
+
+prop_strict_insertWith_forces_value :: Property
+prop_strict_insertWith_forces_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertForced $
+    NEMS.insertWith (\_ _ -> error "forced strict NEMap value") k T.empty m
+
+prop_lazy_adjustWithKey_does_not_force_value :: Property
+prop_lazy_adjustWithKey_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertNotForced $ NEML.adjustWithKey (\_ _ -> error "forced lazy NEMap value") k m
+
+prop_strict_adjustWithKey_forces_value :: Property
+prop_strict_adjustWithKey_forces_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertForced $ NEMS.adjustWithKey (\_ _ -> error "forced strict NEMap value") k m
+
+prop_lazy_alter_does_not_force_value :: Property
+prop_lazy_alter_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertNotForced $ NEML.alter (const (Just (error "forced lazy NEMap value"))) k m
+
+prop_strict_alter_forces_value :: Property
+prop_strict_alter_forces_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertForced $ NEMS.alter (const (Just (error "forced strict NEMap value"))) k m
+
+prop_lazy_mapWithKey_does_not_force_value :: Property
+prop_lazy_mapWithKey_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  assertNotForced $ NEML.mapWithKey (\_ _ -> error "forced lazy NEMap value") m
+
+prop_strict_mapWithKey_forces_value :: Property
+prop_strict_mapWithKey_forces_value = property $ do
+  m <- forAll neMapGen
+  assertForced $ NEMS.mapWithKey (\_ _ -> error "forced strict NEMap value") m
+
+prop_lazy_unionWith_does_not_force_value :: Property
+prop_lazy_unionWith_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertNotForced $
+    NEML.unionWith (\_ _ -> error "forced lazy NEMap value") m (NEML.singleton k T.empty)
+
+prop_strict_unionWith_forces_value :: Property
+prop_strict_unionWith_forces_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertForced $
+    NEMS.unionWith (\_ _ -> error "forced strict NEMap value") m (NEMS.singleton k T.empty)
+
+prop_lazy_mapMaybeWithKey_does_not_force_value :: Property
+prop_lazy_mapMaybeWithKey_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  assertNotForced $ NEML.mapMaybeWithKey (\_ _ -> Just (error "forced lazy NEMap value")) m
+
+prop_strict_mapMaybeWithKey_forces_value :: Property
+prop_strict_mapMaybeWithKey_forces_value = property $ do
+  m <- forAll neMapGen
+  assertForced $ NEMS.mapMaybeWithKey (\_ _ -> Just (error "forced strict NEMap value")) m
+
+prop_lazy_mapAccumWithKey_does_not_force_value :: Property
+prop_lazy_mapAccumWithKey_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  assertNotForced $
+    snd (NEML.mapAccumWithKey (\acc _ _ -> (acc, error "forced lazy NEMap value" :: Text)) () m)
+
+prop_strict_mapAccumWithKey_forces_value :: Property
+prop_strict_mapAccumWithKey_forces_value = property $ do
+  m <- forAll neMapGen
+  assertForced $
+    snd (NEMS.mapAccumWithKey (\acc _ _ -> (acc, error "forced strict NEMap value" :: Text)) () m)
+
+prop_lazy_fromListWith_does_not_force_value :: Property
+prop_lazy_fromListWith_does_not_force_value = property $ do
+  k <- forAll keyGen
+  assertNotForced $
+    NEML.fromListWith (\_ _ -> error "forced lazy NEMap value") ((k, T.empty) :| [(k, T.empty)])
+
+prop_strict_fromListWith_forces_value :: Property
+prop_strict_fromListWith_forces_value = property $ do
+  k <- forAll keyGen
+  assertForced $
+    NEMS.fromListWith (\_ _ -> error "forced strict NEMap value") ((k, T.empty) :| [(k, T.empty)])
+
+prop_lazy_insertMapWith_does_not_force_value :: Property
+prop_lazy_insertMapWith_does_not_force_value = property $ do
+  k <- forAll keyGen
+  assertNotForced $
+    NEML.insertMapWith (\_ _ -> error "forced lazy NEMap value") k T.empty (M.singleton k T.empty)
+
+prop_strict_insertMapWith_forces_value :: Property
+prop_strict_insertMapWith_forces_value = property $ do
+  k <- forAll keyGen
+  assertForced $
+    NEMS.insertMapWith (\_ _ -> error "forced strict NEMap value") k T.empty (M.singleton k T.empty)
+
+prop_lazy_updateWithKey_does_not_force_value :: Property
+prop_lazy_updateWithKey_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertNotForced $ NEML.updateWithKey (\_ _ -> Just (error "forced lazy NEMap value")) k m
+
+prop_strict_updateWithKey_forces_value :: Property
+prop_strict_updateWithKey_forces_value = property $ do
+  m <- forAll neMapGen
+  k <- forAll (existingKeyOf m)
+  assertForced $ NEMS.updateWithKey (\_ _ -> Just (error "forced strict NEMap value")) k m
+
+-- | Two-key map with both keys deliberately mapped to the same target key,
+-- so the combining function is guaranteed to run.
+collidingMapKeysFixture :: MonadGen m => m (KeyType, NEMS.NEMap KeyType Text)
+collidingMapKeysFixture = do
+  k <- keyGen
+  pure (k, NEML.fromList ((k, T.empty) :| [(overKX (+ 1) k, T.empty)]))
+
+prop_lazy_mapKeysWith_does_not_force_value :: Property
+prop_lazy_mapKeysWith_does_not_force_value = property $ do
+  (k, m) <- forAll collidingMapKeysFixture
+  assertNotForced $ NEML.mapKeysWith (\_ _ -> error "forced lazy NEMap value") (const k) m
+
+prop_strict_mapKeysWith_forces_value :: Property
+prop_strict_mapKeysWith_forces_value = property $ do
+  (k, m) <- forAll collidingMapKeysFixture
+  assertForced $ NEMS.mapKeysWith (\_ _ -> error "forced strict NEMap value") (const k) m
+
+prop_lazy_traverseWithKey_does_not_force_value :: Property
+prop_lazy_traverseWithKey_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  assertNotForced $
+    runIdentity (NEML.traverseWithKey (\_ _ -> Identity (error "forced lazy NEMap value" :: Text)) m)
+
+prop_strict_traverseWithKey_forces_value :: Property
+prop_strict_traverseWithKey_forces_value = property $ do
+  m <- forAll neMapGen
+  assertForced $
+    runIdentity (NEMS.traverseWithKey (\_ _ -> Identity (error "forced strict NEMap value" :: Text)) m)
+
+prop_lazy_traverseWithKey1_does_not_force_value :: Property
+prop_lazy_traverseWithKey1_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  assertNotForced $
+    runIdentity (NEML.traverseWithKey1 (\_ _ -> Identity (error "forced lazy NEMap value" :: Text)) m)
+
+prop_strict_traverseWithKey1_forces_value :: Property
+prop_strict_traverseWithKey1_forces_value = property $ do
+  m <- forAll neMapGen
+  assertForced $
+    runIdentity (NEMS.traverseWithKey1 (\_ _ -> Identity (error "forced strict NEMap value" :: Text)) m)
+
+prop_lazy_traverseMaybeWithKey1_does_not_force_value :: Property
+prop_lazy_traverseMaybeWithKey1_does_not_force_value = property $ do
+  m <- forAll neMapGen
+  assertNotForced $
+    runIdentity
+      (NEML.traverseMaybeWithKey1 (\_ _ -> Identity (Just (error "forced lazy NEMap value" :: Text))) m)
+
+prop_strict_traverseMaybeWithKey1_forces_value :: Property
+prop_strict_traverseMaybeWithKey1_forces_value = property $ do
+  m <- forAll neMapGen
+  assertForced $
+    runIdentity
+      (NEMS.traverseMaybeWithKey1 (\_ _ -> Identity (Just (error "forced strict NEMap value" :: Text))) m)
 
 prop_valid_toMap :: Property
 prop_valid_toMap =

@@ -27,6 +27,8 @@ module Tests.Util (
   TestType (..),
   ttProp,
   groupTree,
+  assertForced,
+  assertNotForced,
   readShow,
   readShow1,
   showShow1,
@@ -55,9 +57,11 @@ module Tests.Util (
 ) where
 
 import Control.Applicative
+import Control.Exception (ErrorCall, evaluate, try)
 import Control.Monad
 import Data.Bifunctor
 import Data.Char
+import Data.Either (isLeft)
 import Data.Foldable
 import Data.Function
 import Data.Functor.Apply
@@ -116,6 +120,22 @@ groupTree Group{..} =
     mkName = map deUnderscore . drop (length @[] @Char "prop_")
     deUnderscore '_' = ' '
     deUnderscore c = c
+
+-- | Assert that evaluating a value to WHNF throws (i.e. that constructing
+-- it must have forced some 'error'-laden thunk buried inside).  Used to
+-- test the strict interfaces.
+assertForced :: a -> PropertyT IO ()
+assertForced x = do
+  r <- evalIO $ try @ErrorCall (evaluate x)
+  assert (isLeft r)
+
+-- | Assert that evaluating a value to WHNF does /not/ throw, even when it
+-- contains an 'error'-laden thunk that only a strict interface would have
+-- forced.  Used to test the lazy interfaces.
+assertNotForced :: a -> PropertyT IO ()
+assertNotForced x = do
+  _ <- evalIO $ evaluate x
+  success
 
 -- | test for stability
 data K a b = K {getKX :: !a, getKY :: !b}

@@ -55,7 +55,7 @@ module Data.Map.NonEmpty.Strict.Internal (
 
 import Control.Applicative
 import qualified Data.Foldable as F
-import Data.Functor.Apply (Apply)
+import Data.Functor.Apply (Apply, MaybeApply (..), (<.>))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map.Internal (Map (..))
 import qualified Data.Map.Internal as MI
@@ -162,7 +162,11 @@ traverseWithKey f (NEMap k v m) = NEMap k <$> f k v <*> M.traverseWithKey f m
 {-# INLINE traverseWithKey #-}
 
 traverseWithKey1 :: Apply f => (k -> a -> f b) -> NEMap k a -> f (NEMap k b)
-traverseWithKey1 = L.traverseWithKey1
+traverseWithKey1 f (NEMap k0 v m0) = case runMaybeApply m1 of
+  Left m2 -> NEMap k0 <$> f k0 v <.> m2
+  Right m2 -> flip (NEMap k0) m2 <$> f k0 v
+  where
+    m1 = M.traverseWithKey (\k -> MaybeApply . Left . f k) m0
 {-# INLINE traverseWithKey1 #-}
 
 foldMapWithKey :: Monoid m => (k -> a -> m) -> NEMap k a -> m
