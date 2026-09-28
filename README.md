@@ -104,5 +104,3 @@ Currently not implemented:
 *   Extended merging functions.  However, there aren't too many benefits to be
     gained from lifting extended merging functions, because their
     emptiness/non-emptiness guarantees are difficult to statically conclude.
-*   Strict variants of Map functions.  This is something that I wouldn't mind,
-    and might add in the future.  PR's are welcomed!
