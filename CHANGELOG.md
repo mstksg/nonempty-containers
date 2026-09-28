@@ -6,6 +6,8 @@ Version 0.4.0.0
 
 *September 27, 2026*
 
+<https://github.com/mstksg/nonempty-containers/releases/tag/v0.4.0.0>
+
 *   Add `Data.Map.NonEmpty.Lazy`, `Data.Map.NonEmpty.Strict`,
     `Data.IntMap.NonEmpty.Lazy`, and `Data.IntMap.NonEmpty.Strict`.
     The existing `Data.Map.NonEmpty` and `Data.IntMap.NonEmpty` modules
