@@ -9,7 +9,8 @@ Version 0.4.0.0
 *   Add `Data.Map.NonEmpty.Lazy`, `Data.Map.NonEmpty.Strict`,
     `Data.IntMap.NonEmpty.Lazy`, and `Data.IntMap.NonEmpty.Strict`.
     The existing `Data.Map.NonEmpty` and `Data.IntMap.NonEmpty` modules
-    continue to re-export the lazy interfaces.
+    continue to re-export the lazy interfaces so the imports should be
+    backwards-compatible.
 
 Version 0.3.6.0
 ---------------
