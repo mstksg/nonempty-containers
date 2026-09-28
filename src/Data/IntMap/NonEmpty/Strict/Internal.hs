@@ -13,7 +13,7 @@
 --
 -- Strict internal-use functions used in the implementation of
 -- "Data.IntMap.NonEmpty.Strict".  These share the same 'NEIntMap' type as
--- the lazy modules, matching the convention used by /containers/.
+-- the lazy modules; only construction is strict in the value.
 module Data.IntMap.NonEmpty.Strict.Internal (
   -- * Non-Empty IntMap type
   NEIntMap,

@@ -9,9 +9,8 @@
 --
 -- = Non-Empty Finite Integer-Indexed Maps
 --
--- This module re-exports "Data.IntMap.NonEmpty.Lazy", matching the
--- convention used by "Data.IntMap".  Import "Data.IntMap.NonEmpty.Strict"
--- for the strict value interface.
+-- This module re-exports "Data.IntMap.NonEmpty.Lazy".  Import
+-- "Data.IntMap.NonEmpty.Strict" for the strict value interface.
 module Data.IntMap.NonEmpty (
   module Data.IntMap.NonEmpty.Lazy,
 ) where

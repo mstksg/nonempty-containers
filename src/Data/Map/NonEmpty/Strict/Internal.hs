@@ -13,7 +13,7 @@
 --
 -- Strict internal-use functions used in the implementation of
 -- "Data.Map.NonEmpty.Strict".  These share the same 'NEMap' type as the
--- lazy modules, matching the convention used by /containers/.
+-- lazy modules; only construction is strict in the value.
 module Data.Map.NonEmpty.Strict.Internal (
   -- * Non-Empty Map type
   NEMap,

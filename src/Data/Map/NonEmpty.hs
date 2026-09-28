@@ -9,9 +9,8 @@
 --
 -- = Non-Empty Finite Maps
 --
--- This module re-exports "Data.Map.NonEmpty.Lazy", matching the convention
--- used by "Data.Map".  Import "Data.Map.NonEmpty.Strict" for the strict
--- value interface.
+-- This module re-exports "Data.Map.NonEmpty.Lazy".  Import
+-- "Data.Map.NonEmpty.Strict" for the strict value interface.
 module Data.Map.NonEmpty (
   module Data.Map.NonEmpty.Lazy,
 ) where
