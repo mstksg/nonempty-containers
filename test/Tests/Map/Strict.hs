@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Tests.Map (mapTests) where
+module Tests.Map.Strict (mapStrictTests) where
 
 import Control.Applicative
 import Control.Comonad
@@ -16,10 +16,10 @@ import qualified Data.Functor.WithIndex as IFunctor
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import qualified Data.Map.NonEmpty as NEM
-import qualified Data.Map.NonEmpty.Internal as NEM
 import qualified Data.Map.NonEmpty.Lazy as NEML
+import qualified Data.Map.NonEmpty.Strict as NEM
 import qualified Data.Map.NonEmpty.Strict as NEMS
+import qualified Data.Map.NonEmpty.Strict.Internal as NEM
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import Data.Text (Text)
@@ -32,8 +32,8 @@ import qualified Hedgehog.Range as Range
 import Test.Tasty
 import Tests.Util
 
-mapTests :: TestTree
-mapTests = groupTree $$discover
+mapStrictTests :: TestTree
+mapStrictTests = groupTree $$discover
 
 prop_valid :: Property
 prop_valid =

@@ -2,8 +2,10 @@
 -- import           Test.Tasty.Ingredients.ConsoleReporter
 import Test.Tasty
 import Tests.IntMap
+import Tests.IntMap.Strict
 import Tests.IntSet
 import Tests.Map
+import Tests.Map.Strict
 import Tests.NonEmptyList
 import Tests.Sequence
 import Tests.Set
@@ -21,8 +23,10 @@ main =
     testGroup
       "Tests"
       [ mapTests
+      , mapStrictTests
       , setTests
       , intMapTests
+      , intMapStrictTests
       , intSetTests
       , nonEmptyListTests
       , sequenceTests

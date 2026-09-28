@@ -6,7 +6,9 @@ module Tests.IntMap (intMapTests) where
 
 import Control.Applicative
 import Control.Comonad
+import Control.Exception (ErrorCall, evaluate, try)
 import Data.Coerce
+import Data.Either (isLeft)
 import Data.Foldable
 import qualified Data.Foldable.WithIndex as IFoldable
 import Data.Functor.Alt
@@ -14,6 +16,8 @@ import Data.Functor.Identity
 import qualified Data.Functor.WithIndex as IFunctor
 import qualified Data.IntMap as M
 import qualified Data.IntMap.NonEmpty as NEM
+import qualified Data.IntMap.NonEmpty.Lazy as NEML
+import qualified Data.IntMap.NonEmpty.Strict as NEMS
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Semigroup.Foldable
@@ -35,6 +39,19 @@ prop_valid :: Property
 prop_valid =
   property $
     assert . NEM.valid =<< forAll neIntMapGen
+
+prop_lazy_singleton_does_not_force_value :: Property
+prop_lazy_singleton_does_not_force_value = property $ do
+  _ <- evalIO $ evaluate (NEML.singleton 0 (error "forced lazy NEIntMap value" :: Int))
+  success
+
+prop_strict_singleton_forces_value :: Property
+prop_strict_singleton_forces_value = property $ do
+  r <-
+    evalIO $
+      try @ErrorCall $
+        evaluate (NEMS.singleton 0 (error "forced strict NEIntMap value" :: Int))
+  assert (isLeft r)
 
 -- | We cannot implement these because there is no 'valid' for IntSet
 -- prop_valid_toMap :: Property

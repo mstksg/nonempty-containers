@@ -5,7 +5,7 @@ cabal-version:      1.12
 -- see: https://github.com/sol/hpack
 
 name:               nonempty-containers
-version:            0.3.6.0
+version:            0.4.0.0
 synopsis:           Non-empty variants of containers data types, with full API
 description:
   Efficient and optimized non-empty versions of types from /containers/.
@@ -39,10 +39,18 @@ library
     Data.Containers.NonEmpty.List
     Data.IntMap.NonEmpty
     Data.IntMap.NonEmpty.Internal
+    Data.IntMap.NonEmpty.Lazy
+    Data.IntMap.NonEmpty.Lazy.Internal
+    Data.IntMap.NonEmpty.Strict
+    Data.IntMap.NonEmpty.Strict.Internal
     Data.IntSet.NonEmpty
     Data.IntSet.NonEmpty.Internal
     Data.Map.NonEmpty
     Data.Map.NonEmpty.Internal
+    Data.Map.NonEmpty.Lazy
+    Data.Map.NonEmpty.Lazy.Internal
+    Data.Map.NonEmpty.Strict
+    Data.Map.NonEmpty.Strict.Internal
     Data.Sequence.NonEmpty
     Data.Sequence.NonEmpty.Internal
     Data.Set.NonEmpty
@@ -72,8 +80,10 @@ test-suite nonempty-containers-test
   other-modules:
     Paths_nonempty_containers
     Tests.IntMap
+    Tests.IntMap.Strict
     Tests.IntSet
     Tests.Map
+    Tests.Map.Strict
     Tests.NonEmptyList
     Tests.Sequence
     Tests.Set
